@@ -9,12 +9,31 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "axios": "^0.21.1",
+    "bootstrap": "^5.0.2",
+    "cep-promise": "^4.1.1",
+    "date-fns": "^2.22.1",
+    "file-saver": "^2.0.5",
+    "filesize": "^7.0.0",
+    "formik": "^2.2.9",
+    "immer": "^9.0.5",
+    "js-cookie": "^2.2.1",
     "next": "11.0.1",
+    "next-seo": "^4.26.0",
     "react": "17.0.2",
-    "react-dom": "17.0.2"
+    "react-beautiful-dnd": "^13.1.0",
+    "react-bootstrap": "^1.6.1",
+    "react-dom": "17.0.2",
+    "react-icons": "^4.2.0",
+    "yup": "^0.32.9"
   },
   "devDependencies": {
+    "@types/bootstrap": "^5.0.17",
+    "@types/file-saver": "^2.0.3",
+    "@types/js-cookie": "^2.2.7",
+    "@types/node": "^16.3.1",
     "@types/react": "17.0.14",
+    "@types/react-beautiful-dnd": "^13.1.1",
     "eslint": "7.30.0",
     "eslint-config-next": "11.0.1",
     "typescript": "4.3.5"

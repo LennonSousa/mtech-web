@@ -236,7 +236,7 @@ export default function NewCustomer() {
                                                     average_increase: 0,
                                                     discount: 0,
                                                     increase: 0,
-                                                    percent: false,
+                                                    percent: true,
                                                     show_values: false,
                                                     show_discount: false,
                                                     notes: '',
@@ -447,6 +447,11 @@ export default function NewCustomer() {
                                                                                 .then((cep: CEP) => {
                                                                                     const { street, neighborhood, city, state } = cep;
 
+                                                                                    const stateCities = statesCities.estados.find(item => { return item.sigla === state })
+
+                                                                                    if (stateCities)
+                                                                                        setCities(stateCities.cidades);
+
                                                                                     setFieldValue('street', street);
                                                                                     setFieldValue('neighborhood', neighborhood);
                                                                                     setFieldValue('city', city);
@@ -473,7 +478,6 @@ export default function NewCustomer() {
                                                                         animation="border"
                                                                         variant="info"
                                                                         role="status"
-                                                                        size="sm"
                                                                         aria-hidden="true"
                                                                     />
                                                                 }
@@ -543,7 +547,8 @@ export default function NewCustomer() {
                                                                     as="select"
                                                                     onChange={(e) => {
                                                                         setFieldValue('state', e.target.value);
-                                                                        const stateCities = statesCities.estados.find(item => { return item.nome === e.target.value })
+
+                                                                        const stateCities = statesCities.estados.find(item => { return item.sigla === e.target.value })
 
                                                                         if (stateCities)
                                                                             setCities(stateCities.cidades);
@@ -556,7 +561,7 @@ export default function NewCustomer() {
                                                                     <option hidden>...</option>
                                                                     {
                                                                         statesCities.estados.map((estado, index) => {
-                                                                            return <option key={index} value={estado.nome}>{estado.nome}</option>
+                                                                            return <option key={index} value={estado.sigla}>{estado.nome}</option>
                                                                         })
                                                                     }
                                                                 </Form.Control>
@@ -585,7 +590,7 @@ export default function NewCustomer() {
                                                             </Form.Group>
                                                         </Row>
 
-                                                        <Col className="border-top mb-3"></Col>
+                                                        <Col className="border-top mt-3 mb-3"></Col>
 
                                                         <Row className="mb-3">
                                                             <Col>
@@ -640,7 +645,7 @@ export default function NewCustomer() {
                                                             </Form.Group>
 
                                                             <Form.Group as={Col} sm={3} controlId="formGridIrratiation">
-                                                                <Form.Label>Irradiação Local em [Kwh/m².dia] (Cresesb)</Form.Label>
+                                                                <Form.Label>Irradiação Local em [Kwh/m².dia]</Form.Label>
                                                                 <Form.Control
                                                                     type="text"
                                                                     onChange={handleChange}
@@ -885,6 +890,8 @@ export default function NewCustomer() {
                                                             </Form.Group>
                                                         </Row>
 
+                                                        <Col className="border-top mt-3 mb-3"></Col>
+
                                                         <Row className="mb-3">
                                                             <Col>
                                                                 <Row>
@@ -1043,6 +1050,8 @@ export default function NewCustomer() {
                                                             </Form.Group>
                                                         </Row>
 
+                                                        <Col className="border-top mt-3 mb-3"></Col>
+
                                                         <Row className="mb-3">
                                                             <Col>
                                                                 <Row>
@@ -1115,7 +1124,7 @@ export default function NewCustomer() {
                                                                 <Form.Switch
                                                                     id="percent"
                                                                     label="Valores em Reais (R$)"
-                                                                    checked={values.percent}
+                                                                    checked={!values.percent}
                                                                     onChange={() => { setFieldValue('percent', !values.percent) }}
                                                                 />
                                                             </Col>

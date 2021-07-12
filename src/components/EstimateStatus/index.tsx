@@ -18,7 +18,7 @@ export interface EstimateStatus {
 interface EstimateStatusProps {
     status: EstimateStatus;
     listStatus: EstimateStatus[];
-    handleListTypes(): Promise<void>;
+    handleListStatus(): Promise<void>;
 }
 
 const validationSchema = Yup.object().shape({
@@ -26,7 +26,7 @@ const validationSchema = Yup.object().shape({
     order: Yup.number().required(),
 });
 
-const EstimateStatusItem: React.FC<EstimateStatusProps> = ({ status, listStatus, handleListTypes }) => {
+const EstimateStatusItem: React.FC<EstimateStatusProps> = ({ status, listStatus, handleListStatus }) => {
     const [showModalEditType, setShowModalEditType] = useState(false);
 
     const handleCloseModalEditType = () => { setShowModalEditType(false); setIconDeleteConfirm(false); setIconDelete(true); }
@@ -69,7 +69,7 @@ const EstimateStatusItem: React.FC<EstimateStatusProps> = ({ status, listStatus,
 
             handleCloseModalEditType();
 
-            handleListTypes();
+            handleListStatus();
         }
         catch (err) {
             setIconDeleteConfirm(false);
@@ -122,7 +122,7 @@ const EstimateStatusItem: React.FC<EstimateStatusProps> = ({ status, listStatus,
                                     order: status.order
                                 });
 
-                                await handleListTypes();
+                                await handleListStatus();
 
                                 setTypeMessage("success");
 

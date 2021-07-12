@@ -39,6 +39,46 @@ export interface Grants {
     action: string;
 }
 
+interface TranslateRoles {
+    role: string,
+    translated: string;
+}
+
+export const translatedRoles: TranslateRoles[] = [
+    {
+        role: 'employees',
+        translated: 'Funcionários',
+    },
+    {
+        role: 'shifts',
+        translated: 'Turnos',
+    },
+    {
+        role: 'attendances',
+        translated: 'Ponto',
+    },
+    {
+        role: 'estimates',
+        translated: 'Orçamentos',
+    },
+    {
+        role: 'projects',
+        translated: 'Projetos',
+    },
+    {
+        role: 'services',
+        translated: 'Ordens de Serviço',
+    },
+    {
+        role: 'store',
+        translated: 'Loja'
+    },
+    {
+        role: 'users',
+        translated: 'Usuários',
+    },
+];
+
 interface UsersProps {
     user: User;
     userAuthenticated: User;

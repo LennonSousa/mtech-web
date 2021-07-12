@@ -71,25 +71,25 @@ const Sidebar: React.FC = () => {
                 </Card>
 
                 {
-                    can(user, "customers", "read:any") && <Card className={styles.menuCard}>
+                    can(user, "estimates", "read:any") && <Card className={styles.menuCard}>
                         <Accordion.Toggle
                             as={Card.Header}
                             className={styles.menuCardHeader}
-                            eventKey="customers"
-                            onClick={() => handleItemSideBar('customers')}
+                            eventKey="estimates"
+                            onClick={() => handleItemSideBar('estimates')}
                         >
                             <div>
-                                <FaUserTie /> <span>Clientes</span>
+                                <FaUserTie /> <span>Orçamento</span>
                             </div>
                         </Accordion.Toggle>
 
-                        <Accordion.Collapse eventKey="customers">
+                        <Accordion.Collapse eventKey="estimates">
                             <Card.Body className={styles.menuCardBody}>
-                                <Link href="/customers">
-                                    <a title="Listar todos os clientes" data-title="Listar todos os clientes">
+                                <Link href="/estimates">
+                                    <a title="Listar todos os orçamentos" data-title="Listar todos os orçamentos">
                                         <Row
                                             className={
-                                                selectedMenu === 'customers-index' ? styles.selectedMenuCardBodyItem :
+                                                selectedMenu === 'estimates-index' ? styles.selectedMenuCardBodyItem :
                                                     styles.menuCardBodyItem
                                             }
                                         >
@@ -104,11 +104,11 @@ const Sidebar: React.FC = () => {
                                 </Link>
 
                                 {
-                                    can(user, "customers", "create") && <Link href="/customers/new">
-                                        <a title="Criar um novo cliente" data-title="Criar um novo cliente">
+                                    can(user, "estimates", "create") && <Link href="/estimates/new">
+                                        <a title="Criar um novo orçamento" data-title="Criar um novo orçamento">
                                             <Row
                                                 className={
-                                                    selectedMenu === 'customers-new' ? styles.selectedMenuCardBodyItem :
+                                                    selectedMenu === 'estimates-new' ? styles.selectedMenuCardBodyItem :
                                                         styles.menuCardBodyItem
                                                 }
                                             >
@@ -124,20 +124,21 @@ const Sidebar: React.FC = () => {
                                 }
 
                                 {
-                                    can(user, "customers", "update:any") && <>
-                                        <Link href="/docs/customer">
-                                            <a title="Listar os documentos para clientes" data-title="Listar os documentos para clientes">
+                                    can(user, "estimates", "update:any") && <>
+                                        <Dropdown.Divider />
+                                        <Link href="/estimates/panels">
+                                            <a title="Listar os painéis." data-title="Listar os painéis.">
                                                 <Row
                                                     className={
-                                                        selectedMenu === 'customers-docs' ? styles.selectedMenuCardBodyItem :
+                                                        selectedMenu === 'estimates-panels' ? styles.selectedMenuCardBodyItem :
                                                             styles.menuCardBodyItem
                                                     }
                                                 >
                                                     <Col sm={1}>
-                                                        <FaIdCard size={14} />
+                                                        <FaUsersCog size={14} />
                                                     </Col>
                                                     <Col>
-                                                        <span>Documentos</span>
+                                                        <span>Painéis</span>
                                                     </Col>
                                                 </Row>
                                             </a>
@@ -145,11 +146,47 @@ const Sidebar: React.FC = () => {
 
                                         <Dropdown.Divider />
 
-                                        <Link href="/customers/types">
-                                            <a title="Listar os tipos" data-title="Listar os tipos">
+                                        <Link href="/estimates/status">
+                                            <a title="Listar as fases." data-title="Listar as fases.">
                                                 <Row
                                                     className={
-                                                        selectedMenu === 'customers-types' ? styles.selectedMenuCardBodyItem :
+                                                        selectedMenu === 'estimates-status' ? styles.selectedMenuCardBodyItem :
+                                                            styles.menuCardBodyItem
+                                                    }
+                                                >
+                                                    <Col sm={1}>
+                                                        <FaUsersCog size={14} />
+                                                    </Col>
+                                                    <Col>
+                                                        <span>Fases</span>
+                                                    </Col>
+                                                </Row>
+                                            </a>
+                                        </Link>
+
+                                        <Link href="/estimates/roofs/orientations">
+                                            <a title="Listar orientaçõs de telhado." data-title="Listar orientaçõs de telhado.">
+                                                <Row
+                                                    className={
+                                                        selectedMenu === 'estimates-roofs-orientations' ? styles.selectedMenuCardBodyItem :
+                                                            styles.menuCardBodyItem
+                                                    }
+                                                >
+                                                    <Col sm={1}>
+                                                        <FaUsersCog size={14} />
+                                                    </Col>
+                                                    <Col>
+                                                        <span>Orientações</span>
+                                                    </Col>
+                                                </Row>
+                                            </a>
+                                        </Link>
+
+                                        <Link href="/estimates/roofs/types">
+                                            <a title="Listar tipos de telhados." data-title="Listar tipos de telhados.">
+                                                <Row
+                                                    className={
+                                                        selectedMenu === 'estimates-roofs-types' ? styles.selectedMenuCardBodyItem :
                                                             styles.menuCardBodyItem
                                                     }
                                                 >
@@ -162,71 +199,6 @@ const Sidebar: React.FC = () => {
                                                 </Row>
                                             </a>
                                         </Link>
-                                    </>
-                                }
-
-
-                                {
-                                    can(user, "properties", "read:any") && <>
-                                        <Dropdown.Divider />
-
-                                        <Link href="/properties">
-                                            <a title="Listar todos os imóveis" data-title="Listar todos os imóveis">
-                                                <Row
-                                                    className={
-                                                        selectedMenu === 'properties-index' ? styles.selectedMenuCardBodyItem :
-                                                            styles.menuCardBodyItem
-                                                    }
-                                                >
-                                                    <Col sm={1}>
-                                                        <FaMapSigns size={14} />
-                                                    </Col>
-                                                    <Col>
-                                                        <span>Imóveis</span>
-                                                    </Col>
-                                                </Row>
-                                            </a>
-                                        </Link>
-
-                                        {
-                                            can(user, "customers", "create") && <Link href="/properties/new">
-                                                <a title="Criar um novo imóvel" data-title="Criar um novo imóvel">
-                                                    <Row
-                                                        className={
-                                                            selectedMenu === 'properties-new' ? styles.selectedMenuCardBodyItem :
-                                                                styles.menuCardBodyItem
-                                                        }
-                                                    >
-                                                        <Col sm={1}>
-                                                            <FaPlus size={14} />
-                                                        </Col>
-                                                        <Col>
-                                                            <span>Novo</span>
-                                                        </Col>
-                                                    </Row>
-                                                </a>
-                                            </Link>
-                                        }
-
-                                        {
-                                            can(user, "properties", "update:any") && <Link href="/docs/property">
-                                                <a title="Listar os documentos para imóveis" data-title="Listar os documentos para imóveis">
-                                                    <Row
-                                                        className={
-                                                            selectedMenu === 'properties-docs' ? styles.selectedMenuCardBodyItem :
-                                                                styles.menuCardBodyItem
-                                                        }
-                                                    >
-                                                        <Col sm={1}>
-                                                            <FaFileSignature size={14} />
-                                                        </Col>
-                                                        <Col>
-                                                            <span>Documentos</span>
-                                                        </Col>
-                                                    </Row>
-                                                </a>
-                                            </Link>
-                                        }
                                     </>
                                 }
                             </Card.Body>
@@ -369,334 +341,6 @@ const Sidebar: React.FC = () => {
                 }
 
                 {
-                    can(user, "licensings", "read:any") && <Card className={styles.menuCard}>
-                        <Accordion.Toggle
-                            as={Card.Header}
-                            className={styles.menuCardHeader}
-                            eventKey="licensings"
-                            onClick={() => handleItemSideBar('licensings')}
-                        >
-                            <div>
-                                <FaFileContract /> <span>Licenças</span>
-                            </div>
-                        </Accordion.Toggle>
-                        <Accordion.Collapse eventKey="licensings">
-                            <Card.Body className={styles.menuCardBody}>
-                                <Link href="/licensings">
-                                    <a title="Listar todos os licenciamentos" data-title="Listar todos os licenciamentos">
-                                        <Row
-                                            className={
-                                                selectedMenu === 'licensings-index' ? styles.selectedMenuCardBodyItem :
-                                                    styles.menuCardBodyItem
-                                            }
-                                        >
-                                            <Col sm={1}>
-                                                <FaList size={14} />
-                                            </Col>
-                                            <Col>
-                                                <span>Lista</span>
-                                            </Col>
-                                        </Row>
-                                    </a>
-                                </Link>
-
-                                {
-                                    can(user, "licensings", "create") && <Link href="/licensings/new">
-                                        <a title="Criar um novo licenciamento" data-title="Criar um novo licenciamento">
-                                            <Row
-                                                className={
-                                                    selectedMenu === 'licensings-new' ? styles.selectedMenuCardBodyItem :
-                                                        styles.menuCardBodyItem
-                                                }
-                                            >
-                                                <Col sm={1}>
-                                                    <FaPlus size={14} />
-                                                </Col>
-                                                <Col>
-                                                    <span>Novo</span>
-                                                </Col>
-                                            </Row>
-                                        </a>
-                                    </Link>
-                                }
-
-                                {
-                                    can(user, "licensings", "update:any") && <>
-                                        <Dropdown.Divider />
-
-                                        <Link href="/licensings/authorizations">
-                                            <a title="Listar os tipos" data-title="Listar os tipos">
-                                                <Row
-                                                    className={
-                                                        selectedMenu === 'licensings-authorizations' ? styles.selectedMenuCardBodyItem :
-                                                            styles.menuCardBodyItem
-                                                    }
-                                                >
-                                                    <Col sm={1}>
-                                                        <FaAward size={14} />
-                                                    </Col>
-                                                    <Col>
-                                                        <span>Licenças</span>
-                                                    </Col>
-                                                </Row>
-                                            </a>
-                                        </Link>
-
-                                        <Link href="/licensings/agencies">
-                                            <a title="Listar as órgãos" data-title="Listar os órgãos">
-                                                <Row
-                                                    className={
-                                                        selectedMenu === 'licensings-agencies' ? styles.selectedMenuCardBodyItem :
-                                                            styles.menuCardBodyItem
-                                                    }
-                                                >
-                                                    <Col sm={1}>
-                                                        <FaBalanceScaleLeft size={14} />
-                                                    </Col>
-                                                    <Col>
-                                                        <span>Órgãos</span>
-                                                    </Col>
-                                                </Row>
-                                            </a>
-                                        </Link>
-
-                                        <Link href="/licensings/status">
-                                            <a title="Listar as fases" data-title="Listar as fases">
-                                                <Row
-                                                    className={
-                                                        selectedMenu === 'licensings-status' ? styles.selectedMenuCardBodyItem :
-                                                            styles.menuCardBodyItem
-                                                    }
-                                                >
-                                                    <Col sm={1}>
-                                                        <FaClipboardList size={14} />
-                                                    </Col>
-                                                    <Col>
-                                                        <span>Fases</span>
-                                                    </Col>
-                                                </Row>
-                                            </a>
-                                        </Link>
-
-                                        <Link href="/licensings/infringements">
-                                            <a title="Listar as infrações" data-title="Listar as infrações">
-                                                <Row
-                                                    className={
-                                                        selectedMenu === 'licensings-infringements' ? styles.selectedMenuCardBodyItem :
-                                                            styles.menuCardBodyItem
-                                                    }
-                                                >
-                                                    <Col sm={1}>
-                                                        <FaFileExcel size={14} />
-                                                    </Col>
-                                                    <Col>
-                                                        <span>Infrações</span>
-                                                    </Col>
-                                                </Row>
-                                            </a>
-                                        </Link>
-                                    </>
-                                }
-                            </Card.Body>
-                        </Accordion.Collapse>
-                    </Card>
-                }
-
-                {
-                    can(user, "banks", "read:any") && <Card className={styles.menuCard}>
-                        <Accordion.Toggle
-                            as={Card.Header}
-                            className={styles.menuCardHeader}
-                            eventKey="banks"
-                            onClick={() => handleItemSideBar('banks')}
-                        >
-                            <div>
-                                <FaUniversity /> <span>Bancos</span>
-                            </div>
-                        </Accordion.Toggle>
-                        <Accordion.Collapse eventKey="banks">
-                            <Card.Body className={styles.menuCardBody}>
-                                <Link href="/banks">
-                                    <a title="Listar todos os bancos" data-title="Listar todos os bancos">
-                                        <Row
-                                            className={
-                                                selectedMenu === 'banks-index' ? styles.selectedMenuCardBodyItem :
-                                                    styles.menuCardBodyItem
-                                            }
-                                        >
-                                            <Col sm={1}>
-                                                <FaList size={14} />
-                                            </Col>
-                                            <Col>
-                                                <span>Lista</span>
-                                            </Col>
-                                        </Row>
-                                    </a>
-                                </Link>
-
-                                {
-                                    can(user, "banks", "create") && <Link href="/banks/new">
-                                        <a title="Criar um novo banco" data-title="Criar um novo banco">
-                                            <Row
-                                                className={
-                                                    selectedMenu === 'banks-new' ? styles.selectedMenuCardBodyItem :
-                                                        styles.menuCardBodyItem
-                                                }
-                                            >
-                                                <Col sm={1}>
-                                                    <FaPlus size={14} />
-                                                </Col>
-                                                <Col>
-                                                    <span>Novo</span>
-                                                </Col>
-                                            </Row>
-                                        </a>
-                                    </Link>
-                                }
-
-                                <Dropdown.Divider />
-
-                                {
-                                    can(user, "institutions", "read:any") && <Link href="/institutions">
-                                        <a title="Listar todas as instituições" data-title="Listar todas as instituições">
-                                            <Row
-                                                className={
-                                                    selectedMenu === 'institutions-index' ? styles.selectedMenuCardBodyItem :
-                                                        styles.menuCardBodyItem
-                                                }
-                                            >
-                                                <Col sm={1}>
-                                                    <FaCity size={14} />
-                                                </Col>
-                                                <Col>
-                                                    <span>Instituições</span>
-                                                </Col>
-                                            </Row>
-                                        </a>
-                                    </Link>
-                                }
-                            </Card.Body>
-                        </Accordion.Collapse>
-                    </Card>
-                }
-
-                <Card className={styles.menuCard}>
-                    <Accordion.Toggle
-                        as={Card.Header}
-                        className={styles.menuCardHeader}
-                        eventKey="reports"
-                        onClick={() => handleItemSideBar('reports')}
-                    >
-                        <div>
-                            <FaSortAlphaDown /> <span>Relatórios</span>
-                        </div>
-                    </Accordion.Toggle>
-                    <Accordion.Collapse eventKey="reports">
-                        <Card.Body className={styles.menuCardBody}>
-                            {
-                                can(user, "banks", "read:any") && <Link href="/reports/banks">
-                                    <a title="Relatórios de bancos" data-title="Relatórios de bancos">
-                                        <Row
-                                            className={
-                                                selectedMenu === 'reports-banks' ? styles.selectedMenuCardBodyItem :
-                                                    styles.menuCardBodyItem
-                                            }
-                                        >
-                                            <Col sm={1}>
-                                                <FaUniversity size={14} />
-                                            </Col>
-                                            <Col>
-                                                <span>Bancos</span>
-                                            </Col>
-                                        </Row>
-                                    </a>
-                                </Link>
-                            }
-
-                            {
-                                can(user, "customers", "read:any") && <Link href="/reports/customers">
-                                    <a title="Relatórios de clientes" data-title="Relatórios de clientes">
-                                        <Row
-                                            className={
-                                                selectedMenu === 'reports-customers' ? styles.selectedMenuCardBodyItem :
-                                                    styles.menuCardBodyItem
-                                            }
-                                        >
-                                            <Col sm={1}>
-                                                <FaUserTie size={14} />
-                                            </Col>
-                                            <Col>
-                                                <span>Clientes</span>
-                                            </Col>
-                                        </Row>
-                                    </a>
-                                </Link>
-                            }
-
-                            {
-                                can(user, "licensings", "read:any") && <Link href="/reports/licensings">
-                                    <a title="Relatórios de licenciamentos" data-title="Relatórios de licenciamentos">
-                                        <Row
-                                            className={
-                                                selectedMenu === 'reports-licensings' ? styles.selectedMenuCardBodyItem :
-                                                    styles.menuCardBodyItem
-                                            }
-                                        >
-                                            <Col sm={1}>
-                                                <FaFileContract />
-                                            </Col>
-                                            <Col>
-                                                <span>Licenças</span>
-                                            </Col>
-                                        </Row>
-                                    </a>
-                                </Link>
-                            }
-
-                            {
-                                can(user, "projects", "read:any") && <Link href="/reports/projects">
-                                    <a title="Relatórios de projetos" data-title="Relatórios de projetos">
-                                        <Row
-                                            className={
-                                                selectedMenu === 'reports-projects' ? styles.selectedMenuCardBodyItem :
-                                                    styles.menuCardBodyItem
-                                            }
-                                        >
-                                            <Col sm={1}>
-                                                <FaFileAlt size={14} />
-                                            </Col>
-                                            <Col>
-                                                <span>Projetos</span>
-                                            </Col>
-                                        </Row>
-                                    </a>
-                                </Link>
-                            }
-
-                            {
-                                can(user, "properties", "read:any") && <Link href="/reports/properties">
-                                    <a title="Relatórios de imóveis" data-title="Relatórios de imóveis">
-                                        <Row
-                                            className={
-                                                selectedMenu === 'reports-properties' ? styles.selectedMenuCardBodyItem :
-                                                    styles.menuCardBodyItem
-                                            }
-                                        >
-                                            <Col sm={1}>
-                                                <FaMapSigns size={14} />
-                                            </Col>
-                                            <Col>
-                                                <span>Imóveis</span>
-                                            </Col>
-                                        </Row>
-                                    </a>
-                                </Link>
-                            }
-                        </Card.Body>
-                    </Accordion.Collapse>
-                </Card>
-
-                {
                     can(user, "users", "read:any") && <Card className={styles.menuCard}>
                         <Accordion.Toggle
                             as={Card.Header}
@@ -766,51 +410,28 @@ export function SideNavBar() {
             </Link>
 
             {
-                can(user, "customers", "read:any") && <NavDropdown title="Clientes" id="customers-dropdown">
-                    <Link href="/customers" passHref>
+                can(user, "estimates", "read:any") && <NavDropdown title="Clientes" id="estimates-dropdown">
+                    <Link href="/estimates" passHref>
                         <NavDropdown.Item ><FaList size={14} /> Lista</NavDropdown.Item>
                     </Link>
 
                     {
-                        can(user, "customers", "create") && <Link href="/customers/new" passHref>
+                        can(user, "estimates", "create") && <Link href="/estimates/new" passHref>
                             <NavDropdown.Item ><FaPlus size={14} /> Novo</NavDropdown.Item>
                         </Link>
                     }
 
                     {
-                        can(user, "customers", "update:any") && <>
+                        can(user, "estimates", "update:any") && <>
                             <NavDropdown.Divider />
 
                             <Link href="/docs/customer" passHref>
                                 <NavDropdown.Item ><FaIdCard size={14} /> Documentos</NavDropdown.Item>
                             </Link>
 
-                            <Link href="/customers/types" passHref>
+                            <Link href="/estimates/types" passHref>
                                 <NavDropdown.Item ><FaUsersCog size={14} /> Tipos</NavDropdown.Item>
                             </Link>
-                        </>
-                    }
-
-                    {
-                        can(user, "properties", "read:any") && <>
-                            <NavDropdown.Divider />
-
-                            <Link href="/properties" passHref>
-                                <NavDropdown.Item ><FaMapSigns size={14} /> Imóveis</NavDropdown.Item>
-                            </Link>
-
-                            {
-                                can(user, "properties", "create") && <Link href="/properties/new" passHref>
-                                    <NavDropdown.Item ><FaPlus size={14} /> Novo</NavDropdown.Item>
-                                </Link>
-                            }
-
-                            {
-                                can(user, "properties", "update:any") &&
-                                <Link href="/docs/property" passHref>
-                                    <NavDropdown.Item ><FaFileSignature size={14} /> Documentos</NavDropdown.Item>
-                                </Link>
-                            }
                         </>
                     }
                 </NavDropdown>
@@ -851,96 +472,6 @@ export function SideNavBar() {
                     }
                 </NavDropdown>
             }
-
-            {
-                can(user, "licensings", "read:any") && <NavDropdown title="Licenciamentos" id="licensings-dropdown">
-                    <Link href="/licensings" passHref>
-                        <NavDropdown.Item ><FaList size={14} /> Lista</NavDropdown.Item>
-                    </Link>
-
-                    {
-                        can(user, "licensings", "create") && <Link href="/licensings/new" passHref>
-                            <NavDropdown.Item ><FaPlus size={14} /> Novo</NavDropdown.Item>
-                        </Link>
-                    }
-
-                    {
-                        can(user, "licensings", "update:any") && <>
-                            <Link href="/licensings/authorizations" passHref>
-                                <NavDropdown.Item ><FaAward size={14} /> Licenças</NavDropdown.Item>
-                            </Link>
-
-                            <NavDropdown.Divider />
-
-                            <Link href="/licensings/agencies" passHref>
-                                <NavDropdown.Item ><FaBalanceScaleLeft size={14} /> Órgãos</NavDropdown.Item>
-                            </Link>
-
-                            <Link href="/licensings/status" passHref>
-                                <NavDropdown.Item ><FaClipboardList size={14} /> Fases</NavDropdown.Item>
-                            </Link>
-
-                            <Link href="/licensings/infringements" passHref>
-                                <NavDropdown.Item ><FaFileExcel size={14} /> Infrações</NavDropdown.Item>
-                            </Link>
-                        </>
-                    }
-                </NavDropdown>
-            }
-
-            {
-                can(user, "banks", "read:any") && <NavDropdown title="Bancos" id="banks-dropdown">
-                    <Link href="/banks" passHref>
-                        <NavDropdown.Item ><FaList size={14} /> Lista</NavDropdown.Item>
-                    </Link>
-
-                    {
-                        can(user, "banks", "create") && <Link href="/banks/new" passHref>
-                            <NavDropdown.Item ><FaPlus size={14} /> Novo</NavDropdown.Item>
-                        </Link>
-                    }
-
-                    <NavDropdown.Divider />
-
-                    {
-                        can(user, "institutions", "read:any") && <Link href="/institutions" passHref>
-                            <NavDropdown.Item ><FaCity size={14} /> Instituições</NavDropdown.Item>
-                        </Link>
-                    }
-                </NavDropdown>
-            }
-
-            <NavDropdown title="Relatórios" id="reports-dropdown">
-                {
-                    can(user, "banks", "read:any") && <Link href="/reports/banks" passHref>
-                        <NavDropdown.Item ><FaUniversity size={14} /> Bancos</NavDropdown.Item>
-                    </Link>
-                }
-
-                {
-                    can(user, "customers", "read:any") && <Link href="/reports/customers" passHref>
-                        <NavDropdown.Item ><FaUserTie size={14} /> Clientes</NavDropdown.Item>
-                    </Link>
-                }
-
-                {
-                    can(user, "licensings", "read:any") && <Link href="/reports/licensings" passHref>
-                        <NavDropdown.Item ><FaFileContract /> Licenças</NavDropdown.Item>
-                    </Link>
-                }
-
-                {
-                    can(user, "projects", "read:any") && <Link href="/reports/projects" passHref>
-                        <NavDropdown.Item ><FaFileAlt size={14} /> Projetos</NavDropdown.Item>
-                    </Link>
-                }
-
-                {
-                    can(user, "properties", "read:any") && <Link href="/reports/properties" passHref>
-                        <NavDropdown.Item ><FaMapSigns size={14} /> Imóveis</NavDropdown.Item>
-                    </Link>
-                }
-            </NavDropdown>
 
             {
                 can(user, "users", "read:any") && <NavDropdown title="Usuários" id="users-dropdown">

@@ -17,11 +17,6 @@ import PageBack from '../../../../components/PageBack';
 import { AlertMessage, statusModal } from '../../../../components/interfaces/AlertMessage';
 import { PageWaiting, PageType } from '../../../../components/PageWaiting';
 
-interface userRoles {
-    role: string,
-    grants: string[],
-};
-
 const validationSchema = Yup.object().shape({
     name: Yup.string().required('Obrigatório!').max(50, 'Deve conter no máximo 50 caracteres!'),
     capacity: Yup.number().notRequired(),
@@ -107,7 +102,7 @@ export default function NewUser() {
 
                                                     try {
 
-                                                        await api.post('panels', {
+                                                        const res = await api.post('panels', {
                                                             name: values.name,
                                                             capacity: values.capacity,
                                                             order: panels.length,
@@ -116,7 +111,7 @@ export default function NewUser() {
                                                         setTypeMessage("success");
 
                                                         setTimeout(() => {
-                                                            router.push('/panels');
+                                                            router.push(`/estimates/panels/details/${res.data.id}`);
                                                         }, 1500);
                                                     }
                                                     catch {
@@ -133,7 +128,7 @@ export default function NewUser() {
                                                     <Form onSubmit={handleSubmit}>
                                                         <Row className="mb-3">
                                                             <Col>
-                                                                <PageBack href="/users" subTitle="Voltar para a lista de usuários." />
+                                                                <PageBack href="/estimates/panels" subTitle="Voltar para a lista de painéis." />
                                                             </Col>
                                                         </Row>
 
@@ -152,7 +147,7 @@ export default function NewUser() {
                                                                 <Form.Text className="text-muted text-right">{`${values.name.length}/50 caracteres.`}</Form.Text>
                                                             </Form.Group>
 
-                                                            <Form.Group as={Col} sm={4} controlId="formGridEmail">
+                                                            <Form.Group as={Col} sm={4} controlId="formGridCapacity">
                                                                 <Form.Label>Capacidade</Form.Label>
                                                                 <Form.Control
                                                                     type="number"

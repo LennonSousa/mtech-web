@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Row, Col, InputGroup, ListGroup, Modal, Form, Button } from 'react-bootstrap';
-import { FaPencilAlt, FaBars } from 'react-icons/fa';
+import { FaPencilAlt } from 'react-icons/fa';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 
@@ -19,17 +19,17 @@ export interface PanelPrice {
 
 interface PanelPricesProps {
     panelPrice: PanelPrice;
-    listPanelPrices: PanelPrice[];
-    handleListPanelPrices(): Promise<void>;
+    canEdit?: boolean;
+    handleListPanelPrices?: () => Promise<void>;
 }
 
 const validationSchema = Yup.object().shape({
-    potency: Yup.number().notRequired(),
-    price: Yup.number().notRequired(),
+    potency: Yup.string().notRequired(),
+    price: Yup.string().notRequired(),
     inversor: Yup.string().required('Obrigatório!').max(50, 'Deve conter no máximo 50 caracteres!'),
 });
 
-const PanelPrices: React.FC<PanelPricesProps> = ({ panelPrice, listPanelPrices, handleListPanelPrices }) => {
+const PanelPrices: React.FC<PanelPricesProps> = ({ panelPrice, canEdit = true, handleListPanelPrices }) => {
     const [showModalEditType, setShowModalEditType] = useState(false);
 
     const handleCloseModalEditType = () => { setShowModalEditType(false); setIconDeleteConfirm(false); setIconDelete(true); }
@@ -53,26 +53,11 @@ const PanelPrices: React.FC<PanelPricesProps> = ({ panelPrice, listPanelPrices, 
         setMessageShow(true);
 
         try {
-            await api.delete(`roofs/types/${panelPrice.id}`);
-
-            const list = listPanelPrices.filter(item => { return item.id !== panelPrice.id });
-
-            list.forEach(async (panelPrice, index) => {
-                try {
-                    await api.put(`roofs/types/${panelPrice.id}`, {
-                        inversor: panelPrice.inversor,
-                        order: index
-                    });
-                }
-                catch (err) {
-                    console.log('error to save roof type order after deleting.');
-                    console.log(err)
-                }
-            });
+            await api.delete(`panels/prices/${panelPrice.id}`);
 
             handleCloseModalEditType();
 
-            handleListPanelPrices();
+            if (handleListPanelPrices) handleListPanelPrices();
         }
         catch (err) {
             setIconDeleteConfirm(false);
@@ -84,7 +69,7 @@ const PanelPrices: React.FC<PanelPricesProps> = ({ panelPrice, listPanelPrices, 
                 setMessageShow(false);
             }, 4000);
 
-            console.log("Error to delete roof type");
+            console.log("Error to delete panels prices");
             console.log(err);
         }
     }
@@ -92,30 +77,28 @@ const PanelPrices: React.FC<PanelPricesProps> = ({ panelPrice, listPanelPrices, 
     return (
         <ListGroup.Item variant="light">
             <Row className="align-items-center">
-                <Col sm={1}>
-                    <FaBars />
-                </Col>
-
-                <Col><span>{panelPrice.potency}</span></Col>
+                <Col><span>{`${prettifyCurrency(String(panelPrice.potency))} Kwp`}</span></Col>
 
                 <Col><span>{panelPrice.inversor}</span></Col>
 
-                <Col><span>{panelPrice.price}</span></Col>
+                <Col><span>{`R$ ${prettifyCurrency(String(panelPrice.price))}`}</span></Col>
 
-                <Col className="text-end">
-                    <Button variant="outline-success" className="button-link" onClick={handleShowModalEditType}><FaPencilAlt /> Editar</Button>
-                </Col>
+                {
+                    canEdit && <Col className="col-row text-end">
+                        <Button variant="outline-success" className="button-link" onClick={handleShowModalEditType}><FaPencilAlt /> Editar</Button>
+                    </Col>
+                }
             </Row>
 
             <Modal show={showModalEditType} onHide={handleCloseModalEditType}>
                 <Modal.Header closeButton>
-                    <Modal.Title>Edtiar item</Modal.Title>
+                    <Modal.Title>Edtiar preço</Modal.Title>
                 </Modal.Header>
                 <Formik
                     initialValues={
                         {
-                            potency: panelPrice.potency,
-                            price: panelPrice.price,
+                            potency: prettifyCurrency(String(panelPrice.potency)),
+                            price: prettifyCurrency(String(panelPrice.price)),
                             inversor: panelPrice.inversor,
                         }
                     }
@@ -124,22 +107,20 @@ const PanelPrices: React.FC<PanelPricesProps> = ({ panelPrice, listPanelPrices, 
                         setMessageShow(true);
 
                         try {
-                            if (listPanelPrices) {
-                                await api.put(`roofs/types/${panelPrice.id}`, {
-                                    potency: values.potency,
-                                    price: values.price,
-                                    inversor: values.inversor,
-                                });
+                            await api.put(`panels/prices/${panelPrice.id}`, {
+                                potency: values.potency.replace('.', '').replace(',', '.'),
+                                price: values.price.replace('.', '').replace(',', '.'),
+                                inversor: values.inversor,
+                            });
 
-                                await handleListPanelPrices();
+                            if (handleListPanelPrices) await handleListPanelPrices();
 
-                                setTypeMessage("success");
+                            setTypeMessage("success");
 
-                                setTimeout(() => {
-                                    setMessageShow(false);
-                                    handleCloseModalEditType();
-                                }, 2000);
-                            }
+                            setTimeout(() => {
+                                setMessageShow(false);
+                                handleCloseModalEditType();
+                            }, 1000);
                         }
                         catch (err) {
                             console.log('error edit panel price.');
@@ -158,7 +139,7 @@ const PanelPrices: React.FC<PanelPricesProps> = ({ panelPrice, listPanelPrices, 
                         <Form onSubmit={handleSubmit}>
                             <Modal.Body>
                                 <Form.Row>
-                                    <Form.Group as={Col} sm={2} controlId="formGridPotency">
+                                    <Form.Group as={Col} sm={6} controlId="formGridPotency">
                                         <Form.Label>Potência</Form.Label>
                                         <InputGroup className="mb-2">
                                             <InputGroup.Prepend>
@@ -182,7 +163,7 @@ const PanelPrices: React.FC<PanelPricesProps> = ({ panelPrice, listPanelPrices, 
                                         <Form.Control.Feedback type="invalid">{touched.potency && errors.potency}</Form.Control.Feedback>
                                     </Form.Group>
 
-                                    <Form.Group as={Col} sm={2} controlId="formGridPrice">
+                                    <Form.Group as={Col} sm={6} controlId="formGridPrice">
                                         <Form.Label>Valor</Form.Label>
                                         <InputGroup className="mb-2">
                                             <InputGroup.Prepend>
@@ -205,22 +186,21 @@ const PanelPrices: React.FC<PanelPricesProps> = ({ panelPrice, listPanelPrices, 
                                         </InputGroup>
                                         <Form.Control.Feedback type="invalid">{touched.price && errors.price}</Form.Control.Feedback>
                                     </Form.Group>
-
-                                    <Form.Group controlId="statusFormGridInversor">
-                                        <Form.Label>Inversor</Form.Label>
-                                        <Form.Control type="text"
-                                            placeholder="Inversor"
-                                            onChange={handleChange}
-                                            onBlur={handleBlur}
-                                            value={values.inversor}
-                                            name="inversor"
-                                            isInvalid={!!errors.inversor && touched.inversor}
-                                        />
-                                        <Form.Control.Feedback type="invalid">{touched.inversor && errors.inversor}</Form.Control.Feedback>
-                                        <Form.Text className="text-muted text-right">{`${values.inversor.length}/50 caracteres.`}</Form.Text>
-                                    </Form.Group>
                                 </Form.Row>
 
+                                <Form.Group controlId="statusFormGridInversor">
+                                    <Form.Label>Inversor</Form.Label>
+                                    <Form.Control type="text"
+                                        placeholder="Inversor"
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
+                                        value={values.inversor}
+                                        name="inversor"
+                                        isInvalid={!!errors.inversor && touched.inversor}
+                                    />
+                                    <Form.Control.Feedback type="invalid">{touched.inversor && errors.inversor}</Form.Control.Feedback>
+                                    <Form.Text className="text-muted text-right">{`${values.inversor.length}/50 caracteres.`}</Form.Text>
+                                </Form.Group>
                             </Modal.Body>
                             <Modal.Footer>
                                 {

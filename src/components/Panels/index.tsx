@@ -6,6 +6,8 @@ import { FaPencilAlt, FaBars, FaUserTag, FaPlay, FaPause } from 'react-icons/fa'
 import api from '../../api/api';
 import { PanelPrice } from '../PanelPrices';
 import { Estimate } from '../Estimates';
+import { prettifyCurrency } from '../InputMask/masks';
+
 
 export interface Panel {
     id: string;
@@ -34,6 +36,7 @@ const Panels: React.FC<PanelsProps> = ({ panel, handleListPanels }) => {
             await api.put(`panels/${panel.id}`, {
                 name: panel.name,
                 paused: !panel.paused,
+                order: panel.order,
             });
 
             await handleListPanels();
@@ -59,7 +62,7 @@ const Panels: React.FC<PanelsProps> = ({ panel, handleListPanels }) => {
 
                 <Col><span>{panel.name}</span></Col>
 
-                <Col><span>{panel.capacity}</span></Col>
+                <Col><span>{`${prettifyCurrency(String(panel.capacity))} Wp`}</span></Col>
 
                 <Col className="col-row text-end">
                     <Button
@@ -84,7 +87,7 @@ const Panels: React.FC<PanelsProps> = ({ panel, handleListPanels }) => {
                     <Button
                         variant="outline-success"
                         className="button-link"
-                        onClick={() => handleRoute(`/panels/details/${panel.id}`)}
+                        onClick={() => handleRoute(`/estimates/panels/details/${panel.id}`)}
                         title="Ver informações sobre o painel"
                     >
                         <FaUserTag /> Detalhes
@@ -95,7 +98,7 @@ const Panels: React.FC<PanelsProps> = ({ panel, handleListPanels }) => {
                     <Button
                         variant="outline-success"
                         className="button-link"
-                        onClick={() => handleRoute(`/panels/edit/${panel.id}`)}
+                        onClick={() => handleRoute(`/estimates/panels/edit/${panel.id}`)}
                         title="Editar painel"
                     >
                         <FaPencilAlt /> Editar

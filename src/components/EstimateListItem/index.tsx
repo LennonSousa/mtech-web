@@ -51,7 +51,7 @@ const EstimateItem: React.FC<EstimateItemProps> = ({ estimate }) => {
                         <span
                             className={`form-control-plaintext text-secondary ${styles.itemText}`}
                         >
-                            {!!estimate.address ? estimate.address : <br />}
+                            {!!estimate.city ? estimate.city : <br />}
                         </span>
                     </Col>
                 </Row>

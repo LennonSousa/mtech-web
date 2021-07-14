@@ -3,6 +3,7 @@ import { User } from '../Users';
 import { Panel } from '../Panels';
 import { RoofType } from '../RoofTypes';
 import { RoofOrientation } from '../RoofOrientations';
+import { EstimateItem } from '../EstimateItems';
 
 export interface Estimate {
     id: string;
@@ -48,4 +49,5 @@ export interface Estimate {
     roof_orientation: RoofOrientation;
     roof_type: RoofType;
     status: EstimateStatus;
+    items: EstimateItem;
 }

@@ -6,7 +6,7 @@ import { Button, Col, Container, Form, InputGroup, ListGroup, Row, Spinner, Toas
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { format } from 'date-fns';
-import { FaCashRegister, FaPlus, FaUserTie, FaPlug, FaSolarPanel } from 'react-icons/fa';
+import { FaCashRegister, FaClipboardList, FaUserTie, FaPlug, FaSolarPanel } from 'react-icons/fa';
 import cep, { CEP } from 'cep-promise';
 
 import api from '../../../api/api';
@@ -18,6 +18,8 @@ import { Panel } from '../../../components/Panels';
 import { RoofOrientation } from '../../../components/RoofOrientations';
 import { RoofType } from '../../../components/RoofTypes';
 import { EstimateStatus } from '../../../components/EstimateStatus';
+import EstimateItems, { EstimateItem } from '../../../components/EstimateItems';
+
 import Members from '../../../components/EstimateMembers';
 import { cpf, cnpj, cellphone } from '../../../components/InputMask/masks';
 import { statesCities } from '../../../components/StatesCities';
@@ -25,6 +27,7 @@ import PageBack from '../../../components/PageBack';
 import { PageWaiting, PageType } from '../../../components/PageWaiting';
 import { AlertMessage, statusModal } from '../../../components/interfaces/AlertMessage';
 import { prettifyCurrency } from '../../../components/InputMask/masks';
+import { Calculate, CalcProps } from '../../../utils/calcEstimate';
 
 const validationSchema = Yup.object().shape({
     customer: Yup.string().required('Obrigatório!'),
@@ -40,26 +43,26 @@ const validationSchema = Yup.object().shape({
     complement: Yup.string().notRequired().nullable(),
     city: Yup.string().required('Obrigatório!'),
     state: Yup.string().required('Obrigatório!'),
-    energy_company: Yup.string().required('Obrigatório!'),
-    unity: Yup.string().required('Obrigatório!'),
-    kwh: Yup.number().required('Obrigatório!'),
-    irradiation: Yup.number().required('Obrigatório!'),
-    month_01: Yup.number().required('Obrigatório!'),
-    month_02: Yup.number().required('Obrigatório!'),
-    month_03: Yup.number().required('Obrigatório!'),
-    month_04: Yup.number().required('Obrigatório!'),
-    month_05: Yup.number().required('Obrigatório!'),
-    month_06: Yup.number().required('Obrigatório!'),
-    month_07: Yup.number().required('Obrigatório!'),
-    month_08: Yup.number().required('Obrigatório!'),
-    month_09: Yup.number().required('Obrigatório!'),
-    month_10: Yup.number().required('Obrigatório!'),
-    month_11: Yup.number().required('Obrigatório!'),
-    month_12: Yup.number().required('Obrigatório!'),
-    month_13: Yup.number().required('Obrigatório!'),
-    average_increase: Yup.number().required('Obrigatório!'),
-    discount: Yup.number().required('Obrigatório!'),
-    increase: Yup.number().required('Obrigatório!'),
+    energy_company: Yup.string().notRequired(),
+    unity: Yup.string().notRequired(),
+    kwh: Yup.string().required('Obrigatório!'),
+    irradiation: Yup.string().required('Obrigatório!'),
+    month_01: Yup.string().required('Obrigatório!'),
+    month_02: Yup.string().required('Obrigatório!'),
+    month_03: Yup.string().required('Obrigatório!'),
+    month_04: Yup.string().required('Obrigatório!'),
+    month_05: Yup.string().required('Obrigatório!'),
+    month_06: Yup.string().required('Obrigatório!'),
+    month_07: Yup.string().required('Obrigatório!'),
+    month_08: Yup.string().required('Obrigatório!'),
+    month_09: Yup.string().required('Obrigatório!'),
+    month_10: Yup.string().required('Obrigatório!'),
+    month_11: Yup.string().required('Obrigatório!'),
+    month_12: Yup.string().required('Obrigatório!'),
+    month_13: Yup.string().required('Obrigatório!'),
+    average_increase: Yup.string().required('Obrigatório!'),
+    discount: Yup.string().required('Obrigatório!'),
+    increase: Yup.string().required('Obrigatório!'),
     percent: Yup.boolean().notRequired(),
     show_values: Yup.boolean().notRequired(),
     show_discount: Yup.boolean().notRequired(),
@@ -77,13 +80,11 @@ export default function NewCustomer() {
     const { handleItemSideBar, handleSelectedMenu } = useContext(SideBarContext);
     const { loading, user } = useContext(AuthContext);
 
-    const [users, setUsers] = useState<User[]>([]);
-    const [usersToAdd, setUsersToAdd] = useState<User[]>([]);
-
     const [panels, setPanels] = useState<Panel[]>([]);
     const [roofOrientations, setRoofOrientations] = useState<RoofOrientation[]>([]);
     const [roofTypes, setRoofTypes] = useState<RoofType[]>([]);
     const [estimateStatusList, setEstimateStatusList] = useState<EstimateStatus[]>([]);
+    const [estimateItemsList, setEstimateItemsList] = useState<EstimateItem[]>([]);
 
     const [spinnerCep, setSpinnerCep] = useState(false);
     const [messageShow, setMessageShow] = useState(false);
@@ -96,9 +97,28 @@ export default function NewCustomer() {
     const [typeLoadingMessage, setTypeLoadingMessage] = useState<PageType>("waiting");
     const [textLoadingMessage, setTextLoadingMessage] = useState('Aguarde, carregando...');
 
-    const [showUsers, setShowUsers] = useState(false);
+    // Values calc result.
+    const [resultMonthsAverageKwh, setResultMonthsAverageKwh] = useState(0);
+    const [resultFinalAverageKwh, setResultFinalAverageKwh] = useState(0);
+    const [resultMonthlyPaid, setResultMonthlyPaid] = useState(0);
+    const [resultYearlyPaid, setResultYearlyPaid] = useState(0);
 
-    const toggleShowUsers = () => setShowUsers(!showUsers);
+    const [resultPanelsAmount, setResultPanelsAmount] = useState(0);
+
+    const [resultSystemCapacityKwp, setResultSystemCapacityKwp] = useState(0);
+
+    const [resultMonthlyGeneratedEnergy, setResultMonthlyGeneratedEnergy] = useState(0);
+    const [resultYearlyGeneratedEnergy, setResultYearlyGeneratedEnergy] = useState(0);
+    const [resultCo2Reduction, setResultCo2Reduction] = useState(0);
+
+    const [resultSystemArea, setResultSystemArea] = useState(0);
+    const [resultFinalSystemCapacityKwp, setResultFinalSystemCapacityKwp] = useState(0);
+
+    const [resultPreSystemPrice, setResultPreSystemPrice] = useState(0);
+
+    const [resultFinalSystemPrice, setResultFinalSystemPrice] = useState(0);
+
+    const [valuesCalc, setValuesCalc] = useState<CalcProps>();
 
     useEffect(() => {
         handleItemSideBar('estimates');
@@ -147,10 +167,132 @@ export default function NewCustomer() {
                     setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
                     setHasErrors(true);
                 });
+
+                setEstimateItemsList(
+                    [
+                        {
+                            id: '0',
+                            name: 'Inversor',
+                            amount: 1,
+                            price: 0,
+                            percent: 20,
+                            order: 0,
+                        },
+                        {
+                            id: '1',
+                            name: 'Painel',
+                            amount: 1,
+                            price: 0,
+                            percent: 65,
+                            order: 1,
+                        },
+                        {
+                            id: '2',
+                            name: 'ESTRUTURA METALICA PARA PAINEL SOLAR',
+                            amount: 1,
+                            price: 0,
+                            percent: 10,
+                            order: 2,
+                        },
+                        {
+                            id: '3',
+                            name: 'ENGENHARIA E INSTALAÇÃO',
+                            amount: 1,
+                            price: 0,
+                            percent: 5,
+                            order: 3,
+                        }
+                    ]
+                );
             }
         }
 
     }, [user]);
+
+    function handleCalcEstimate(values: CalcProps) {
+        const calcResults = Calculate(values);
+
+        if (calcResults) {
+            setResultMonthsAverageKwh(calcResults.monthsAverageKwh);
+            setResultFinalAverageKwh(calcResults.finalAverageKwh);
+            setResultMonthlyPaid(calcResults.monthlyPaid);
+            setResultYearlyPaid(calcResults.yearlyPaid);
+
+            setResultSystemCapacityKwp(calcResults.systemCapacityKwp);
+
+            setResultMonthlyGeneratedEnergy(calcResults.monthlyGeneratedEnergy);
+            setResultYearlyGeneratedEnergy(calcResults.yearlyGeneratedEnergy);
+            setResultCo2Reduction(calcResults.co2Reduction);
+
+            setResultSystemArea(calcResults.systemArea);
+            setResultFinalSystemCapacityKwp(calcResults.finalSystemCapacityKwp);
+
+            setResultPreSystemPrice(calcResults.systemInitialPrice);
+            setResultFinalSystemPrice(calcResults.finalSystemPrice);
+
+            setEstimateItemsList(calcResults.estimateItems);
+
+            calcResults.estimateItems.forEach(item => {
+                if (item.order === 1) setResultPanelsAmount(item.amount);
+            })
+        }
+    }
+
+    function handleValues(values: any) {
+        try {
+            const panel = panels.find(panel => { return panel.id === values['panel'] });
+            const roofOrientation = roofOrientations.find(roofOrientation => { return roofOrientation.id === values['roof_orientation'] });
+
+            if (!panel || !roofOrientation) return undefined;
+
+            const valuesCalcItem: CalcProps = {
+                kwh: Number(values['kwh'].replace('.', '').replace(',', '.')),
+                irradiation: Number(values['irradiation'].replace('.', '').replace(',', '.')),
+                panel,
+                month_01: Number(values['month_01'].replace('.', '').replace(',', '.')),
+                month_02: Number(values['month_02'].replace('.', '').replace(',', '.')),
+                month_03: Number(values['month_03'].replace('.', '').replace(',', '.')),
+                month_04: Number(values['month_04'].replace('.', '').replace(',', '.')),
+                month_05: Number(values['month_05'].replace('.', '').replace(',', '.')),
+                month_06: Number(values['month_06'].replace('.', '').replace(',', '.')),
+                month_07: Number(values['month_07'].replace('.', '').replace(',', '.')),
+                month_08: Number(values['month_08'].replace('.', '').replace(',', '.')),
+                month_09: Number(values['month_09'].replace('.', '').replace(',', '.')),
+                month_10: Number(values['month_10'].replace('.', '').replace(',', '.')),
+                month_11: Number(values['month_11'].replace('.', '').replace(',', '.')),
+                month_12: Number(values['month_12'].replace('.', '').replace(',', '.')),
+                month_13: Number(values['month_13'].replace('.', '').replace(',', '.')),
+                averageIncrease: Number(values['average_increase'].replace('.', '').replace(',', '.')),
+                roofOrientation: roofOrientation,
+                discount: Number(values['discount'].replace('.', '').replace(',', '.')),
+                increase: Number(values['increase'].replace('.', '').replace(',', '.')),
+                percent: values['percent'],
+                estimateItems: estimateItemsList,
+            }
+
+            setValuesCalc(valuesCalcItem);
+
+            return valuesCalcItem;
+        }
+        catch {
+            return undefined;
+        }
+    }
+
+    function handleListEstimateItems(estimateItemsList: EstimateItem[]) {
+        setEstimateItemsList(estimateItemsList);
+
+        if (valuesCalc) {
+            const updatedValuesCalc = {
+                ...valuesCalc,
+                estimateItems: estimateItemsList,
+            };
+
+            setValuesCalc(updatedValuesCalc);
+
+            handleCalcEstimate(updatedValuesCalc);
+        }
+    }
 
     return (
         <>
@@ -218,24 +360,24 @@ export default function NewCustomer() {
                                                     state: '',
                                                     energy_company: '',
                                                     unity: '',
-                                                    kwh: 0,
-                                                    irradiation: 0,
-                                                    month_01: 0,
-                                                    month_02: 0,
-                                                    month_03: 0,
-                                                    month_04: 0,
-                                                    month_05: 0,
-                                                    month_06: 0,
-                                                    month_07: 0,
-                                                    month_08: 0,
-                                                    month_09: 0,
-                                                    month_10: 0,
-                                                    month_11: 0,
-                                                    month_12: 0,
-                                                    month_13: 0,
-                                                    average_increase: 0,
-                                                    discount: 0,
-                                                    increase: 0,
+                                                    kwh: '0,00',
+                                                    irradiation: '0,00',
+                                                    month_01: '0,00',
+                                                    month_02: '0,00',
+                                                    month_03: '0,00',
+                                                    month_04: '0,00',
+                                                    month_05: '0,00',
+                                                    month_06: '0,00',
+                                                    month_07: '0,00',
+                                                    month_08: '0,00',
+                                                    month_09: '0,00',
+                                                    month_10: '0,00',
+                                                    month_11: '0,00',
+                                                    month_12: '0,00',
+                                                    month_13: '0,00',
+                                                    average_increase: '0,00',
+                                                    discount: '0,00',
+                                                    increase: '0,00',
                                                     percent: true,
                                                     show_values: false,
                                                     show_discount: false,
@@ -603,7 +745,7 @@ export default function NewCustomer() {
                                                         </Row>
 
                                                         <Row className="mb-2">
-                                                            <Form.Group as={Col} sm={8} controlId="formGridEngeryCompany">
+                                                            <Form.Group as={Col} sm={4} controlId="formGridEngeryCompany">
                                                                 <Form.Label>Concessionária de energia</Form.Label>
                                                                 <Form.Control
                                                                     type="text"
@@ -628,398 +770,8 @@ export default function NewCustomer() {
                                                                 />
                                                                 <Form.Control.Feedback type="invalid">{touched.unity && errors.unity}</Form.Control.Feedback>
                                                             </Form.Group>
-                                                        </Row>
 
-                                                        <Row className="mb-3">
-                                                            <Form.Group as={Col} sm={3} controlId="formGridKwh">
-                                                                <Form.Label>Valor unitário do Quilowatts x Hora</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={handleChange}
-                                                                    onBlur={handleBlur}
-                                                                    value={values.kwh}
-                                                                    name="kwh"
-                                                                    isInvalid={!!errors.kwh && touched.kwh}
-                                                                />
-                                                                <Form.Control.Feedback type="invalid">{touched.kwh && errors.kwh}</Form.Control.Feedback>
-                                                            </Form.Group>
-
-                                                            <Form.Group as={Col} sm={3} controlId="formGridIrratiation">
-                                                                <Form.Label>Irradiação Local em [Kwh/m².dia]</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={handleChange}
-                                                                    onBlur={handleBlur}
-                                                                    value={values.irradiation}
-                                                                    name="irradiation"
-                                                                    isInvalid={!!errors.irradiation && touched.irradiation}
-                                                                />
-                                                                <Form.Control.Feedback type="invalid">{touched.irradiation && errors.irradiation}</Form.Control.Feedback>
-                                                            </Form.Group>
-
-                                                            <Form.Group as={Col} sm={6} controlId="formGridPanel">
-                                                                <Form.Label>Painél fotovoltaico (Wp)</Form.Label>
-                                                                <Form.Control
-                                                                    as="select"
-                                                                    onChange={handleChange}
-                                                                    onBlur={handleBlur}
-                                                                    value={values.panel}
-                                                                    name="panel"
-                                                                    isInvalid={!!errors.panel && touched.panel}
-                                                                >
-                                                                    <option hidden>Escolha uma opção</option>
-                                                                    {
-                                                                        panels.map((panel, index) => {
-                                                                            return <option key={index} value={panel.id}>{
-                                                                                `${panel.name} - ${panel.capacity} Wp`
-                                                                            }</option>
-                                                                        })
-                                                                    }
-                                                                </Form.Control>
-                                                                <Form.Control.Feedback type="invalid">{touched.panel && errors.panel}</Form.Control.Feedback>
-                                                            </Form.Group>
-                                                        </Row>
-
-                                                        <Row className="mb-2">
-                                                            <Form.Group as={Col} sm={3} controlId="formGridMonth01">
-                                                                <Form.Label>Mês 01</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={handleChange}
-                                                                    onBlur={handleBlur}
-                                                                    value={values.month_01}
-                                                                    name="month_01"
-                                                                    isInvalid={!!errors.month_01 && touched.month_01}
-                                                                />
-                                                                <Form.Control.Feedback type="invalid">{touched.month_01 && errors.month_01}</Form.Control.Feedback>
-                                                            </Form.Group>
-
-                                                            <Form.Group as={Col} sm={3} controlId="formGridMonth02">
-                                                                <Form.Label>Mês 02</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={handleChange}
-                                                                    onBlur={handleBlur}
-                                                                    value={values.month_02}
-                                                                    name="month_02"
-                                                                    isInvalid={!!errors.month_02 && touched.month_02}
-                                                                />
-                                                                <Form.Control.Feedback type="invalid">{touched.month_02 && errors.month_02}</Form.Control.Feedback>
-                                                            </Form.Group>
-
-                                                            <Form.Group as={Col} sm={3} controlId="formGridMonth03">
-                                                                <Form.Label>Mês 03</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={handleChange}
-                                                                    onBlur={handleBlur}
-                                                                    value={values.month_03}
-                                                                    name="month_03"
-                                                                    isInvalid={!!errors.month_03 && touched.month_03}
-                                                                />
-                                                                <Form.Control.Feedback type="invalid">{touched.month_03 && errors.month_03}</Form.Control.Feedback>
-                                                            </Form.Group>
-
-                                                            <Form.Group as={Col} sm={3} controlId="formGridMonth04">
-                                                                <Form.Label>Mês 04</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={handleChange}
-                                                                    onBlur={handleBlur}
-                                                                    value={values.month_04}
-                                                                    name="month_04"
-                                                                    isInvalid={!!errors.month_04 && touched.month_04}
-                                                                />
-                                                                <Form.Control.Feedback type="invalid">{touched.month_04 && errors.month_04}</Form.Control.Feedback>
-                                                            </Form.Group>
-                                                        </Row>
-
-                                                        <Row className="mb-2">
-                                                            <Form.Group as={Col} sm={3} controlId="formGridMonth05">
-                                                                <Form.Label>Mês 05</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={handleChange}
-                                                                    onBlur={handleBlur}
-                                                                    value={values.month_05}
-                                                                    name="month_05"
-                                                                    isInvalid={!!errors.month_05 && touched.month_05}
-                                                                />
-                                                                <Form.Control.Feedback type="invalid">{touched.month_05 && errors.month_05}</Form.Control.Feedback>
-                                                            </Form.Group>
-
-                                                            <Form.Group as={Col} sm={3} controlId="formGridMonth06">
-                                                                <Form.Label>Mês 06</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={handleChange}
-                                                                    onBlur={handleBlur}
-                                                                    value={values.month_06}
-                                                                    name="month_06"
-                                                                    isInvalid={!!errors.month_06 && touched.month_06}
-                                                                />
-                                                                <Form.Control.Feedback type="invalid">{touched.month_06 && errors.month_06}</Form.Control.Feedback>
-                                                            </Form.Group>
-
-                                                            <Form.Group as={Col} sm={3} controlId="formGridMonth07">
-                                                                <Form.Label>Mês 07</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={handleChange}
-                                                                    onBlur={handleBlur}
-                                                                    value={values.month_07}
-                                                                    name="month_07"
-                                                                    isInvalid={!!errors.month_07 && touched.month_07}
-                                                                />
-                                                                <Form.Control.Feedback type="invalid">{touched.month_07 && errors.month_07}</Form.Control.Feedback>
-                                                            </Form.Group>
-
-                                                            <Form.Group as={Col} sm={3} controlId="formGridMonth08">
-                                                                <Form.Label>Mês 08</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={handleChange}
-                                                                    onBlur={handleBlur}
-                                                                    value={values.month_08}
-                                                                    name="month_08"
-                                                                    isInvalid={!!errors.month_08 && touched.month_08}
-                                                                />
-                                                                <Form.Control.Feedback type="invalid">{touched.month_08 && errors.month_08}</Form.Control.Feedback>
-                                                            </Form.Group>
-                                                        </Row>
-
-                                                        <Row className="mb-2">
-                                                            <Form.Group as={Col} sm={3} controlId="formGridMonth09">
-                                                                <Form.Label>Mês 09</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={handleChange}
-                                                                    onBlur={handleBlur}
-                                                                    value={values.month_09}
-                                                                    name="month_09"
-                                                                    isInvalid={!!errors.month_09 && touched.month_09}
-                                                                />
-                                                                <Form.Control.Feedback type="invalid">{touched.month_09 && errors.month_09}</Form.Control.Feedback>
-                                                            </Form.Group>
-
-                                                            <Form.Group as={Col} sm={3} controlId="formGridMonth10">
-                                                                <Form.Label>Mês 10</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={handleChange}
-                                                                    onBlur={handleBlur}
-                                                                    value={values.month_10}
-                                                                    name="month_10"
-                                                                    isInvalid={!!errors.month_10 && touched.month_10}
-                                                                />
-                                                                <Form.Control.Feedback type="invalid">{touched.month_10 && errors.month_10}</Form.Control.Feedback>
-                                                            </Form.Group>
-
-                                                            <Form.Group as={Col} sm={3} controlId="formGridMonth11">
-                                                                <Form.Label>Mês 11</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={handleChange}
-                                                                    onBlur={handleBlur}
-                                                                    value={values.month_11}
-                                                                    name="month_11"
-                                                                    isInvalid={!!errors.month_11 && touched.month_11}
-                                                                />
-                                                                <Form.Control.Feedback type="invalid">{touched.month_11 && errors.month_11}</Form.Control.Feedback>
-                                                            </Form.Group>
-
-                                                            <Form.Group as={Col} sm={3} controlId="formGridMonth12">
-                                                                <Form.Label>Mês 12</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={handleChange}
-                                                                    onBlur={handleBlur}
-                                                                    value={values.month_12}
-                                                                    name="month_12"
-                                                                    isInvalid={!!errors.month_12 && touched.month_12}
-                                                                />
-                                                                <Form.Control.Feedback type="invalid">{touched.month_12 && errors.month_12}</Form.Control.Feedback>
-                                                            </Form.Group>
-                                                        </Row>
-
-                                                        <Row className="mb-2">
-                                                            <Form.Group as={Col} sm={3} controlId="formGridMonth13">
-                                                                <Form.Label>Mês 13</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={handleChange}
-                                                                    onBlur={handleBlur}
-                                                                    value={values.month_13}
-                                                                    name="month_13"
-                                                                    isInvalid={!!errors.month_13 && touched.month_13}
-                                                                />
-                                                                <Form.Control.Feedback type="invalid">{touched.month_13 && errors.month_13}</Form.Control.Feedback>
-                                                            </Form.Group>
-
-                                                            <Form.Group as={Col} sm={3} controlId="formGridMonthsAverage">
-                                                                <Form.Label>Média</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    value={values.month_02}
-                                                                    name="months_average"
-                                                                    readOnly
-                                                                />
-                                                            </Form.Group>
-
-                                                            <Form.Group as={Col} sm={3} controlId="formGridAverageIncrease">
-                                                                <Form.Label>Previsão de aumento (Kwh)</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={handleChange}
-                                                                    onBlur={handleBlur}
-                                                                    value={values.average_increase}
-                                                                    name="average_increase"
-                                                                    isInvalid={!!errors.average_increase && touched.average_increase}
-                                                                />
-                                                                <Form.Control.Feedback type="invalid">{touched.average_increase && errors.average_increase}</Form.Control.Feedback>
-                                                            </Form.Group>
-
-                                                            <Form.Group as={Col} sm={3} controlId="formGridFinalAverage">
-                                                                <Form.Label>Consumo final</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    value={values.month_04}
-                                                                    name="final_average"
-                                                                    readOnly
-                                                                />
-                                                            </Form.Group>
-                                                        </Row>
-
-                                                        <Col className="border-top mt-3 mb-3"></Col>
-
-                                                        <Row className="mb-3">
-                                                            <Col>
-                                                                <Row>
-                                                                    <Col>
-                                                                        <h6 className="text-success">Projeto <FaSolarPanel /></h6>
-                                                                    </Col>
-                                                                </Row>
-                                                            </Col>
-                                                        </Row>
-
-                                                        <Row className="mb-2">
-                                                            <Form.Group as={Col} sm={4} controlId="formGridMonthlyPaid">
-                                                                <Form.Label>Valor médio mensal da conta de energia</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    value={values.month_02}
-                                                                    name="monthly_paid"
-                                                                    readOnly
-                                                                />
-                                                            </Form.Group>
-
-                                                            <Form.Group as={Col} sm={4} controlId="formGridYearlyPaid">
-                                                                <Form.Label>Valor pago anualmente</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    value={values.month_02}
-                                                                    name="yearly_paid"
-                                                                    readOnly
-                                                                />
-                                                            </Form.Group>
-
-                                                            <Form.Group as={Col} sm={4} controlId="formGridPanelsAmount">
-                                                                <Form.Label>Número total de Painéis Fotovoltaicos</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    value={values.month_04}
-                                                                    name="panels_amount"
-                                                                    readOnly
-                                                                />
-                                                            </Form.Group>
-                                                        </Row>
-
-                                                        <Row className="mb-2">
-                                                            <Form.Group as={Col} sm={4} controlId="formGridSystemCapacity">
-                                                                <Form.Label>Capacidade Total do Sistema Fotovoltaico (Kwp)</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    value={values.month_02}
-                                                                    name="system_capacity"
-                                                                    readOnly
-                                                                />
-                                                            </Form.Group>
-
-                                                            <Form.Group as={Col} sm={4} controlId="formGridMonthlyGenerated">
-                                                                <Form.Label>Total de energia gerada mensalmente (Kwh)</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    value={values.month_02}
-                                                                    name="monthly_generated"
-                                                                    readOnly
-                                                                />
-                                                            </Form.Group>
-
-                                                            <Form.Group as={Col} sm={4} controlId="formGridYearlyGenerated">
-                                                                <Form.Label>Total de energia gerada anualmente (Kwh)</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    value={values.month_04}
-                                                                    name="yearly_generated"
-                                                                    readOnly
-                                                                />
-                                                            </Form.Group>
-                                                        </Row>
-
-                                                        <Row className="mb-2">
-                                                            <Form.Group as={Col} sm={4} controlId="formGridCO2Reduction">
-                                                                <Form.Label>Redução de emissão de gás CO² ao ano (Kg)</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    value={values.month_02}
-                                                                    name="co2_reduction"
-                                                                    readOnly
-                                                                />
-                                                            </Form.Group>
-
-                                                            <Form.Group as={Col} sm={4} controlId="formGridSystemArea">
-                                                                <Form.Label>Área ocupada pelo sistema (m²)</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    value={values.month_02}
-                                                                    name="system_area"
-                                                                    readOnly
-                                                                />
-                                                            </Form.Group>
-
-                                                            <Form.Group as={Col} sm={4} controlId="formGridFinalSystemaCapacity">
-                                                                <Form.Label>Capacidade do Sistema Arredondada (kwp)</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    value={values.month_04}
-                                                                    name="final_sistem_capacity"
-                                                                    readOnly
-                                                                />
-                                                            </Form.Group>
-                                                        </Row>
-
-                                                        <Row className="mb-2">
-                                                            <Form.Group as={Col} sm={6} controlId="formGridRoofOrientation">
-                                                                <Form.Label>Orientação do telhado</Form.Label>
-                                                                <Form.Control
-                                                                    as="select"
-                                                                    onChange={handleChange}
-                                                                    onBlur={handleBlur}
-                                                                    value={values.roof_orientation}
-                                                                    name="roof_orientation"
-                                                                    isInvalid={!!errors.roof_orientation && touched.roof_orientation}
-                                                                >
-                                                                    <option hidden>Escolha uma opção</option>
-                                                                    {
-                                                                        roofOrientations.map((orientation, index) => {
-                                                                            return <option key={index} value={orientation.id}>{orientation.name}</option>
-                                                                        })
-                                                                    }
-                                                                </Form.Control>
-                                                                <Form.Control.Feedback type="invalid">{touched.roof_orientation && errors.roof_orientation}</Form.Control.Feedback>
-                                                            </Form.Group>
-
-                                                            <Form.Group as={Col} sm={6} controlId="formGridRoofType">
+                                                            <Form.Group as={Col} sm={4} controlId="formGridRoofType">
                                                                 <Form.Label>Tipo de telhado</Form.Label>
                                                                 <Form.Control
                                                                     as="select"
@@ -1038,15 +790,617 @@ export default function NewCustomer() {
                                                                 </Form.Control>
                                                                 <Form.Control.Feedback type="invalid">{touched.roof_type && errors.roof_type}</Form.Control.Feedback>
                                                             </Form.Group>
+                                                        </Row>
 
-                                                            <Form.Group as={Col} sm={4} controlId="formGridPreSystemPrice">
-                                                                <Form.Label>Valor do sistema (parcial)</Form.Label>
+                                                        <Row className="mb-3">
+                                                            <Form.Group as={Col} sm={3} controlId="formGridKwh">
+                                                                <Form.Label>Valor unitário do Quilowatts x Hora</Form.Label>
                                                                 <Form.Control
                                                                     type="text"
-                                                                    value={values.month_04}
-                                                                    name="pre_system_value"
-                                                                    readOnly
+                                                                    onChange={(e) => {
+                                                                        setFieldValue('kwh', prettifyCurrency(e.target.value));
+                                                                    }}
+                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                        setFieldValue('kwh', prettifyCurrency(e.target.value));
+
+                                                                        const calcValues = handleValues(values);
+
+                                                                        if (calcValues) handleCalcEstimate(calcValues);
+                                                                    }}
+                                                                    value={values.kwh}
+                                                                    name="kwh"
+                                                                    isInvalid={!!errors.kwh && touched.kwh}
                                                                 />
+                                                                <Form.Control.Feedback type="invalid">{touched.kwh && errors.kwh}</Form.Control.Feedback>
+                                                            </Form.Group>
+
+                                                            <Form.Group as={Col} sm={3} controlId="formGridIrratiation">
+                                                                <Form.Label>Irradiação Local em [Kwh/m².dia]</Form.Label>
+                                                                <Form.Control
+                                                                    type="text"
+                                                                    onChange={(e) => {
+                                                                        setFieldValue('irradiation', prettifyCurrency(e.target.value));
+                                                                    }}
+                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                        setFieldValue('irradiation', prettifyCurrency(e.target.value));
+
+                                                                        const calcValues = handleValues(values);
+
+                                                                        if (calcValues) handleCalcEstimate(calcValues);
+                                                                    }}
+                                                                    value={values.irradiation}
+                                                                    name="irradiation"
+                                                                    isInvalid={!!errors.irradiation && touched.irradiation}
+                                                                />
+                                                                <Form.Control.Feedback type="invalid">{touched.irradiation && errors.irradiation}</Form.Control.Feedback>
+                                                            </Form.Group>
+
+                                                            <Form.Group as={Col} sm={3} controlId="formGridPanel">
+                                                                <Form.Label>Painél fotovoltaico (Wp)</Form.Label>
+                                                                <Form.Control
+                                                                    as="select"
+                                                                    onChange={(e) => {
+                                                                        setFieldValue('panel', e.target.value);
+
+                                                                        const calcValues = handleValues(values);
+
+                                                                        if (calcValues) handleCalcEstimate(calcValues);
+                                                                    }}
+                                                                    onBlur={handleBlur}
+                                                                    value={values.panel}
+                                                                    name="panel"
+                                                                    isInvalid={!!errors.panel && touched.panel}
+                                                                >
+                                                                    <option hidden>Escolha uma opção</option>
+                                                                    {
+                                                                        panels.map((panel, index) => {
+                                                                            return <option key={index} value={panel.id}>{
+                                                                                `${panel.name} - ${prettifyCurrency(String(panel.capacity))} Wp`
+                                                                            }</option>
+                                                                        })
+                                                                    }
+                                                                </Form.Control>
+                                                                <Form.Control.Feedback type="invalid">{touched.panel && errors.panel}</Form.Control.Feedback>
+                                                            </Form.Group>
+
+                                                            <Form.Group as={Col} sm={3} controlId="formGridRoofOrientation">
+                                                                <Form.Label>Orientação do telhado</Form.Label>
+                                                                <Form.Control
+                                                                    as="select"
+                                                                    onChange={(e) => {
+                                                                        setFieldValue('roof_orientation', e.target.value);
+
+                                                                        const calcValues = handleValues(values);
+
+                                                                        if (calcValues) handleCalcEstimate(calcValues);
+                                                                    }}
+                                                                    onBlur={handleBlur}
+                                                                    value={values.roof_orientation}
+                                                                    name="roof_orientation"
+                                                                    isInvalid={!!errors.roof_orientation && touched.roof_orientation}
+                                                                >
+                                                                    <option hidden>Escolha uma opção</option>
+                                                                    {
+                                                                        roofOrientations.map((orientation, index) => {
+                                                                            return <option key={index} value={orientation.id}>{orientation.name}</option>
+                                                                        })
+                                                                    }
+                                                                </Form.Control>
+                                                                <Form.Control.Feedback type="invalid">{touched.roof_orientation && errors.roof_orientation}</Form.Control.Feedback>
+                                                            </Form.Group>
+                                                        </Row>
+
+                                                        <Row className="mb-2">
+                                                            <Form.Group as={Col} sm={3} controlId="formGridMonth01">
+                                                                <Form.Label>Mês 01</Form.Label>
+                                                                <Form.Control
+                                                                    type="text"
+                                                                    onChange={(e) => {
+                                                                        setFieldValue('month_01', prettifyCurrency(e.target.value));
+                                                                    }}
+                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                        setFieldValue('month_01', prettifyCurrency(e.target.value));
+
+                                                                        const calcValues = handleValues(values);
+
+                                                                        if (calcValues) handleCalcEstimate(calcValues);
+                                                                    }}
+                                                                    value={values.month_01}
+                                                                    name="month_01"
+                                                                    isInvalid={!!errors.month_01 && touched.month_01}
+                                                                />
+                                                                <Form.Control.Feedback type="invalid">{touched.month_01 && errors.month_01}</Form.Control.Feedback>
+                                                            </Form.Group>
+
+                                                            <Form.Group as={Col} sm={3} controlId="formGridMonth02">
+                                                                <Form.Label>Mês 02</Form.Label>
+                                                                <Form.Control
+                                                                    type="text"
+                                                                    onChange={(e) => {
+                                                                        setFieldValue('month_02', prettifyCurrency(e.target.value));
+                                                                    }}
+                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                        setFieldValue('month_02', prettifyCurrency(e.target.value));
+
+                                                                        const calcValues = handleValues(values);
+
+                                                                        if (calcValues) handleCalcEstimate(calcValues);
+                                                                    }}
+                                                                    value={values.month_02}
+                                                                    name="month_02"
+                                                                    isInvalid={!!errors.month_02 && touched.month_02}
+                                                                />
+                                                                <Form.Control.Feedback type="invalid">{touched.month_02 && errors.month_02}</Form.Control.Feedback>
+                                                            </Form.Group>
+
+                                                            <Form.Group as={Col} sm={3} controlId="formGridMonth03">
+                                                                <Form.Label>Mês 03</Form.Label>
+                                                                <Form.Control
+                                                                    type="text"
+                                                                    onChange={(e) => {
+                                                                        setFieldValue('month_03', prettifyCurrency(e.target.value));
+                                                                    }}
+                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                        setFieldValue('month_03', prettifyCurrency(e.target.value));
+
+                                                                        const calcValues = handleValues(values);
+
+                                                                        if (calcValues) handleCalcEstimate(calcValues);
+                                                                    }}
+                                                                    value={values.month_03}
+                                                                    name="month_03"
+                                                                    isInvalid={!!errors.month_03 && touched.month_03}
+                                                                />
+                                                                <Form.Control.Feedback type="invalid">{touched.month_03 && errors.month_03}</Form.Control.Feedback>
+                                                            </Form.Group>
+
+                                                            <Form.Group as={Col} sm={3} controlId="formGridMonth04">
+                                                                <Form.Label>Mês 04</Form.Label>
+                                                                <Form.Control
+                                                                    type="text"
+                                                                    onChange={(e) => {
+                                                                        setFieldValue('month_04', prettifyCurrency(e.target.value));
+                                                                    }}
+                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                        setFieldValue('month_04', prettifyCurrency(e.target.value));
+
+                                                                        const calcValues = handleValues(values);
+
+                                                                        if (calcValues) handleCalcEstimate(calcValues);
+                                                                    }}
+                                                                    value={values.month_04}
+                                                                    name="month_04"
+                                                                    isInvalid={!!errors.month_04 && touched.month_04}
+                                                                />
+                                                                <Form.Control.Feedback type="invalid">{touched.month_04 && errors.month_04}</Form.Control.Feedback>
+                                                            </Form.Group>
+                                                        </Row>
+
+                                                        <Row className="mb-2">
+                                                            <Form.Group as={Col} sm={3} controlId="formGridMonth05">
+                                                                <Form.Label>Mês 05</Form.Label>
+                                                                <Form.Control
+                                                                    type="text"
+                                                                    onChange={(e) => {
+                                                                        setFieldValue('month_05', prettifyCurrency(e.target.value));
+                                                                    }}
+                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                        setFieldValue('month_05', prettifyCurrency(e.target.value));
+
+                                                                        const calcValues = handleValues(values);
+
+                                                                        if (calcValues) handleCalcEstimate(calcValues);
+                                                                    }}
+                                                                    value={values.month_05}
+                                                                    name="month_05"
+                                                                    isInvalid={!!errors.month_05 && touched.month_05}
+                                                                />
+                                                                <Form.Control.Feedback type="invalid">{touched.month_05 && errors.month_05}</Form.Control.Feedback>
+                                                            </Form.Group>
+
+                                                            <Form.Group as={Col} sm={3} controlId="formGridMonth06">
+                                                                <Form.Label>Mês 06</Form.Label>
+                                                                <Form.Control
+                                                                    type="text"
+                                                                    onChange={(e) => {
+                                                                        setFieldValue('month_06', prettifyCurrency(e.target.value));
+                                                                    }}
+                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                        setFieldValue('month_06', prettifyCurrency(e.target.value));
+
+                                                                        const calcValues = handleValues(values);
+
+                                                                        if (calcValues) handleCalcEstimate(calcValues);
+                                                                    }}
+                                                                    value={values.month_06}
+                                                                    name="month_06"
+                                                                    isInvalid={!!errors.month_06 && touched.month_06}
+                                                                />
+                                                                <Form.Control.Feedback type="invalid">{touched.month_06 && errors.month_06}</Form.Control.Feedback>
+                                                            </Form.Group>
+
+                                                            <Form.Group as={Col} sm={3} controlId="formGridMonth07">
+                                                                <Form.Label>Mês 07</Form.Label>
+                                                                <Form.Control
+                                                                    type="text"
+                                                                    onChange={(e) => {
+                                                                        setFieldValue('month_07', prettifyCurrency(e.target.value));
+                                                                    }}
+                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                        setFieldValue('month_07', prettifyCurrency(e.target.value));
+
+                                                                        const calcValues = handleValues(values);
+
+                                                                        if (calcValues) handleCalcEstimate(calcValues);
+                                                                    }}
+                                                                    value={values.month_07}
+                                                                    name="month_07"
+                                                                    isInvalid={!!errors.month_07 && touched.month_07}
+                                                                />
+                                                                <Form.Control.Feedback type="invalid">{touched.month_07 && errors.month_07}</Form.Control.Feedback>
+                                                            </Form.Group>
+
+                                                            <Form.Group as={Col} sm={3} controlId="formGridMonth08">
+                                                                <Form.Label>Mês 08</Form.Label>
+                                                                <Form.Control
+                                                                    type="text"
+                                                                    onChange={(e) => {
+                                                                        setFieldValue('month_08', prettifyCurrency(e.target.value));
+                                                                    }}
+                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                        setFieldValue('month_08', prettifyCurrency(e.target.value));
+
+                                                                        const calcValues = handleValues(values);
+
+                                                                        if (calcValues) handleCalcEstimate(calcValues);
+                                                                    }}
+                                                                    value={values.month_08}
+                                                                    name="month_08"
+                                                                    isInvalid={!!errors.month_08 && touched.month_08}
+                                                                />
+                                                                <Form.Control.Feedback type="invalid">{touched.month_08 && errors.month_08}</Form.Control.Feedback>
+                                                            </Form.Group>
+                                                        </Row>
+
+                                                        <Row className="mb-2">
+                                                            <Form.Group as={Col} sm={3} controlId="formGridMonth09">
+                                                                <Form.Label>Mês 09</Form.Label>
+                                                                <Form.Control
+                                                                    type="text"
+                                                                    onChange={(e) => {
+                                                                        setFieldValue('month_09', prettifyCurrency(e.target.value));
+                                                                    }}
+                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                        setFieldValue('month_09', prettifyCurrency(e.target.value));
+
+                                                                        const calcValues = handleValues(values);
+
+                                                                        if (calcValues) handleCalcEstimate(calcValues);
+                                                                    }}
+                                                                    value={values.month_09}
+                                                                    name="month_09"
+                                                                    isInvalid={!!errors.month_09 && touched.month_09}
+                                                                />
+                                                                <Form.Control.Feedback type="invalid">{touched.month_09 && errors.month_09}</Form.Control.Feedback>
+                                                            </Form.Group>
+
+                                                            <Form.Group as={Col} sm={3} controlId="formGridMonth10">
+                                                                <Form.Label>Mês 10</Form.Label>
+                                                                <Form.Control
+                                                                    type="text"
+                                                                    onChange={(e) => {
+                                                                        setFieldValue('month_10', prettifyCurrency(e.target.value));
+                                                                    }}
+                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                        setFieldValue('month_10', prettifyCurrency(e.target.value));
+
+                                                                        const calcValues = handleValues(values);
+
+                                                                        if (calcValues) handleCalcEstimate(calcValues);
+                                                                    }}
+                                                                    value={values.month_10}
+                                                                    name="month_10"
+                                                                    isInvalid={!!errors.month_10 && touched.month_10}
+                                                                />
+                                                                <Form.Control.Feedback type="invalid">{touched.month_10 && errors.month_10}</Form.Control.Feedback>
+                                                            </Form.Group>
+
+                                                            <Form.Group as={Col} sm={3} controlId="formGridMonth11">
+                                                                <Form.Label>Mês 11</Form.Label>
+                                                                <Form.Control
+                                                                    type="text"
+                                                                    onChange={(e) => {
+                                                                        setFieldValue('month_11', prettifyCurrency(e.target.value));
+                                                                    }}
+                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                        setFieldValue('month_11', prettifyCurrency(e.target.value));
+
+                                                                        const calcValues = handleValues(values);
+
+                                                                        if (calcValues) handleCalcEstimate(calcValues);
+                                                                    }}
+                                                                    value={values.month_11}
+                                                                    name="month_11"
+                                                                    isInvalid={!!errors.month_11 && touched.month_11}
+                                                                />
+                                                                <Form.Control.Feedback type="invalid">{touched.month_11 && errors.month_11}</Form.Control.Feedback>
+                                                            </Form.Group>
+
+                                                            <Form.Group as={Col} sm={3} controlId="formGridMonth12">
+                                                                <Form.Label>Mês 12</Form.Label>
+                                                                <Form.Control
+                                                                    type="text"
+                                                                    onChange={(e) => {
+                                                                        setFieldValue('month_12', prettifyCurrency(e.target.value));
+                                                                    }}
+                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                        setFieldValue('month_12', prettifyCurrency(e.target.value));
+
+                                                                        const calcValues = handleValues(values);
+
+                                                                        if (calcValues) handleCalcEstimate(calcValues);
+                                                                    }}
+                                                                    value={values.month_12}
+                                                                    name="month_12"
+                                                                    isInvalid={!!errors.month_12 && touched.month_12}
+                                                                />
+                                                                <Form.Control.Feedback type="invalid">{touched.month_12 && errors.month_12}</Form.Control.Feedback>
+                                                            </Form.Group>
+                                                        </Row>
+
+                                                        <Row className="mb-2">
+                                                            <Form.Group as={Col} sm={3} controlId="formGridMonth13">
+                                                                <Form.Label>Mês 13</Form.Label>
+                                                                <Form.Control
+                                                                    type="text"
+                                                                    onChange={(e) => {
+                                                                        setFieldValue('month_13', prettifyCurrency(e.target.value));
+                                                                    }}
+                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                        setFieldValue('month_13', prettifyCurrency(e.target.value));
+
+                                                                        const calcValues = handleValues(values);
+
+                                                                        if (calcValues) handleCalcEstimate(calcValues);
+                                                                    }}
+                                                                    value={values.month_13}
+                                                                    name="month_13"
+                                                                    isInvalid={!!errors.month_13 && touched.month_13}
+                                                                />
+                                                                <Form.Control.Feedback type="invalid">{touched.month_13 && errors.month_13}</Form.Control.Feedback>
+                                                            </Form.Group>
+
+                                                            <Form.Group as={Col} sm={3} controlId="formGridMonthsAverageKwh">
+                                                                <Form.Label>Média</Form.Label>
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupMonthsAverageKwh">Kwh</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        value={prettifyCurrency(String(resultMonthsAverageKwh.toFixed(2)))}
+                                                                        name="months_average"
+                                                                        aria-label="Média"
+                                                                        aria-describedby="btnGroupMonthsAverageKwh"
+                                                                        readOnly
+                                                                    />
+                                                                </InputGroup>
+                                                            </Form.Group>
+
+                                                            <Form.Group as={Col} sm={3} controlId="formGridAverageIncrease">
+                                                                <Form.Label>Previsão de aumento</Form.Label>
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupAverageIncrease">Kwh</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        onChange={(e) => {
+                                                                            setFieldValue('average_increase', prettifyCurrency(e.target.value));
+                                                                        }}
+                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                            setFieldValue('average_increase', prettifyCurrency(e.target.value));
+
+                                                                            const calcValues = handleValues(values);
+
+                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                        }}
+                                                                        value={values.average_increase}
+                                                                        name="average_increase"
+                                                                        isInvalid={!!errors.average_increase && touched.average_increase}
+                                                                        aria-label="Previsão de aumento"
+                                                                        aria-describedby="btnGroupAverageIncrease"
+                                                                    />
+                                                                </InputGroup>
+                                                                <Form.Control.Feedback type="invalid">{touched.average_increase && errors.average_increase}</Form.Control.Feedback>
+                                                            </Form.Group>
+
+                                                            <Form.Group as={Col} sm={3} controlId="formGridFinalAverageKwh">
+                                                                <Form.Label>Consumo final</Form.Label>
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupFinalAverageKwh">Kwh</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        value={prettifyCurrency(String(resultFinalAverageKwh.toFixed(2)))}
+                                                                        name="final_average"
+                                                                        aria-label="Média final"
+                                                                        aria-describedby="btnGroupFinalAverageKwh"
+                                                                        readOnly
+                                                                    />
+                                                                </InputGroup>
+                                                            </Form.Group>
+                                                        </Row>
+
+                                                        <Col className="border-top mt-3 mb-3"></Col>
+
+                                                        <Row className="mb-3">
+                                                            <Col>
+                                                                <Row>
+                                                                    <Col>
+                                                                        <h6 className="text-success">Projeto <FaSolarPanel /></h6>
+                                                                    </Col>
+                                                                </Row>
+                                                            </Col>
+                                                        </Row>
+
+                                                        <Row className="mb-2">
+                                                            <Form.Group as={Col} sm={4} controlId="formGridMonthlyPaid">
+                                                                <Form.Label>Valor médio mensal da conta de energia</Form.Label>
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupMonthlyPaid">R$</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        value={prettifyCurrency(String(resultMonthlyPaid.toFixed(2)))}
+                                                                        name="monthly_paid"
+                                                                        aria-label="Valor médio mensal da conta de energia"
+                                                                        aria-describedby="btnGroupMonthlyPaid"
+                                                                        readOnly
+                                                                    />
+                                                                </InputGroup>
+                                                            </Form.Group>
+
+                                                            <Form.Group as={Col} sm={4} controlId="formGridYearlyPaid">
+                                                                <Form.Label>Valor pago anualmente</Form.Label>
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupYearlyPaid">R$</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        value={prettifyCurrency(String(resultYearlyPaid.toFixed(2)))}
+                                                                        name="yearly_paid"
+                                                                        aria-label="Valor pago anualmente"
+                                                                        aria-describedby="btnGroupYearlyPaid"
+                                                                        readOnly
+                                                                    />
+                                                                </InputGroup>
+                                                            </Form.Group>
+
+                                                            <Form.Group as={Col} sm={4} controlId="formGridPanelsAmount">
+                                                                <Form.Label>Número total de Painéis Fotovoltaicos</Form.Label>
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupPanelsAmount">Un</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        value={resultPanelsAmount}
+                                                                        name="panels_amount"
+                                                                        aria-label="Número total de Painéis Fotovoltaicos"
+                                                                        aria-describedby="btnGroupPanelsAmount"
+                                                                        readOnly
+                                                                    />
+                                                                </InputGroup>
+                                                            </Form.Group>
+                                                        </Row>
+
+                                                        <Row className="mb-2">
+                                                            <Form.Group as={Col} sm={4} controlId="formGridSystemCapacityKwp">
+                                                                <Form.Label>Capacidade Total do Sistema Fotovoltaico</Form.Label>
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupSystemCapacityKwp">Kwp</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        value={prettifyCurrency(String(resultSystemCapacityKwp.toFixed(2)))}
+                                                                        name="system_capacity"
+                                                                        aria-label="Capacidade Total do Sistema"
+                                                                        aria-describedby="btnGroupSystemCapacityKwp"
+                                                                        readOnly
+                                                                    />
+                                                                </InputGroup>
+                                                            </Form.Group>
+
+                                                            <Form.Group as={Col} sm={4} controlId="formGridMonthlyGeneratedEnergy">
+                                                                <Form.Label>Total de energia gerada mensalmente</Form.Label>
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupMonthlyGeneratedEnergy">Kwh</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        value={prettifyCurrency(String(resultMonthlyGeneratedEnergy.toFixed(2)))}
+                                                                        name="monthly_generated"
+                                                                        aria-label="Total de energia gerada mensalmente"
+                                                                        aria-describedby="btnGroupMonthlyGeneratedEnergy"
+                                                                        readOnly
+                                                                    />
+                                                                </InputGroup>
+                                                            </Form.Group>
+
+                                                            <Form.Group as={Col} sm={4} controlId="formGridYearlyGeneratedEnergy">
+                                                                <Form.Label>Total de energia gerada anualmente</Form.Label>
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupYearlyGeneratedEnergy">Kwh</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        value={prettifyCurrency(String(resultYearlyGeneratedEnergy.toFixed(2)))}
+                                                                        name="yearly_generated"
+                                                                        aria-label="Total de energia gerada anualmente"
+                                                                        aria-describedby="btnGroupYearlyGeneratedEnergy"
+                                                                        readOnly
+                                                                    />
+                                                                </InputGroup>
+                                                            </Form.Group>
+                                                        </Row>
+
+                                                        <Row className="mb-2">
+                                                            <Form.Group as={Col} sm={4} controlId="formGridCo2Reduction">
+                                                                <Form.Label>Redução de emissão de gás CO² ao ano</Form.Label>
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupCo2Reduction">Kg</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        value={prettifyCurrency(String(resultCo2Reduction.toFixed(2)))}
+                                                                        name="co2_reduction"
+                                                                        aria-label="Redução de emissão de gás CO² ao ano"
+                                                                        aria-describedby="btnGroupCo2Reduction"
+                                                                        readOnly
+                                                                    />
+                                                                </InputGroup>
+                                                            </Form.Group>
+
+                                                            <Form.Group as={Col} sm={4} controlId="formGridSystemArea">
+                                                                <Form.Label>Área ocupada pelo sistema</Form.Label>
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupSystemArea">m²</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        value={prettifyCurrency(String(resultSystemArea.toFixed(2)))}
+                                                                        name="system_area"
+                                                                        aria-label="Área ocupada pelo sistema"
+                                                                        aria-describedby="btnGroupSystemArea"
+                                                                        readOnly
+                                                                    />
+                                                                </InputGroup>
+                                                            </Form.Group>
+
+                                                            <Form.Group as={Col} sm={4} controlId="formGridFinalSystemCapacity">
+                                                                <Form.Label>Capacidade arredondada do Sistema</Form.Label>
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupFinalSystemCapacity">Kwp</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        value={prettifyCurrency(String(resultFinalSystemCapacityKwp.toFixed(2)))}
+                                                                        name="final_sistem_capacity"
+                                                                        aria-label="Valor pago anualmente"
+                                                                        aria-describedby="btnGroupFinalSystemCapacity"
+                                                                        readOnly
+                                                                    />
+                                                                </InputGroup>
                                                             </Form.Group>
                                                         </Row>
 
@@ -1062,16 +1416,39 @@ export default function NewCustomer() {
                                                             </Col>
                                                         </Row>
 
-                                                        <Form.Row className="mb-2">
-                                                            <Form.Switch
-                                                                id="show_discount"
-                                                                label="Exibir descontos no orçamento?"
-                                                                checked={values.show_discount}
-                                                                onChange={() => { setFieldValue('show_discount', !values.show_discount) }}
-                                                            />
-                                                        </Form.Row>
+                                                        <Row className="align-items-center">
+                                                            <Form.Group as={Col} sm={3} controlId="formGridPreSystemPrice">
+                                                                <Form.Label>Subtotal</Form.Label>
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupPreSystemPrice">R$</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        value={prettifyCurrency(String(resultPreSystemPrice.toFixed(2)))}
+                                                                        name="pre_system_value"
+                                                                        aria-label="Valor do sistema "
+                                                                        aria-describedby="btnGroupPreSystemPrice"
+                                                                        readOnly
+                                                                    />
+                                                                </InputGroup>
+                                                            </Form.Group>
 
-                                                        <Row className="mb-3">
+                                                            <Col sm={3}>
+                                                                <Form.Switch
+                                                                    id="percent"
+                                                                    label="Valores em Reais (R$)"
+                                                                    checked={!values.percent}
+                                                                    onChange={() => {
+                                                                        setFieldValue('percent', !values.percent);
+
+                                                                        const calcValues = handleValues(values);
+
+                                                                        if (calcValues) handleCalcEstimate(calcValues);
+                                                                    }}
+                                                                />
+                                                            </Col>
+
                                                             <Form.Group as={Col} sm={3} controlId="formGridDiscount">
                                                                 <Form.Label>Desconto</Form.Label>
                                                                 <InputGroup className="mb-2">
@@ -1085,6 +1462,10 @@ export default function NewCustomer() {
                                                                         }}
                                                                         onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
                                                                             setFieldValue('discount', prettifyCurrency(e.target.value));
+
+                                                                            const calcValues = handleValues(values);
+
+                                                                            if (calcValues) handleCalcEstimate(calcValues);
                                                                         }}
                                                                         value={values.discount}
                                                                         name="discount"
@@ -1109,6 +1490,10 @@ export default function NewCustomer() {
                                                                         }}
                                                                         onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
                                                                             setFieldValue('increase', prettifyCurrency(e.target.value));
+
+                                                                            const calcValues = handleValues(values);
+
+                                                                            if (calcValues) handleCalcEstimate(calcValues);
                                                                         }}
                                                                         value={values.increase}
                                                                         name="increase"
@@ -1119,14 +1504,26 @@ export default function NewCustomer() {
                                                                 </InputGroup>
                                                                 <Form.Control.Feedback type="invalid">{touched.increase && errors.increase}</Form.Control.Feedback>
                                                             </Form.Group>
+                                                        </Row>
 
-                                                            <Col className="col-row">
-                                                                <Form.Switch
-                                                                    id="percent"
-                                                                    label="Valores em Reais (R$)"
-                                                                    checked={!values.percent}
-                                                                    onChange={() => { setFieldValue('percent', !values.percent) }}
-                                                                />
+                                                        <Form.Row className="mb-2">
+                                                            <Form.Switch
+                                                                id="show_discount"
+                                                                label="Exibir descontos no orçamento?"
+                                                                checked={values.show_discount}
+                                                                onChange={() => { setFieldValue('show_discount', !values.show_discount) }}
+                                                            />
+                                                        </Form.Row>
+
+                                                        <Col className="border-top mt-3 mb-3"></Col>
+
+                                                        <Row>
+                                                            <Col>
+                                                                <Row>
+                                                                    <Col>
+                                                                        <h6 className="text-success">Itens <FaClipboardList /></h6>
+                                                                    </Col>
+                                                                </Row>
                                                             </Col>
                                                         </Row>
 
@@ -1138,6 +1535,53 @@ export default function NewCustomer() {
                                                                 onChange={() => { setFieldValue('show_values', !values.show_values) }}
                                                             />
                                                         </Form.Row>
+
+                                                        <Row>
+                                                            <Col sm={2}><h6 className="text-secondary">Quantidade</h6></Col>
+                                                            <Col sm={5}><h6 className="text-secondary">Produto</h6></Col>
+                                                            <Col sm={2}><h6 className="text-secondary">Unitário</h6></Col>
+                                                            <Col sm={2}><h6 className="text-secondary">Total</h6></Col>
+                                                        </Row>
+
+                                                        {
+                                                            estimateItemsList && estimateItemsList.map(estimateItem => {
+                                                                return <EstimateItems
+                                                                    key={estimateItem.id}
+                                                                    estimateItem={estimateItem}
+                                                                    estimateItemsList={estimateItemsList}
+                                                                    handleListEstimateItems={handleListEstimateItems}
+                                                                    canEdit={estimateItem.order === 0 ? true : false}
+                                                                />
+                                                            })
+                                                        }
+
+                                                        <Row className="mb-3">
+                                                            <Col>
+                                                                <Row>
+                                                                    <Col>
+                                                                        <h6 className="text-success">Valor final do sitema <FaClipboardList /></h6>
+                                                                    </Col>
+                                                                </Row>
+                                                            </Col>
+                                                        </Row>
+
+                                                        <Row className="align-items-center">
+                                                            <Form.Group as={Col} sm={3} controlId="formGridFinalSystemPrice">
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupFinalSystemPrice">R$</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        value={prettifyCurrency(String(resultFinalSystemPrice.toFixed(2)))}
+                                                                        name="pre_system_value"
+                                                                        aria-label="Valor do sistema "
+                                                                        aria-describedby="btnGroupFinalSystemPrice"
+                                                                        readOnly
+                                                                    />
+                                                                </InputGroup>
+                                                            </Form.Group>
+                                                        </Row>
 
                                                         <Form.Row className="mb-3">
                                                             <Form.Group as={Col} controlId="formGridNotes">

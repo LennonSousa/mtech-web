@@ -2,7 +2,7 @@ import { useContext, useEffect, useState } from 'react';
 import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { NextSeo } from 'next-seo';
-import { Button, Col, Container, Form, InputGroup, ListGroup, Row, Spinner, Toast } from 'react-bootstrap';
+import { Button, Col, Container, Form, InputGroup, Row, Spinner } from 'react-bootstrap';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { format } from 'date-fns';
@@ -13,7 +13,7 @@ import api from '../../../api/api';
 import { TokenVerify } from '../../../utils/tokenVerify';
 import { SideBarContext } from '../../../contexts/SideBarContext';
 import { AuthContext } from '../../../contexts/AuthContext';
-import { User, can } from '../../../components/Users';
+import { can } from '../../../components/Users';
 import { Panel } from '../../../components/Panels';
 import { RoofOrientation } from '../../../components/RoofOrientations';
 import { RoofType } from '../../../components/RoofTypes';
@@ -27,7 +27,7 @@ import PageBack from '../../../components/PageBack';
 import { PageWaiting, PageType } from '../../../components/PageWaiting';
 import { AlertMessage, statusModal } from '../../../components/interfaces/AlertMessage';
 import { prettifyCurrency } from '../../../components/InputMask/masks';
-import { Calculate, CalcProps } from '../../../utils/calcEstimate';
+import { calculate, CalcProps } from '../../../utils/calcEstimate';
 
 const validationSchema = Yup.object().shape({
     customer: Yup.string().required('Obrigatório!'),
@@ -210,7 +210,7 @@ export default function NewCustomer() {
     }, [user]);
 
     function handleCalcEstimate(values: CalcProps) {
-        const calcResults = Calculate(values);
+        const calcResults = calculate(values);
 
         if (calcResults) {
             setResultMonthsAverageKwh(calcResults.monthsAverageKwh);
@@ -234,7 +234,7 @@ export default function NewCustomer() {
 
             calcResults.estimateItems.forEach(item => {
                 if (item.order === 1) setResultPanelsAmount(item.amount);
-            })
+            });
         }
     }
 
@@ -392,57 +392,72 @@ export default function NewCustomer() {
                                                     setTypeMessage("waiting");
                                                     setMessageShow(true);
 
+                                                    const valuesCalcItem = handleValues(values);
+
                                                     try {
-                                                        const res = await api.post('estimates', {
-                                                            customer: values.customer,
-                                                            document: values.document,
-                                                            phone: values.phone,
-                                                            cellphone: values.cellphone,
-                                                            contacts: values.contacts,
-                                                            email: values.email,
-                                                            zip_code: values.zip_code,
-                                                            street: values.street,
-                                                            number: values.number,
-                                                            neighborhood: values.neighborhood,
-                                                            complement: values.complement,
-                                                            city: values.city,
-                                                            state: values.state,
-                                                            energy_company: values.energy_company,
-                                                            unity: values.unity,
-                                                            kwh: values.kwh,
-                                                            irradiation: values.irradiation,
-                                                            month_01: values.month_01,
-                                                            month_02: values.month_02,
-                                                            month_03: values.month_03,
-                                                            month_04: values.month_04,
-                                                            month_05: values.month_05,
-                                                            month_06: values.month_06,
-                                                            month_07: values.month_07,
-                                                            month_08: values.month_08,
-                                                            month_09: values.month_09,
-                                                            month_10: values.month_10,
-                                                            month_11: values.month_11,
-                                                            month_12: values.month_12,
-                                                            month_13: values.month_13,
-                                                            average_increase: values.average_increase,
-                                                            discount: values.discount,
-                                                            increase: values.increase,
-                                                            percent: values.percent,
-                                                            show_values: values.show_values,
-                                                            show_discount: values.show_discount,
-                                                            notes: values.notes,
-                                                            user: values.user,
-                                                            panel: values.panel,
-                                                            roof_orientation: values.roof_orientation,
-                                                            roof_type: values.roof_type,
-                                                            status: values.status,
-                                                        });
+                                                        if (valuesCalcItem) {
+                                                            const items = estimateItemsList.map(item => {
+                                                                return {
+                                                                    name: item.name,
+                                                                    amount: item.amount,
+                                                                    price: item.price,
+                                                                    percent: item.percent,
+                                                                    order: item.order,
+                                                                }
+                                                            });
 
-                                                        setTypeMessage("success");
+                                                            const res = await api.post('estimates', {
+                                                                customer: values.customer,
+                                                                document: values.document,
+                                                                phone: values.phone,
+                                                                cellphone: values.cellphone,
+                                                                contacts: values.contacts,
+                                                                email: values.email,
+                                                                zip_code: values.zip_code,
+                                                                street: values.street,
+                                                                number: values.number,
+                                                                neighborhood: values.neighborhood,
+                                                                complement: values.complement,
+                                                                city: values.city,
+                                                                state: values.state,
+                                                                energy_company: values.energy_company,
+                                                                unity: values.unity,
+                                                                kwh: valuesCalcItem.kwh,
+                                                                irradiation: valuesCalcItem.irradiation,
+                                                                month_01: valuesCalcItem.month_01,
+                                                                month_02: valuesCalcItem.month_02,
+                                                                month_03: valuesCalcItem.month_03,
+                                                                month_04: valuesCalcItem.month_04,
+                                                                month_05: valuesCalcItem.month_05,
+                                                                month_06: valuesCalcItem.month_06,
+                                                                month_07: valuesCalcItem.month_07,
+                                                                month_08: valuesCalcItem.month_08,
+                                                                month_09: valuesCalcItem.month_09,
+                                                                month_10: valuesCalcItem.month_10,
+                                                                month_11: valuesCalcItem.month_11,
+                                                                month_12: valuesCalcItem.month_12,
+                                                                month_13: valuesCalcItem.month_13,
+                                                                average_increase: valuesCalcItem.averageIncrease,
+                                                                discount: valuesCalcItem.discount,
+                                                                increase: valuesCalcItem.increase,
+                                                                percent: values.percent,
+                                                                show_values: values.show_values,
+                                                                show_discount: values.show_discount,
+                                                                notes: values.notes,
+                                                                user: values.user,
+                                                                panel: values.panel,
+                                                                roof_orientation: values.roof_orientation,
+                                                                roof_type: values.roof_type,
+                                                                status: values.status,
+                                                                items,
+                                                            });
 
-                                                        setTimeout(() => {
-                                                            router.push(`/estimates/details/${res.data.id}`)
-                                                        }, 2000);
+                                                            setTypeMessage("success");
+
+                                                            setTimeout(() => {
+                                                                router.push(`/estimates/details/${res.data.id}`)
+                                                            }, 1000);
+                                                        }
                                                     }
                                                     catch {
                                                         setTypeMessage("error");
@@ -794,7 +809,7 @@ export default function NewCustomer() {
 
                                                         <Row className="mb-3">
                                                             <Form.Group as={Col} sm={3} controlId="formGridKwh">
-                                                                <Form.Label>Valor unitário do Quilowatts x Hora</Form.Label>
+                                                                <Form.Label>Valor unitário do Quilowatts/Hora</Form.Label>
                                                                 <Form.Control
                                                                     type="text"
                                                                     onChange={(e) => {
@@ -1580,6 +1595,26 @@ export default function NewCustomer() {
                                                                         readOnly
                                                                     />
                                                                 </InputGroup>
+                                                            </Form.Group>
+
+                                                            <Form.Group as={Col} sm={4} controlId="formGridStatus">
+                                                                <Form.Label>Fase</Form.Label>
+                                                                <Form.Control
+                                                                    as="select"
+                                                                    onChange={handleChange}
+                                                                    onBlur={handleBlur}
+                                                                    value={values.status}
+                                                                    name="status"
+                                                                    isInvalid={!!errors.status && touched.status}
+                                                                >
+                                                                    <option hidden>...</option>
+                                                                    {
+                                                                        estimateStatusList.map((status, index) => {
+                                                                            return <option key={index} value={status.id}>{status.name}</option>
+                                                                        })
+                                                                    }
+                                                                </Form.Control>
+                                                                <Form.Control.Feedback type="invalid">{touched.status && errors.status}</Form.Control.Feedback>
                                                             </Form.Group>
                                                         </Row>
 

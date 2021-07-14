@@ -13,7 +13,11 @@ export interface Estimate {
     cellphone: string;
     contacts: string;
     email: string;
-    address: string;
+    zip_code: string;
+    street: string;
+    number: string;
+    neighborhood: string;
+    complement: string;
     city: string;
     state: string;
     energy_company: string;
@@ -49,5 +53,5 @@ export interface Estimate {
     roof_orientation: RoofOrientation;
     roof_type: RoofType;
     status: EstimateStatus;
-    items: EstimateItem;
+    items: EstimateItem[];
 }

@@ -44,7 +44,7 @@ export interface CalcResultProps {
     estimateItems: EstimateItem[];
 }
 
-export function Calculate(props: CalcProps) {
+export function calculate(props: CalcProps) {
     console.log('props: ', props);
     // Average
     const sum = props.month_01
@@ -65,6 +65,7 @@ export function Calculate(props: CalcProps) {
 
     // Final average
     const finalAverageKwh = monthsAverageKwh + props.averageIncrease;
+
 
     // Monthly and yearly paid
     const monthlyPaid = finalAverageKwh * props.kwh;

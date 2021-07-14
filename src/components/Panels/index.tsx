@@ -13,6 +13,8 @@ export interface Panel {
     id: string;
     name: string;
     capacity: number;
+    width: number;
+    height: number;
     paused: boolean;
     order: number;
     prices: PanelPrice[];

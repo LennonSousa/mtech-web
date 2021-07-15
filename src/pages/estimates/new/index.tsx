@@ -207,7 +207,7 @@ export default function NewCustomer() {
             }
         }
 
-    }, [user]); activePage
+    }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
     function handleCalcEstimate(values: CalcProps) {
         const calcResults = calculate(values);

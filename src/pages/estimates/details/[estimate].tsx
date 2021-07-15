@@ -59,26 +59,26 @@ export default function PropertyDetails() {
                         setData(estimateRes);
 
                         const valuesCalcItem: CalcProps = {
-                            kwh: Number(estimateRes.kwh),
-                            irradiation: Number(estimateRes.irradiation),
+                            kwh: estimateRes.kwh,
+                            irradiation: estimateRes.irradiation,
                             panel: estimateRes.panel,
-                            month_01: Number(estimateRes.month_01),
-                            month_02: Number(estimateRes.month_02),
-                            month_03: Number(estimateRes.month_03),
-                            month_04: Number(estimateRes.month_04),
-                            month_05: Number(estimateRes.month_05),
-                            month_06: Number(estimateRes.month_06),
-                            month_07: Number(estimateRes.month_07),
-                            month_08: Number(estimateRes.month_08),
-                            month_09: Number(estimateRes.month_09),
-                            month_10: Number(estimateRes.month_10),
-                            month_11: Number(estimateRes.month_11),
-                            month_12: Number(estimateRes.month_12),
-                            month_13: Number(estimateRes.month_13),
-                            averageIncrease: Number(estimateRes.average_increase),
+                            month_01: estimateRes.month_01,
+                            month_02: estimateRes.month_02,
+                            month_03: estimateRes.month_03,
+                            month_04: estimateRes.month_04,
+                            month_05: estimateRes.month_05,
+                            month_06: estimateRes.month_06,
+                            month_07: estimateRes.month_07,
+                            month_08: estimateRes.month_08,
+                            month_09: estimateRes.month_09,
+                            month_10: estimateRes.month_10,
+                            month_11: estimateRes.month_11,
+                            month_12: estimateRes.month_12,
+                            month_13: estimateRes.month_13,
+                            averageIncrease: estimateRes.average_increase,
                             roofOrientation: estimateRes.roof_orientation,
-                            discount: Number(estimateRes.discount),
-                            increase: Number(estimateRes.increase),
+                            discount: estimateRes.discount,
+                            increase: estimateRes.increase,
                             percent: estimateRes.percent,
                             estimateItems: estimateRes.items,
                         }
@@ -467,7 +467,7 @@ export default function PropertyDetails() {
 
                                                                         <Row>
                                                                             <Col>
-                                                                                <h6 className="text-secondary">{`${data.panel.name} - ${prettifyCurrency(String(data.panel.capacity))} Wp`}</h6>
+                                                                                <h6 className="text-secondary">{`${data.panel.name} - ${prettifyCurrency(String(data.panel.capacity))} W`}</h6>
                                                                             </Col>
                                                                         </Row>
                                                                     </Col>
@@ -779,7 +779,7 @@ export default function PropertyDetails() {
 
                                                                         <Row>
                                                                             <Col>
-                                                                                <h6 className="text-secondary">{`${prettifyCurrency(String(calcResults.systemCapacityKwp.toFixed(2)))} Wp`} </h6>
+                                                                                <h6 className="text-secondary">{`${prettifyCurrency(String(calcResults.systemCapacityKwp.toFixed(2)))} kWp`} </h6>
                                                                             </Col>
                                                                         </Row>
                                                                     </Col>
@@ -851,7 +851,7 @@ export default function PropertyDetails() {
 
                                                                         <Row>
                                                                             <Col>
-                                                                                <h6 className="text-secondary">{`${prettifyCurrency(String(calcResults.finalSystemCapacityKwp.toFixed(2)))} Wp`}</h6>
+                                                                                <h6 className="text-secondary">{`${prettifyCurrency(String(calcResults.finalSystemCapacityKwp.toFixed(2)))} kWp`}</h6>
                                                                             </Col>
                                                                         </Row>
                                                                     </Col>

@@ -129,7 +129,7 @@ export default function UserDetails() {
 
                                                                         <Row>
                                                                             <Col>
-                                                                                <h6 className="text-secondary">{`${prettifyCurrency(String(data.capacity))} Wp`}</h6>
+                                                                                <h6 className="text-secondary">{`${prettifyCurrency(String(data.capacity))} kWp`}</h6>
                                                                             </Col>
                                                                         </Row>
                                                                     </Col>

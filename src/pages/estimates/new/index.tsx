@@ -238,7 +238,7 @@ export default function NewCustomer() {
         }
     }
 
-    function handleValues(values: any) {
+    function handleFormValues(values: any) {
         try {
             const panel = panels.find(panel => { return panel.id === values['panel'] });
             const roofOrientation = roofOrientations.find(roofOrientation => { return roofOrientation.id === values['roof_orientation'] });
@@ -246,26 +246,26 @@ export default function NewCustomer() {
             if (!panel || !roofOrientation) return undefined;
 
             const valuesCalcItem: CalcProps = {
-                kwh: Number(values['kwh'].replace('.', '').replace(',', '.')),
-                irradiation: Number(values['irradiation'].replace('.', '').replace(',', '.')),
+                kwh: values['kwh'].replace('.', '').replace(',', '.'),
+                irradiation: values['irradiation'].replace('.', '').replace(',', '.'),
                 panel,
-                month_01: Number(values['month_01'].replace('.', '').replace(',', '.')),
-                month_02: Number(values['month_02'].replace('.', '').replace(',', '.')),
-                month_03: Number(values['month_03'].replace('.', '').replace(',', '.')),
-                month_04: Number(values['month_04'].replace('.', '').replace(',', '.')),
-                month_05: Number(values['month_05'].replace('.', '').replace(',', '.')),
-                month_06: Number(values['month_06'].replace('.', '').replace(',', '.')),
-                month_07: Number(values['month_07'].replace('.', '').replace(',', '.')),
-                month_08: Number(values['month_08'].replace('.', '').replace(',', '.')),
-                month_09: Number(values['month_09'].replace('.', '').replace(',', '.')),
-                month_10: Number(values['month_10'].replace('.', '').replace(',', '.')),
-                month_11: Number(values['month_11'].replace('.', '').replace(',', '.')),
-                month_12: Number(values['month_12'].replace('.', '').replace(',', '.')),
-                month_13: Number(values['month_13'].replace('.', '').replace(',', '.')),
-                averageIncrease: Number(values['average_increase'].replace('.', '').replace(',', '.')),
+                month_01: values['month_01'].replace('.', '').replace(',', '.'),
+                month_02: values['month_02'].replace('.', '').replace(',', '.'),
+                month_03: values['month_03'].replace('.', '').replace(',', '.'),
+                month_04: values['month_04'].replace('.', '').replace(',', '.'),
+                month_05: values['month_05'].replace('.', '').replace(',', '.'),
+                month_06: values['month_06'].replace('.', '').replace(',', '.'),
+                month_07: values['month_07'].replace('.', '').replace(',', '.'),
+                month_08: values['month_08'].replace('.', '').replace(',', '.'),
+                month_09: values['month_09'].replace('.', '').replace(',', '.'),
+                month_10: values['month_10'].replace('.', '').replace(',', '.'),
+                month_11: values['month_11'].replace('.', '').replace(',', '.'),
+                month_12: values['month_12'].replace('.', '').replace(',', '.'),
+                month_13: values['month_13'].replace('.', '').replace(',', '.'),
+                averageIncrease: values['average_increase'].replace('.', '').replace(',', '.'),
                 roofOrientation: roofOrientation,
-                discount: Number(values['discount'].replace('.', '').replace(',', '.')),
-                increase: Number(values['increase'].replace('.', '').replace(',', '.')),
+                discount: values['discount'].replace('.', '').replace(',', '.'),
+                increase: values['increase'].replace('.', '').replace(',', '.'),
                 percent: values['percent'],
                 estimateItems: estimateItemsList,
             }
@@ -317,7 +317,7 @@ export default function NewCustomer() {
                 !user || loading ? <PageWaiting status="waiting" /> :
                     <>
                         {
-                            can(user, "projects", "create") ? <>
+                            can(user, "estimates", "create") ? <>
                                 {
                                     loadingData || hasErrors ? <PageWaiting
                                         status={typeLoadingMessage}
@@ -392,7 +392,7 @@ export default function NewCustomer() {
                                                     setTypeMessage("waiting");
                                                     setMessageShow(true);
 
-                                                    const valuesCalcItem = handleValues(values);
+                                                    const valuesCalcItem = handleFormValues(values);
 
                                                     try {
                                                         if (valuesCalcItem) {
@@ -818,7 +818,7 @@ export default function NewCustomer() {
                                                                     onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
                                                                         setFieldValue('kwh', prettifyCurrency(e.target.value));
 
-                                                                        const calcValues = handleValues(values);
+                                                                        const calcValues = handleFormValues(values);
 
                                                                         if (calcValues) handleCalcEstimate(calcValues);
                                                                     }}
@@ -839,7 +839,7 @@ export default function NewCustomer() {
                                                                     onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
                                                                         setFieldValue('irradiation', prettifyCurrency(e.target.value));
 
-                                                                        const calcValues = handleValues(values);
+                                                                        const calcValues = handleFormValues(values);
 
                                                                         if (calcValues) handleCalcEstimate(calcValues);
                                                                     }}
@@ -851,13 +851,13 @@ export default function NewCustomer() {
                                                             </Form.Group>
 
                                                             <Form.Group as={Col} sm={3} controlId="formGridPanel">
-                                                                <Form.Label>Painél fotovoltaico (Wp)</Form.Label>
+                                                                <Form.Label>Painél fotovoltaico (W)</Form.Label>
                                                                 <Form.Control
                                                                     as="select"
                                                                     onChange={(e) => {
                                                                         setFieldValue('panel', e.target.value);
 
-                                                                        const calcValues = handleValues(values);
+                                                                        const calcValues = handleFormValues(values);
 
                                                                         if (calcValues) handleCalcEstimate(calcValues);
                                                                     }}
@@ -870,7 +870,7 @@ export default function NewCustomer() {
                                                                     {
                                                                         panels.map((panel, index) => {
                                                                             return <option key={index} value={panel.id}>{
-                                                                                `${panel.name} - ${prettifyCurrency(String(panel.capacity))} Wp`
+                                                                                `${panel.name} - ${prettifyCurrency(String(panel.capacity))} W`
                                                                             }</option>
                                                                         })
                                                                     }
@@ -885,7 +885,7 @@ export default function NewCustomer() {
                                                                     onChange={(e) => {
                                                                         setFieldValue('roof_orientation', e.target.value);
 
-                                                                        const calcValues = handleValues(values);
+                                                                        const calcValues = handleFormValues(values);
 
                                                                         if (calcValues) handleCalcEstimate(calcValues);
                                                                     }}
@@ -916,7 +916,7 @@ export default function NewCustomer() {
                                                                     onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
                                                                         setFieldValue('month_01', prettifyCurrency(e.target.value));
 
-                                                                        const calcValues = handleValues(values);
+                                                                        const calcValues = handleFormValues(values);
 
                                                                         if (calcValues) handleCalcEstimate(calcValues);
                                                                     }}
@@ -937,7 +937,7 @@ export default function NewCustomer() {
                                                                     onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
                                                                         setFieldValue('month_02', prettifyCurrency(e.target.value));
 
-                                                                        const calcValues = handleValues(values);
+                                                                        const calcValues = handleFormValues(values);
 
                                                                         if (calcValues) handleCalcEstimate(calcValues);
                                                                     }}
@@ -958,7 +958,7 @@ export default function NewCustomer() {
                                                                     onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
                                                                         setFieldValue('month_03', prettifyCurrency(e.target.value));
 
-                                                                        const calcValues = handleValues(values);
+                                                                        const calcValues = handleFormValues(values);
 
                                                                         if (calcValues) handleCalcEstimate(calcValues);
                                                                     }}
@@ -979,7 +979,7 @@ export default function NewCustomer() {
                                                                     onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
                                                                         setFieldValue('month_04', prettifyCurrency(e.target.value));
 
-                                                                        const calcValues = handleValues(values);
+                                                                        const calcValues = handleFormValues(values);
 
                                                                         if (calcValues) handleCalcEstimate(calcValues);
                                                                     }}
@@ -1002,7 +1002,7 @@ export default function NewCustomer() {
                                                                     onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
                                                                         setFieldValue('month_05', prettifyCurrency(e.target.value));
 
-                                                                        const calcValues = handleValues(values);
+                                                                        const calcValues = handleFormValues(values);
 
                                                                         if (calcValues) handleCalcEstimate(calcValues);
                                                                     }}
@@ -1023,7 +1023,7 @@ export default function NewCustomer() {
                                                                     onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
                                                                         setFieldValue('month_06', prettifyCurrency(e.target.value));
 
-                                                                        const calcValues = handleValues(values);
+                                                                        const calcValues = handleFormValues(values);
 
                                                                         if (calcValues) handleCalcEstimate(calcValues);
                                                                     }}
@@ -1044,7 +1044,7 @@ export default function NewCustomer() {
                                                                     onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
                                                                         setFieldValue('month_07', prettifyCurrency(e.target.value));
 
-                                                                        const calcValues = handleValues(values);
+                                                                        const calcValues = handleFormValues(values);
 
                                                                         if (calcValues) handleCalcEstimate(calcValues);
                                                                     }}
@@ -1065,7 +1065,7 @@ export default function NewCustomer() {
                                                                     onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
                                                                         setFieldValue('month_08', prettifyCurrency(e.target.value));
 
-                                                                        const calcValues = handleValues(values);
+                                                                        const calcValues = handleFormValues(values);
 
                                                                         if (calcValues) handleCalcEstimate(calcValues);
                                                                     }}
@@ -1088,7 +1088,7 @@ export default function NewCustomer() {
                                                                     onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
                                                                         setFieldValue('month_09', prettifyCurrency(e.target.value));
 
-                                                                        const calcValues = handleValues(values);
+                                                                        const calcValues = handleFormValues(values);
 
                                                                         if (calcValues) handleCalcEstimate(calcValues);
                                                                     }}
@@ -1109,7 +1109,7 @@ export default function NewCustomer() {
                                                                     onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
                                                                         setFieldValue('month_10', prettifyCurrency(e.target.value));
 
-                                                                        const calcValues = handleValues(values);
+                                                                        const calcValues = handleFormValues(values);
 
                                                                         if (calcValues) handleCalcEstimate(calcValues);
                                                                     }}
@@ -1130,7 +1130,7 @@ export default function NewCustomer() {
                                                                     onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
                                                                         setFieldValue('month_11', prettifyCurrency(e.target.value));
 
-                                                                        const calcValues = handleValues(values);
+                                                                        const calcValues = handleFormValues(values);
 
                                                                         if (calcValues) handleCalcEstimate(calcValues);
                                                                     }}
@@ -1151,7 +1151,7 @@ export default function NewCustomer() {
                                                                     onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
                                                                         setFieldValue('month_12', prettifyCurrency(e.target.value));
 
-                                                                        const calcValues = handleValues(values);
+                                                                        const calcValues = handleFormValues(values);
 
                                                                         if (calcValues) handleCalcEstimate(calcValues);
                                                                     }}
@@ -1174,7 +1174,7 @@ export default function NewCustomer() {
                                                                     onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
                                                                         setFieldValue('month_13', prettifyCurrency(e.target.value));
 
-                                                                        const calcValues = handleValues(values);
+                                                                        const calcValues = handleFormValues(values);
 
                                                                         if (calcValues) handleCalcEstimate(calcValues);
                                                                     }}
@@ -1216,7 +1216,7 @@ export default function NewCustomer() {
                                                                         onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
                                                                             setFieldValue('average_increase', prettifyCurrency(e.target.value));
 
-                                                                            const calcValues = handleValues(values);
+                                                                            const calcValues = handleFormValues(values);
 
                                                                             if (calcValues) handleCalcEstimate(calcValues);
                                                                         }}
@@ -1318,7 +1318,7 @@ export default function NewCustomer() {
                                                                 <Form.Label>Capacidade Total do Sistema Fotovoltaico</Form.Label>
                                                                 <InputGroup className="mb-2">
                                                                     <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupSystemCapacityKwp">Kwp</InputGroup.Text>
+                                                                        <InputGroup.Text id="btnGroupSystemCapacityKwp">kWp</InputGroup.Text>
                                                                     </InputGroup.Prepend>
                                                                     <Form.Control
                                                                         type="text"
@@ -1405,7 +1405,7 @@ export default function NewCustomer() {
                                                                 <Form.Label>Capacidade arredondada do Sistema</Form.Label>
                                                                 <InputGroup className="mb-2">
                                                                     <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupFinalSystemCapacity">Kwp</InputGroup.Text>
+                                                                        <InputGroup.Text id="btnGroupFinalSystemCapacity">kWp</InputGroup.Text>
                                                                     </InputGroup.Prepend>
                                                                     <Form.Control
                                                                         type="text"
@@ -1457,7 +1457,7 @@ export default function NewCustomer() {
                                                                     onChange={() => {
                                                                         setFieldValue('percent', !values.percent);
 
-                                                                        const calcValues = handleValues(values);
+                                                                        const calcValues = handleFormValues(values);
 
                                                                         if (calcValues) handleCalcEstimate(calcValues);
                                                                     }}
@@ -1478,7 +1478,7 @@ export default function NewCustomer() {
                                                                         onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
                                                                             setFieldValue('discount', prettifyCurrency(e.target.value));
 
-                                                                            const calcValues = handleValues(values);
+                                                                            const calcValues = handleFormValues(values);
 
                                                                             if (calcValues) handleCalcEstimate(calcValues);
                                                                         }}
@@ -1506,7 +1506,7 @@ export default function NewCustomer() {
                                                                         onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
                                                                             setFieldValue('increase', prettifyCurrency(e.target.value));
 
-                                                                            const calcValues = handleValues(values);
+                                                                            const calcValues = handleFormValues(values);
 
                                                                             if (calcValues) handleCalcEstimate(calcValues);
                                                                         }}
@@ -1580,9 +1580,9 @@ export default function NewCustomer() {
                                                             </Col>
                                                         </Row>
 
-                                                        <Row className="align-items-center">
+                                                        <Row className="align-items-end">
                                                             <Form.Group as={Col} sm={3} controlId="formGridFinalSystemPrice">
-                                                                <InputGroup className="mb-2">
+                                                                <InputGroup>
                                                                     <InputGroup.Prepend>
                                                                         <InputGroup.Text id="btnGroupFinalSystemPrice">R$</InputGroup.Text>
                                                                     </InputGroup.Prepend>

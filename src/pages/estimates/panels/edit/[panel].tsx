@@ -219,7 +219,7 @@ export default function UserEdit() {
                                                                                 <Form.Label>Capacidade</Form.Label>
                                                                                 <InputGroup className="mb-2">
                                                                                     <InputGroup.Prepend>
-                                                                                        <InputGroup.Text id="btnGroupCapacity">Wp</InputGroup.Text>
+                                                                                        <InputGroup.Text id="btnGroupCapacity">kWp</InputGroup.Text>
                                                                                     </InputGroup.Prepend>
                                                                                     <Form.Control
                                                                                         type="text"
@@ -395,7 +395,7 @@ export default function UserEdit() {
                                                                                         <Form.Label>Potência</Form.Label>
                                                                                         <InputGroup className="mb-2">
                                                                                             <InputGroup.Prepend>
-                                                                                                <InputGroup.Text id="btnGroupPotency">Kwp</InputGroup.Text>
+                                                                                                <InputGroup.Text id="btnGroupPotency">kWp</InputGroup.Text>
                                                                                             </InputGroup.Prepend>
                                                                                             <Form.Control
                                                                                                 type="text"

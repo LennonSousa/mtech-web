@@ -64,7 +64,7 @@ const Panels: React.FC<PanelsProps> = ({ panel, handleListPanels }) => {
 
                 <Col><span>{panel.name}</span></Col>
 
-                <Col><span>{`${prettifyCurrency(String(panel.capacity))} Wp`}</span></Col>
+                <Col><span>{`${prettifyCurrency(String(panel.capacity))} W`}</span></Col>
 
                 <Col className="col-row text-end">
                     <Button

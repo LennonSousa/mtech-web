@@ -77,7 +77,7 @@ const PanelPrices: React.FC<PanelPricesProps> = ({ panelPrice, canEdit = true, h
     return (
         <ListGroup.Item variant="light">
             <Row className="align-items-center">
-                <Col><span>{`${prettifyCurrency(String(panelPrice.potency))} Kwp`}</span></Col>
+                <Col><span>{`${prettifyCurrency(String(panelPrice.potency))} kWp`}</span></Col>
 
                 <Col><span>{panelPrice.inversor}</span></Col>
 
@@ -143,7 +143,7 @@ const PanelPrices: React.FC<PanelPricesProps> = ({ panelPrice, canEdit = true, h
                                         <Form.Label>Potência</Form.Label>
                                         <InputGroup className="mb-2">
                                             <InputGroup.Prepend>
-                                                <InputGroup.Text id="btnGroupPotency">Kwp</InputGroup.Text>
+                                                <InputGroup.Text id="btnGroupPotency">kWp</InputGroup.Text>
                                             </InputGroup.Prepend>
                                             <Form.Control
                                                 type="text"

@@ -68,26 +68,26 @@ export default function PropertyDetails() {
                         setData(estimateRes);
 
                         const valuesCalcItem: CalcProps = {
-                            kwh: Number(estimateRes.kwh),
-                            irradiation: Number(estimateRes.irradiation),
+                            kwh: estimateRes.kwh,
+                            irradiation: estimateRes.irradiation,
                             panel: estimateRes.panel,
-                            month_01: Number(estimateRes.month_01),
-                            month_02: Number(estimateRes.month_02),
-                            month_03: Number(estimateRes.month_03),
-                            month_04: Number(estimateRes.month_04),
-                            month_05: Number(estimateRes.month_05),
-                            month_06: Number(estimateRes.month_06),
-                            month_07: Number(estimateRes.month_07),
-                            month_08: Number(estimateRes.month_08),
-                            month_09: Number(estimateRes.month_09),
-                            month_10: Number(estimateRes.month_10),
-                            month_11: Number(estimateRes.month_11),
-                            month_12: Number(estimateRes.month_12),
-                            month_13: Number(estimateRes.month_13),
-                            averageIncrease: Number(estimateRes.average_increase),
+                            month_01: estimateRes.month_01,
+                            month_02: estimateRes.month_02,
+                            month_03: estimateRes.month_03,
+                            month_04: estimateRes.month_04,
+                            month_05: estimateRes.month_05,
+                            month_06: estimateRes.month_06,
+                            month_07: estimateRes.month_07,
+                            month_08: estimateRes.month_08,
+                            month_09: estimateRes.month_09,
+                            month_10: estimateRes.month_10,
+                            month_11: estimateRes.month_11,
+                            month_12: estimateRes.month_12,
+                            month_13: estimateRes.month_13,
+                            averageIncrease: estimateRes.average_increase,
                             roofOrientation: estimateRes.roof_orientation,
-                            discount: Number(estimateRes.discount),
-                            increase: Number(estimateRes.increase),
+                            discount: estimateRes.discount,
+                            increase: estimateRes.increase,
                             percent: estimateRes.percent,
                             estimateItems: estimateRes.items,
                         }
@@ -192,7 +192,8 @@ export default function PropertyDetails() {
 
                                                                 <Row className="mb-3 text-center">
                                                                     <Col>
-                                                                        <h3 className="text-info">ORÇAMENTO DE PROJETO EM ENERGIA SOLAR</h3>
+                                                                        <h4 className="text-dark text-wrap">PROPOSTA TÉCNICA E COMERCIAL<br></br>
+                                                                            PARA FORNECIMENTO DE SISTEMA SOLAR FOTOVOLTAICO</h4>
                                                                     </Col>
                                                                 </Row>
 
@@ -200,25 +201,31 @@ export default function PropertyDetails() {
                                                                     <Col sm={9}>
                                                                         <Row>
                                                                             <Col>
-                                                                                <h5 className="text-info">{store.title}</h5>
+                                                                                <h5 className="text-dark">{store.title}</h5>
                                                                             </Col>
                                                                         </Row>
 
                                                                         <Row>
                                                                             <Col>
-                                                                                <h6 className="text-info">{`${store.street}, ${store.number} - ${store.neighborhood}`}</h6>
+                                                                                <h6 className="text-dark">{`${store.street}, ${store.number} - ${store.neighborhood}`}</h6>
                                                                             </Col>
                                                                         </Row>
 
                                                                         <Row>
                                                                             <Col>
-                                                                                <h6 className="text-info">{store.complement}</h6>
+                                                                                <h6 className="text-dark">{store.complement}</h6>
                                                                             </Col>
                                                                         </Row>
 
                                                                         <Row>
                                                                             <Col>
-                                                                                <h6 className="text-info">{`${store.zip_code}, ${store.city} - ${store.state}`}</h6>
+                                                                                <h6 className="text-dark">{`${store.zip_code}, ${store.city} - ${store.state}`}</h6>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-dark">{`${store.phone}, ${store.email}`}</h6>
                                                                             </Col>
                                                                         </Row>
                                                                     </Col>
@@ -514,7 +521,7 @@ export default function PropertyDetails() {
 
                                                                         <Row>
                                                                             <Col>
-                                                                                <h6 className="text-secondary">{`${data.panel.name} - ${prettifyCurrency(String(data.panel.capacity))} Wp`}</h6>
+                                                                                <h6 className="text-secondary">{`${data.panel.name} - ${prettifyCurrency(String(data.panel.capacity))} W`}</h6>
                                                                             </Col>
                                                                         </Row>
                                                                     </Col>
@@ -886,7 +893,7 @@ export default function PropertyDetails() {
 
                                                                         <Row>
                                                                             <Col>
-                                                                                <h6 className="text-secondary">{`${prettifyCurrency(String(calcResults.finalSystemCapacityKwp.toFixed(2)))} Wp`}</h6>
+                                                                                <h6 className="text-secondary">{`${prettifyCurrency(String(calcResults.finalSystemCapacityKwp.toFixed(2)))} kWp`}</h6>
                                                                             </Col>
                                                                         </Row>
                                                                     </Col>
@@ -1045,7 +1052,7 @@ export default function PropertyDetails() {
 
                                                                 <Row className="mb-3">
                                                                     <Col>
-                                                                        <span className="text-secondary text-wrap">{store.warranty}</span>
+                                                                        <span className="text-secondary text-wrap">{`${store.warranty}`}</span>
                                                                     </Col>
                                                                 </Row>
 
@@ -1122,7 +1129,7 @@ export default function PropertyDetails() {
 
                                                                 <Row className="justify-content-center">
                                                                     <Col sm={8}>
-                                                                        <h6 className="text-dark">{store.title}</h6>
+                                                                        <h6 className="text-dark">{store.name}</h6>
                                                                     </Col>
                                                                 </Row>
 

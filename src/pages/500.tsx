@@ -17,10 +17,10 @@ export default function Page500() {
           description: 'Erro interno da plataforma de gerenciamento da Mtech Solar.',
           images: [
             {
-              url: 'https://app.mtechsolar.com/assets/images/logo-bioma.jpg',
-              alt: 'Erro interno | Plataforma Bioma',
+              url: 'https://app.mtechsolar.com/assets/images/logo-mtech.jpg',
+              alt: 'Erro interno | Plataforma Mtech Solar',
             },
-            { url: 'https://app.mtechsolar.com/assets/images/logo-bioma.jpg' },
+            { url: 'https://app.mtechsolar.com/assets/images/logo-mtech.jpg' },
           ],
         }}
       />

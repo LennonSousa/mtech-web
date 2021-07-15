@@ -46,17 +46,17 @@ export default function NewCustomer({ authenticated, user, token }: InferGetServ
         <>
             <NextSeo
                 title="Criar nova senha"
-                description="Criar nova senha da plataforma de gerenciamento da Bioma consultoria."
+                description="Criar nova senha da plataforma de gerenciamento da Mtech Solar."
                 openGraph={{
-                    url: 'https://app.biomaconsultoria.com',
+                    url: 'https://app.mtechsolar.com.br',
                     title: 'Criar nova senha',
-                    description: 'Criar nova senha da plataforma de gerenciamento da Bioma consultoria.',
+                    description: 'Criar nova senha da plataforma de gerenciamento da Mtech Solar.',
                     images: [
                         {
-                            url: 'https://app.biomaconsultoria.com/assets/images/logo-bioma.jpg',
-                            alt: 'Criar nova senha | Plataforma Bioma',
+                            url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
+                            alt: 'Criar nova senha | Plataforma Mtech Solar',
                         },
-                        { url: 'https://app.biomaconsultoria.com/assets/images/logo-bioma.jpg' },
+                        { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
                     ],
                 }}
             />
@@ -71,7 +71,7 @@ export default function NewCustomer({ authenticated, user, token }: InferGetServ
                                         <Col md={6} className="mt-1 mb-4">
                                             <Row className="justify-content-center align-items-center">
                                                 <Col sm={8}>
-                                                    <Image fluid src="/assets/images/logo-bioma.svg" alt="Bioma consultoria." />
+                                                    <Image fluid src="/assets/images/logo-mtech.svg" alt="Mtech Solar." />
                                                 </Col>
                                             </Row>
                                         </Col>

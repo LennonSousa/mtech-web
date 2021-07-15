@@ -59,7 +59,7 @@ export default function Types() {
                 });
             }
         }
-    }, [user]);
+    }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
     async function handleListStatus() {
         const res = await api.get('estimates/status');
@@ -109,17 +109,17 @@ export default function Types() {
         <>
             <NextSeo
                 title="Fases do orçamento"
-                description="Fases do orçamento da plataforma de gerenciamento da Bioma consultoria."
+                description="Fases do orçamento da plataforma de gerenciamento da Mtech Solar."
                 openGraph={{
-                    url: 'https://app.biomaconsultoria.com',
+                    url: 'https://app.mtechsolar.com.br',
                     title: 'Fases do orçamento',
-                    description: 'Fases do orçamento da plataforma de gerenciamento da Bioma consultoria.',
+                    description: 'Fases do orçamento da plataforma de gerenciamento da Mtech Solar.',
                     images: [
                         {
-                            url: 'https://app.biomaconsultoria.com/assets/images/logo-bioma.jpg',
-                            alt: 'Fases do orçamento | Plataforma Bioma',
+                            url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
+                            alt: 'Fases do orçamento | Plataforma Mtech Solar',
                         },
-                        { url: 'https://app.biomaconsultoria.com/assets/images/logo-bioma.jpg' },
+                        { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
                     ],
                 }}
             />

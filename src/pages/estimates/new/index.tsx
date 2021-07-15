@@ -207,7 +207,7 @@ export default function NewCustomer() {
             }
         }
 
-    }, [user]);
+    }, [user]); activePage
 
     function handleCalcEstimate(values: CalcProps) {
         const calcResults = calculate(values);
@@ -298,17 +298,17 @@ export default function NewCustomer() {
         <>
             <NextSeo
                 title="Criar orçamento"
-                description="Criar orçamento da plataforma de gerenciamento da Bioma consultoria."
+                description="Criar orçamento da plataforma de gerenciamento da Mtech Solar."
                 openGraph={{
-                    url: 'https://app.biomaconsultoria.com',
+                    url: 'https://app.mtechsolar.com.br',
                     title: 'Criar orçamento',
-                    description: 'Criar orçamento da plataforma de gerenciamento da Bioma consultoria.',
+                    description: 'Criar orçamento da plataforma de gerenciamento da Mtech Solar.',
                     images: [
                         {
-                            url: 'https://app.biomaconsultoria.com/assets/images/logo-bioma.jpg',
-                            alt: 'Criar orçamento | Plataforma Bioma',
+                            url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
+                            alt: 'Criar orçamento | Plataforma Mtech Solar',
                         },
-                        { url: 'https://app.biomaconsultoria.com/assets/images/logo-bioma.jpg' },
+                        { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
                     ],
                 }}
             />

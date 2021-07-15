@@ -43,7 +43,7 @@ export default function Login() {
           images: [
             {
               url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
-              alt: 'Bem-vindo(a) | Plataforma Bioma',
+              alt: 'Bem-vindo(a) | Plataforma Mtech Solar',
             },
             { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
           ],

@@ -48,7 +48,7 @@ const Sidebar: React.FC = () => {
         }
 
         setShowPageHeader(show);
-    }, [signed, router.route, user]);
+    }, [signed, router.route, user, pathsNotShow]);
 
     function handleToDashboard() {
         router.push('/dashboard');

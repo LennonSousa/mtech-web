@@ -60,7 +60,7 @@ export default function UserDetails() {
                 });
             }
         }
-    }, [user]);
+    }, [user, userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
     function handleRoute(route: string) {
         router.push(route);
@@ -70,17 +70,17 @@ export default function UserDetails() {
         <>
             <NextSeo
                 title="Detalhes do usuário"
-                description="Detalhes do usuário da plataforma de gerenciamento da Bioma consultoria."
+                description="Detalhes do usuário da plataforma de gerenciamento da Mtech Solar."
                 openGraph={{
-                    url: 'https://app.biomaconsultoria.com',
+                    url: 'https://app.mtechsolar.com.br',
                     title: 'Detalhes do usuário',
-                    description: 'Detalhes do usuário da plataforma de gerenciamento da Bioma consultoria.',
+                    description: 'Detalhes do usuário da plataforma de gerenciamento da Mtech Solar.',
                     images: [
                         {
-                            url: 'https://app.biomaconsultoria.com/assets/images/logo-bioma.jpg',
-                            alt: 'Detalhes do usuário | Plataforma Bioma',
+                            url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
+                            alt: 'Detalhes do usuário | Plataforma Mtech Solar',
                         },
-                        { url: 'https://app.biomaconsultoria.com/assets/images/logo-bioma.jpg' },
+                        { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
                     ],
                 }}
             />

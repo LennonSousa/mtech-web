@@ -59,7 +59,7 @@ export default function Types() {
                 });
             }
         }
-    }, [user]);
+    }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
     async function handleListTypes() {
         const res = await api.get('roofs/types');
@@ -109,17 +109,17 @@ export default function Types() {
         <>
             <NextSeo
                 title="Tipos de telhado"
-                description="Tipos de telhado da plataforma de gerenciamento da Bioma consultoria."
+                description="Tipos de telhado da plataforma de gerenciamento da Mtech Solar."
                 openGraph={{
-                    url: 'https://app.biomaconsultoria.com',
+                    url: 'https://app.mtechsolar.com.br',
                     title: 'Tipos de telhado',
-                    description: 'Tipos de telhado da plataforma de gerenciamento da Bioma consultoria.',
+                    description: 'Tipos de telhado da plataforma de gerenciamento da Mtech Solar.',
                     images: [
                         {
-                            url: 'https://app.biomaconsultoria.com/assets/images/logo-bioma.jpg',
-                            alt: 'Tipos de telhado | Plataforma Bioma',
+                            url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
+                            alt: 'Tipos de telhado | Plataforma Mtech Solar',
                         },
-                        { url: 'https://app.biomaconsultoria.com/assets/images/logo-bioma.jpg' },
+                        { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
                     ],
                 }}
             />

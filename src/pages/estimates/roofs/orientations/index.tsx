@@ -60,7 +60,7 @@ export default function Types() {
                 });
             }
         }
-    }, [user]);
+    }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
     async function handleListOrientations() {
         const res = await api.get('roofs/orientations');
@@ -110,17 +110,17 @@ export default function Types() {
         <>
             <NextSeo
                 title="Orientaçõs de telhado"
-                description="Orientaçõs de telhado da plataforma de gerenciamento da Bioma consultoria."
+                description="Orientaçõs de telhado da plataforma de gerenciamento da Mtech Solar."
                 openGraph={{
-                    url: 'https://app.biomaconsultoria.com',
+                    url: 'https://app.mtechsolar.com.br',
                     title: 'Orientaçõs de telhado',
-                    description: 'Orientaçõs de telhado da plataforma de gerenciamento da Bioma consultoria.',
+                    description: 'Orientaçõs de telhado da plataforma de gerenciamento da Mtech Solar.',
                     images: [
                         {
-                            url: 'https://app.biomaconsultoria.com/assets/images/logo-bioma.jpg',
-                            alt: 'Orientaçõs de telhado | Plataforma Bioma',
+                            url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
+                            alt: 'Orientaçõs de telhado | Plataforma Mtech Solar',
                         },
-                        { url: 'https://app.biomaconsultoria.com/assets/images/logo-bioma.jpg' },
+                        { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
                     ],
                 }}
             />

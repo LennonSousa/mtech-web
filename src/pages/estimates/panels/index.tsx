@@ -57,17 +57,17 @@ export default function PanelsPage() {
         <>
             <NextSeo
                 title="Lista de painéis"
-                description="Lista de painéis da plataforma de gerenciamento da Bioma consultoria."
+                description="Lista de painéis da plataforma de gerenciamento da Mtech Solar."
                 openGraph={{
-                    url: 'https://app.biomaconsultoria.com',
+                    url: 'https://app.mtechsolar.com.br',
                     title: 'Lista de painéis',
-                    description: 'Lista de painéis da plataforma de gerenciamento da Bioma consultoria.',
+                    description: 'Lista de painéis da plataforma de gerenciamento da Mtech Solar.',
                     images: [
                         {
-                            url: 'https://app.biomaconsultoria.com/assets/images/logo-bioma.jpg',
-                            alt: 'Lista de painéis | Plataforma Bioma',
+                            url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
+                            alt: 'Lista de painéis | Plataforma Mtech Solar',
                         },
-                        { url: 'https://app.biomaconsultoria.com/assets/images/logo-bioma.jpg' },
+                        { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
                     ],
                 }}
             />

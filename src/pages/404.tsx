@@ -10,17 +10,17 @@ export default function Page404() {
     <>
       <NextSeo
         title="Página não encontrada"
-        description="Página não encontrada da plataforma de gerenciamento da Bioma consultoria."
+        description="Página não encontrada da plataforma de gerenciamento da Mtech Solar."
         openGraph={{
-          url: 'https://app.biomaconsultoria.com',
+          url: 'https://app.mtechsolar.com.br',
           title: 'Página não encontrada',
-          description: 'Página não encontrada da plataforma de gerenciamento da Bioma consultoria.',
+          description: 'Página não encontrada da plataforma de gerenciamento da Mtech Solar.',
           images: [
             {
-              url: 'https://app.biomaconsultoria.com/assets/images/logo-bioma.jpg',
-              alt: 'Página não encontrada | Plataforma Bioma',
+              url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
+              alt: 'Página não encontrada | Plataforma Mtech Solar',
             },
-            { url: 'https://app.biomaconsultoria.com/assets/images/logo-bioma.jpg' },
+            { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
           ],
         }}
       />

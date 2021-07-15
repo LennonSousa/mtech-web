@@ -131,7 +131,7 @@ export default function PropertyDetails() {
                 }
             }
         }
-    }, [user, estimate]);
+    }, [user, estimate]); // eslint-disable-line react-hooks/exhaustive-deps
 
     function handleRoute(route: string) {
         router.push(route);
@@ -141,17 +141,17 @@ export default function PropertyDetails() {
         <>
             <NextSeo
                 title="Imprimir orçamento"
-                description="Imprimir orçamento da plataforma de gerenciamento da Bioma consultoria."
+                description="Imprimir orçamento da plataforma de gerenciamento da Mtech Solar."
                 openGraph={{
-                    url: 'https://app.biomaconsultoria.com',
+                    url: 'https://app.mtechsolar.com.br',
                     title: 'Imprimir orçamento',
-                    description: 'Imprimir orçamento da plataforma de gerenciamento da Bioma consultoria.',
+                    description: 'Imprimir orçamento da plataforma de gerenciamento da Mtech Solar.',
                     images: [
                         {
-                            url: 'https://app.biomaconsultoria.com/assets/images/logo-bioma.jpg',
-                            alt: 'Imprimir orçamento | Plataforma Bioma',
+                            url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
+                            alt: 'Imprimir orçamento | Plataforma Mtech Solar',
                         },
-                        { url: 'https://app.biomaconsultoria.com/assets/images/logo-bioma.jpg' },
+                        { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
                     ],
                 }}
             />

@@ -26,7 +26,7 @@ const Paginations: React.FC<WaitingModalProps> = ({ pages, active = 1, handleAct
         }
 
         setPageItems(items);
-    }, [pages, active]);
+    }, [pages, active]); // eslint-disable-line react-hooks/exhaustive-deps
 
     return (
         <Pagination size="sm">{pageItems}</Pagination>

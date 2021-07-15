@@ -81,7 +81,7 @@ export default function NewUser() {
             });
         }
 
-    }, [user]);
+    }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
     function handleChecks(event: ChangeEvent<HTMLInputElement>) {
         const roleId = event.target.value.split("-", 1)[0];
@@ -152,17 +152,17 @@ export default function NewUser() {
         <>
             <NextSeo
                 title="Criar usuário"
-                description="Criar usuário da plataforma de gerenciamento da Bioma consultoria."
+                description="Criar usuário da plataforma de gerenciamento da Mtech Solar."
                 openGraph={{
-                    url: 'https://app.biomaconsultoria.com',
+                    url: 'https://app.mtechsolar.com.br',
                     title: 'Criar usuário',
-                    description: 'Criar usuário da plataforma de gerenciamento da Bioma consultoria.',
+                    description: 'Criar usuário da plataforma de gerenciamento da Mtech Solar.',
                     images: [
                         {
-                            url: 'https://app.biomaconsultoria.com/assets/images/logo-bioma.jpg',
-                            alt: 'Criar usuário | Plataforma Bioma',
+                            url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
+                            alt: 'Criar usuário | Plataforma Mtech Solar',
                         },
-                        { url: 'https://app.biomaconsultoria.com/assets/images/logo-bioma.jpg' },
+                        { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
                     ],
                 }}
             />

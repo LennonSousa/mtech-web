@@ -40,7 +40,7 @@ export default function UsersPage() {
                 setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
             });
         }
-    }, [user]);
+    }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
     async function handleListUsers() {
         const res = await api.get('users');
@@ -56,17 +56,17 @@ export default function UsersPage() {
         <>
             <NextSeo
                 title="Lista de usuários"
-                description="Lista de usuários da plataforma de gerenciamento da Bioma consultoria."
+                description="Lista de usuários da plataforma de gerenciamento da Mtech Solar."
                 openGraph={{
-                    url: 'https://app.biomaconsultoria.com',
+                    url: 'https://app.mtechsolar.com.br',
                     title: 'Lista de usuários',
-                    description: 'Lista de usuários da plataforma de gerenciamento da Bioma consultoria.',
+                    description: 'Lista de usuários da plataforma de gerenciamento da Mtech Solar.',
                     images: [
                         {
-                            url: 'https://app.biomaconsultoria.com/assets/images/logo-bioma.jpg',
-                            alt: 'Lista de usuários | Plataforma Bioma',
+                            url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
+                            alt: 'Lista de usuários | Plataforma Mtech Solar',
                         },
-                        { url: 'https://app.biomaconsultoria.com/assets/images/logo-bioma.jpg' },
+                        { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
                     ],
                 }}
             />

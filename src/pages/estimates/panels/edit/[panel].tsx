@@ -77,7 +77,7 @@ export default function UserEdit() {
                 });
             }
         }
-    }, [user]);
+    }, [user, panel]); // eslint-disable-line react-hooks/exhaustive-deps
 
     async function handleUserDelete() {
         if (user && data) {
@@ -126,17 +126,17 @@ export default function UserEdit() {
         <>
             <NextSeo
                 title="Editar painel"
-                description="Editar painel da plataforma de gerenciamento da Bioma consultoria."
+                description="Editar painel da plataforma de gerenciamento da Mtech Solar."
                 openGraph={{
-                    url: 'https://app.biomaconsultoria.com',
+                    url: 'https://app.mtechsolar.com.br',
                     title: 'Editar painel',
-                    description: 'Editar painel da plataforma de gerenciamento da Bioma consultoria.',
+                    description: 'Editar painel da plataforma de gerenciamento da Mtech Solar.',
                     images: [
                         {
-                            url: 'https://app.biomaconsultoria.com/assets/images/logo-bioma.jpg',
-                            alt: 'Editar painel | Plataforma Bioma',
+                            url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
+                            alt: 'Editar painel | Plataforma Mtech Solar',
                         },
-                        { url: 'https://app.biomaconsultoria.com/assets/images/logo-bioma.jpg' },
+                        { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
                     ],
                 }}
             />

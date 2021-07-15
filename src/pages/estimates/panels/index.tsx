@@ -41,7 +41,7 @@ export default function PanelsPage() {
                 setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
             });
         }
-    }, [user]);
+    }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
     async function handleListPanels() {
         const res = await api.get('panels');

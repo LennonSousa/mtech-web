@@ -32,7 +32,7 @@ export function Header() {
         if (signed && !pathsNotShow.find(item => { return item === router.route })) show = true;
 
         setShowPageHeader(show);
-    }, [signed, router.route, pathsNotShow]);
+    }, [signed, router.route]); // eslint-disable-line react-hooks/exhaustive-deps
 
     function handleRoute(route: string) {
         router.push(route);

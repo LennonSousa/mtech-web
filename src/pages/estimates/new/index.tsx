@@ -6,7 +6,7 @@ import { Button, Col, Container, Form, InputGroup, Row, Spinner } from 'react-bo
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { format } from 'date-fns';
-import { FaCashRegister, FaClipboardList, FaUserTie, FaPlug, FaSolarPanel } from 'react-icons/fa';
+import { FaCashRegister, FaClipboardList, FaCopy, FaUserTie, FaPlug, FaSolarPanel } from 'react-icons/fa';
 import cep, { CEP } from 'cep-promise';
 
 import api from '../../../api/api';
@@ -469,7 +469,7 @@ export default function NewCustomer() {
                                                 }}
                                                 validationSchema={validationSchema}
                                             >
-                                                {({ handleChange, handleBlur, handleSubmit, setFieldValue, values, errors, touched }) => (
+                                                {({ handleChange, handleBlur, handleSubmit, setFieldValue, setValues, values, errors, touched }) => (
                                                     <Form onSubmit={handleSubmit}>
 
                                                         <Row className="mb-3">
@@ -595,6 +595,7 @@ export default function NewCustomer() {
                                                                 <Form.Control
                                                                     type="text"
                                                                     placeholder="00000000"
+                                                                    autoComplete="off"
                                                                     onChange={(e) => {
                                                                         handleChange(e);
 
@@ -810,43 +811,59 @@ export default function NewCustomer() {
                                                         <Row className="mb-3">
                                                             <Form.Group as={Col} sm={3} controlId="formGridKwh">
                                                                 <Form.Label>Valor unitário do Quilowatts/Hora</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={(e) => {
-                                                                        setFieldValue('kwh', prettifyCurrency(e.target.value));
-                                                                    }}
-                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                                                                        setFieldValue('kwh', prettifyCurrency(e.target.value));
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupKwh">R$</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
 
-                                                                        const calcValues = handleFormValues(values);
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        onChange={(e) => {
+                                                                            setFieldValue('kwh', prettifyCurrency(e.target.value));
+                                                                        }}
+                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                            setFieldValue('kwh', prettifyCurrency(e.target.value));
 
-                                                                        if (calcValues) handleCalcEstimate(calcValues);
-                                                                    }}
-                                                                    value={values.kwh}
-                                                                    name="kwh"
-                                                                    isInvalid={!!errors.kwh && touched.kwh}
-                                                                />
+                                                                            const calcValues = handleFormValues(values);
+
+                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                        }}
+                                                                        value={values.kwh}
+                                                                        name="kwh"
+                                                                        isInvalid={!!errors.kwh && touched.kwh}
+                                                                        aria-label="Valor unitário do Quilowatts/Hora."
+                                                                        aria-describedby="btnGroupKwh"
+                                                                    />
+                                                                </InputGroup>
                                                                 <Form.Control.Feedback type="invalid">{touched.kwh && errors.kwh}</Form.Control.Feedback>
                                                             </Form.Group>
 
                                                             <Form.Group as={Col} sm={3} controlId="formGridIrratiation">
-                                                                <Form.Label>Irradiação Local em [Kwh/m².dia]</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={(e) => {
-                                                                        setFieldValue('irradiation', prettifyCurrency(e.target.value));
-                                                                    }}
-                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                                                                        setFieldValue('irradiation', prettifyCurrency(e.target.value));
+                                                                <Form.Label>Irradiação Local</Form.Label>
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupIrradiation">kWh/m²</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
 
-                                                                        const calcValues = handleFormValues(values);
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        onChange={(e) => {
+                                                                            setFieldValue('irradiation', prettifyCurrency(e.target.value));
+                                                                        }}
+                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                            setFieldValue('irradiation', prettifyCurrency(e.target.value));
 
-                                                                        if (calcValues) handleCalcEstimate(calcValues);
-                                                                    }}
-                                                                    value={values.irradiation}
-                                                                    name="irradiation"
-                                                                    isInvalid={!!errors.irradiation && touched.irradiation}
-                                                                />
+                                                                            const calcValues = handleFormValues(values);
+
+                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                        }}
+                                                                        value={values.irradiation}
+                                                                        name="irradiation"
+                                                                        isInvalid={!!errors.irradiation && touched.irradiation}
+                                                                        aria-label="Irradiação Local em [kWh/m².dia]."
+                                                                        aria-describedby="btnGroupIrradiation"
+                                                                    />
+                                                                </InputGroup>
                                                                 <Form.Control.Feedback type="invalid">{touched.irradiation && errors.irradiation}</Form.Control.Feedback>
                                                             </Form.Group>
 
@@ -908,85 +925,149 @@ export default function NewCustomer() {
                                                         <Row className="mb-2">
                                                             <Form.Group as={Col} sm={3} controlId="formGridMonth01">
                                                                 <Form.Label>Mês 01</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={(e) => {
-                                                                        setFieldValue('month_01', prettifyCurrency(e.target.value));
-                                                                    }}
-                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                                                                        setFieldValue('month_01', prettifyCurrency(e.target.value));
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupMonth01">kWh</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
 
-                                                                        const calcValues = handleFormValues(values);
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        onChange={(e) => {
+                                                                            setFieldValue('month_01', prettifyCurrency(e.target.value));
+                                                                        }}
+                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                            setFieldValue('month_01', prettifyCurrency(e.target.value));
 
-                                                                        if (calcValues) handleCalcEstimate(calcValues);
-                                                                    }}
-                                                                    value={values.month_01}
-                                                                    name="month_01"
-                                                                    isInvalid={!!errors.month_01 && touched.month_01}
-                                                                />
+                                                                            const calcValues = handleFormValues(values);
+
+                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                        }}
+                                                                        value={values.month_01}
+                                                                        name="month_01"
+                                                                        isInvalid={!!errors.month_01 && touched.month_01}
+                                                                        aria-label="Consumo em kWh"
+                                                                        aria-describedby="btnGroupMonth01"
+                                                                    />
+                                                                    <InputGroup.Prepend>
+                                                                        <Button
+                                                                            id="btnGroupMonth01"
+                                                                            variant="success"
+                                                                            title="Copiar valor para todos os outros meses."
+                                                                            onClick={() => {
+                                                                                const updatedValues = {
+                                                                                    ...values,
+                                                                                    month_02: values.month_01,
+                                                                                    month_03: values.month_01,
+                                                                                    month_04: values.month_01,
+                                                                                    month_05: values.month_01,
+                                                                                    month_06: values.month_01,
+                                                                                    month_07: values.month_01,
+                                                                                    month_08: values.month_01,
+                                                                                    month_09: values.month_01,
+                                                                                    month_10: values.month_01,
+                                                                                    month_11: values.month_01,
+                                                                                    month_12: values.month_01,
+                                                                                    month_13: values.month_01,
+                                                                                };
+
+                                                                                setValues(updatedValues);
+
+                                                                                const calcValues = handleFormValues(updatedValues);
+
+                                                                                if (calcValues) handleCalcEstimate(calcValues);
+                                                                            }}
+                                                                        >
+                                                                            <FaCopy />
+                                                                        </Button>
+                                                                    </InputGroup.Prepend>
+                                                                </InputGroup>
                                                                 <Form.Control.Feedback type="invalid">{touched.month_01 && errors.month_01}</Form.Control.Feedback>
                                                             </Form.Group>
 
                                                             <Form.Group as={Col} sm={3} controlId="formGridMonth02">
                                                                 <Form.Label>Mês 02</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={(e) => {
-                                                                        setFieldValue('month_02', prettifyCurrency(e.target.value));
-                                                                    }}
-                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                                                                        setFieldValue('month_02', prettifyCurrency(e.target.value));
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupMonth02">kWh</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
 
-                                                                        const calcValues = handleFormValues(values);
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        onChange={(e) => {
+                                                                            setFieldValue('month_02', prettifyCurrency(e.target.value));
+                                                                        }}
+                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                            setFieldValue('month_02', prettifyCurrency(e.target.value));
 
-                                                                        if (calcValues) handleCalcEstimate(calcValues);
-                                                                    }}
-                                                                    value={values.month_02}
-                                                                    name="month_02"
-                                                                    isInvalid={!!errors.month_02 && touched.month_02}
-                                                                />
+                                                                            const calcValues = handleFormValues(values);
+
+                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                        }}
+                                                                        value={values.month_02}
+                                                                        name="month_02"
+                                                                        isInvalid={!!errors.month_02 && touched.month_02}
+                                                                        aria-label="Consumo em kWh"
+                                                                        aria-describedby="btnGroupMonth02"
+                                                                    />
+                                                                </InputGroup>
                                                                 <Form.Control.Feedback type="invalid">{touched.month_02 && errors.month_02}</Form.Control.Feedback>
                                                             </Form.Group>
 
                                                             <Form.Group as={Col} sm={3} controlId="formGridMonth03">
                                                                 <Form.Label>Mês 03</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={(e) => {
-                                                                        setFieldValue('month_03', prettifyCurrency(e.target.value));
-                                                                    }}
-                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                                                                        setFieldValue('month_03', prettifyCurrency(e.target.value));
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupMonth03">kWh</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
 
-                                                                        const calcValues = handleFormValues(values);
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        onChange={(e) => {
+                                                                            setFieldValue('month_03', prettifyCurrency(e.target.value));
+                                                                        }}
+                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                            setFieldValue('month_03', prettifyCurrency(e.target.value));
 
-                                                                        if (calcValues) handleCalcEstimate(calcValues);
-                                                                    }}
-                                                                    value={values.month_03}
-                                                                    name="month_03"
-                                                                    isInvalid={!!errors.month_03 && touched.month_03}
-                                                                />
+                                                                            const calcValues = handleFormValues(values);
+
+                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                        }}
+                                                                        value={values.month_03}
+                                                                        name="month_03"
+                                                                        isInvalid={!!errors.month_03 && touched.month_03}
+                                                                        aria-label="Consumo em kWh"
+                                                                        aria-describedby="btnGroupMonth03"
+                                                                    />
+                                                                </InputGroup>
                                                                 <Form.Control.Feedback type="invalid">{touched.month_03 && errors.month_03}</Form.Control.Feedback>
                                                             </Form.Group>
 
                                                             <Form.Group as={Col} sm={3} controlId="formGridMonth04">
                                                                 <Form.Label>Mês 04</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={(e) => {
-                                                                        setFieldValue('month_04', prettifyCurrency(e.target.value));
-                                                                    }}
-                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                                                                        setFieldValue('month_04', prettifyCurrency(e.target.value));
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupMonth04">kWh</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
 
-                                                                        const calcValues = handleFormValues(values);
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        onChange={(e) => {
+                                                                            setFieldValue('month_04', prettifyCurrency(e.target.value));
+                                                                        }}
+                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                            setFieldValue('month_04', prettifyCurrency(e.target.value));
 
-                                                                        if (calcValues) handleCalcEstimate(calcValues);
-                                                                    }}
-                                                                    value={values.month_04}
-                                                                    name="month_04"
-                                                                    isInvalid={!!errors.month_04 && touched.month_04}
-                                                                />
+                                                                            const calcValues = handleFormValues(values);
+
+                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                        }}
+                                                                        value={values.month_04}
+                                                                        name="month_04"
+                                                                        isInvalid={!!errors.month_04 && touched.month_04}
+                                                                        aria-label="Consumo em kWh"
+                                                                        aria-describedby="btnGroupMonth04"
+                                                                    />
+                                                                </InputGroup>
                                                                 <Form.Control.Feedback type="invalid">{touched.month_04 && errors.month_04}</Form.Control.Feedback>
                                                             </Form.Group>
                                                         </Row>
@@ -994,85 +1075,117 @@ export default function NewCustomer() {
                                                         <Row className="mb-2">
                                                             <Form.Group as={Col} sm={3} controlId="formGridMonth05">
                                                                 <Form.Label>Mês 05</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={(e) => {
-                                                                        setFieldValue('month_05', prettifyCurrency(e.target.value));
-                                                                    }}
-                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                                                                        setFieldValue('month_05', prettifyCurrency(e.target.value));
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupMonth05">kWh</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
 
-                                                                        const calcValues = handleFormValues(values);
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        onChange={(e) => {
+                                                                            setFieldValue('month_05', prettifyCurrency(e.target.value));
+                                                                        }}
+                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                            setFieldValue('month_05', prettifyCurrency(e.target.value));
 
-                                                                        if (calcValues) handleCalcEstimate(calcValues);
-                                                                    }}
-                                                                    value={values.month_05}
-                                                                    name="month_05"
-                                                                    isInvalid={!!errors.month_05 && touched.month_05}
-                                                                />
+                                                                            const calcValues = handleFormValues(values);
+
+                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                        }}
+                                                                        value={values.month_05}
+                                                                        name="month_05"
+                                                                        isInvalid={!!errors.month_05 && touched.month_05}
+                                                                        aria-label="Consumo em kWh"
+                                                                        aria-describedby="btnGroupMonth05"
+                                                                    />
+                                                                </InputGroup>
                                                                 <Form.Control.Feedback type="invalid">{touched.month_05 && errors.month_05}</Form.Control.Feedback>
                                                             </Form.Group>
 
                                                             <Form.Group as={Col} sm={3} controlId="formGridMonth06">
                                                                 <Form.Label>Mês 06</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={(e) => {
-                                                                        setFieldValue('month_06', prettifyCurrency(e.target.value));
-                                                                    }}
-                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                                                                        setFieldValue('month_06', prettifyCurrency(e.target.value));
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupMonth06">kWh</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
 
-                                                                        const calcValues = handleFormValues(values);
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        onChange={(e) => {
+                                                                            setFieldValue('month_06', prettifyCurrency(e.target.value));
+                                                                        }}
+                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                            setFieldValue('month_06', prettifyCurrency(e.target.value));
 
-                                                                        if (calcValues) handleCalcEstimate(calcValues);
-                                                                    }}
-                                                                    value={values.month_06}
-                                                                    name="month_06"
-                                                                    isInvalid={!!errors.month_06 && touched.month_06}
-                                                                />
+                                                                            const calcValues = handleFormValues(values);
+
+                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                        }}
+                                                                        value={values.month_06}
+                                                                        name="month_06"
+                                                                        isInvalid={!!errors.month_06 && touched.month_06}
+                                                                        aria-label="Consumo em kWh"
+                                                                        aria-describedby="btnGroupMonth06"
+                                                                    />
+                                                                </InputGroup>
                                                                 <Form.Control.Feedback type="invalid">{touched.month_06 && errors.month_06}</Form.Control.Feedback>
                                                             </Form.Group>
 
                                                             <Form.Group as={Col} sm={3} controlId="formGridMonth07">
                                                                 <Form.Label>Mês 07</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={(e) => {
-                                                                        setFieldValue('month_07', prettifyCurrency(e.target.value));
-                                                                    }}
-                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                                                                        setFieldValue('month_07', prettifyCurrency(e.target.value));
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupMonth07">kWh</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
 
-                                                                        const calcValues = handleFormValues(values);
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        onChange={(e) => {
+                                                                            setFieldValue('month_07', prettifyCurrency(e.target.value));
+                                                                        }}
+                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                            setFieldValue('month_07', prettifyCurrency(e.target.value));
 
-                                                                        if (calcValues) handleCalcEstimate(calcValues);
-                                                                    }}
-                                                                    value={values.month_07}
-                                                                    name="month_07"
-                                                                    isInvalid={!!errors.month_07 && touched.month_07}
-                                                                />
+                                                                            const calcValues = handleFormValues(values);
+
+                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                        }}
+                                                                        value={values.month_07}
+                                                                        name="month_07"
+                                                                        isInvalid={!!errors.month_07 && touched.month_07}
+                                                                        aria-label="Consumo em kWh"
+                                                                        aria-describedby="btnGroupMonth07"
+                                                                    />
+                                                                </InputGroup>
                                                                 <Form.Control.Feedback type="invalid">{touched.month_07 && errors.month_07}</Form.Control.Feedback>
                                                             </Form.Group>
 
                                                             <Form.Group as={Col} sm={3} controlId="formGridMonth08">
                                                                 <Form.Label>Mês 08</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={(e) => {
-                                                                        setFieldValue('month_08', prettifyCurrency(e.target.value));
-                                                                    }}
-                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                                                                        setFieldValue('month_08', prettifyCurrency(e.target.value));
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupMonth08">kWh</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
 
-                                                                        const calcValues = handleFormValues(values);
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        onChange={(e) => {
+                                                                            setFieldValue('month_08', prettifyCurrency(e.target.value));
+                                                                        }}
+                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                            setFieldValue('month_08', prettifyCurrency(e.target.value));
 
-                                                                        if (calcValues) handleCalcEstimate(calcValues);
-                                                                    }}
-                                                                    value={values.month_08}
-                                                                    name="month_08"
-                                                                    isInvalid={!!errors.month_08 && touched.month_08}
-                                                                />
+                                                                            const calcValues = handleFormValues(values);
+
+                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                        }}
+                                                                        value={values.month_08}
+                                                                        name="month_08"
+                                                                        isInvalid={!!errors.month_08 && touched.month_08}
+                                                                        aria-label="Consumo em kWh"
+                                                                        aria-describedby="btnGroupMonth08"
+                                                                    />
+                                                                </InputGroup>
                                                                 <Form.Control.Feedback type="invalid">{touched.month_08 && errors.month_08}</Form.Control.Feedback>
                                                             </Form.Group>
                                                         </Row>
@@ -1080,85 +1193,117 @@ export default function NewCustomer() {
                                                         <Row className="mb-2">
                                                             <Form.Group as={Col} sm={3} controlId="formGridMonth09">
                                                                 <Form.Label>Mês 09</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={(e) => {
-                                                                        setFieldValue('month_09', prettifyCurrency(e.target.value));
-                                                                    }}
-                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                                                                        setFieldValue('month_09', prettifyCurrency(e.target.value));
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupMonth09">kWh</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
 
-                                                                        const calcValues = handleFormValues(values);
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        onChange={(e) => {
+                                                                            setFieldValue('month_09', prettifyCurrency(e.target.value));
+                                                                        }}
+                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                            setFieldValue('month_09', prettifyCurrency(e.target.value));
 
-                                                                        if (calcValues) handleCalcEstimate(calcValues);
-                                                                    }}
-                                                                    value={values.month_09}
-                                                                    name="month_09"
-                                                                    isInvalid={!!errors.month_09 && touched.month_09}
-                                                                />
+                                                                            const calcValues = handleFormValues(values);
+
+                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                        }}
+                                                                        value={values.month_09}
+                                                                        name="month_09"
+                                                                        isInvalid={!!errors.month_09 && touched.month_09}
+                                                                        aria-label="Consumo em kWh"
+                                                                        aria-describedby="btnGroupMonth09"
+                                                                    />
+                                                                </InputGroup>
                                                                 <Form.Control.Feedback type="invalid">{touched.month_09 && errors.month_09}</Form.Control.Feedback>
                                                             </Form.Group>
 
                                                             <Form.Group as={Col} sm={3} controlId="formGridMonth10">
                                                                 <Form.Label>Mês 10</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={(e) => {
-                                                                        setFieldValue('month_10', prettifyCurrency(e.target.value));
-                                                                    }}
-                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                                                                        setFieldValue('month_10', prettifyCurrency(e.target.value));
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupMonth10">kWh</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
 
-                                                                        const calcValues = handleFormValues(values);
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        onChange={(e) => {
+                                                                            setFieldValue('month_10', prettifyCurrency(e.target.value));
+                                                                        }}
+                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                            setFieldValue('month_10', prettifyCurrency(e.target.value));
 
-                                                                        if (calcValues) handleCalcEstimate(calcValues);
-                                                                    }}
-                                                                    value={values.month_10}
-                                                                    name="month_10"
-                                                                    isInvalid={!!errors.month_10 && touched.month_10}
-                                                                />
+                                                                            const calcValues = handleFormValues(values);
+
+                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                        }}
+                                                                        value={values.month_10}
+                                                                        name="month_10"
+                                                                        isInvalid={!!errors.month_10 && touched.month_10}
+                                                                        aria-label="Consumo em kWh"
+                                                                        aria-describedby="btnGroupMonth10"
+                                                                    />
+                                                                </InputGroup>
                                                                 <Form.Control.Feedback type="invalid">{touched.month_10 && errors.month_10}</Form.Control.Feedback>
                                                             </Form.Group>
 
                                                             <Form.Group as={Col} sm={3} controlId="formGridMonth11">
                                                                 <Form.Label>Mês 11</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={(e) => {
-                                                                        setFieldValue('month_11', prettifyCurrency(e.target.value));
-                                                                    }}
-                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                                                                        setFieldValue('month_11', prettifyCurrency(e.target.value));
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupMonth11">kWh</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
 
-                                                                        const calcValues = handleFormValues(values);
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        onChange={(e) => {
+                                                                            setFieldValue('month_11', prettifyCurrency(e.target.value));
+                                                                        }}
+                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                            setFieldValue('month_11', prettifyCurrency(e.target.value));
 
-                                                                        if (calcValues) handleCalcEstimate(calcValues);
-                                                                    }}
-                                                                    value={values.month_11}
-                                                                    name="month_11"
-                                                                    isInvalid={!!errors.month_11 && touched.month_11}
-                                                                />
+                                                                            const calcValues = handleFormValues(values);
+
+                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                        }}
+                                                                        value={values.month_11}
+                                                                        name="month_11"
+                                                                        isInvalid={!!errors.month_11 && touched.month_11}
+                                                                        aria-label="Consumo em kWh"
+                                                                        aria-describedby="btnGroupMonth11"
+                                                                    />
+                                                                </InputGroup>
                                                                 <Form.Control.Feedback type="invalid">{touched.month_11 && errors.month_11}</Form.Control.Feedback>
                                                             </Form.Group>
 
                                                             <Form.Group as={Col} sm={3} controlId="formGridMonth12">
                                                                 <Form.Label>Mês 12</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={(e) => {
-                                                                        setFieldValue('month_12', prettifyCurrency(e.target.value));
-                                                                    }}
-                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                                                                        setFieldValue('month_12', prettifyCurrency(e.target.value));
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupMonth12">kWh</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
 
-                                                                        const calcValues = handleFormValues(values);
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        onChange={(e) => {
+                                                                            setFieldValue('month_12', prettifyCurrency(e.target.value));
+                                                                        }}
+                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                            setFieldValue('month_12', prettifyCurrency(e.target.value));
 
-                                                                        if (calcValues) handleCalcEstimate(calcValues);
-                                                                    }}
-                                                                    value={values.month_12}
-                                                                    name="month_12"
-                                                                    isInvalid={!!errors.month_12 && touched.month_12}
-                                                                />
+                                                                            const calcValues = handleFormValues(values);
+
+                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                        }}
+                                                                        value={values.month_12}
+                                                                        name="month_12"
+                                                                        isInvalid={!!errors.month_12 && touched.month_12}
+                                                                        aria-label="Consumo em kWh"
+                                                                        aria-describedby="btnGroupMonth12"
+                                                                    />
+                                                                </InputGroup>
                                                                 <Form.Control.Feedback type="invalid">{touched.month_12 && errors.month_12}</Form.Control.Feedback>
                                                             </Form.Group>
                                                         </Row>
@@ -1166,22 +1311,29 @@ export default function NewCustomer() {
                                                         <Row className="mb-2">
                                                             <Form.Group as={Col} sm={3} controlId="formGridMonth13">
                                                                 <Form.Label>Mês 13</Form.Label>
-                                                                <Form.Control
-                                                                    type="text"
-                                                                    onChange={(e) => {
-                                                                        setFieldValue('month_13', prettifyCurrency(e.target.value));
-                                                                    }}
-                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                                                                        setFieldValue('month_13', prettifyCurrency(e.target.value));
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupMonth13">kWh</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        onChange={(e) => {
+                                                                            setFieldValue('month_13', prettifyCurrency(e.target.value));
+                                                                        }}
+                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                            setFieldValue('month_13', prettifyCurrency(e.target.value));
 
-                                                                        const calcValues = handleFormValues(values);
+                                                                            const calcValues = handleFormValues(values);
 
-                                                                        if (calcValues) handleCalcEstimate(calcValues);
-                                                                    }}
-                                                                    value={values.month_13}
-                                                                    name="month_13"
-                                                                    isInvalid={!!errors.month_13 && touched.month_13}
-                                                                />
+                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                        }}
+                                                                        value={values.month_13}
+                                                                        name="month_13"
+                                                                        isInvalid={!!errors.month_13 && touched.month_13}
+                                                                        aria-label="Consumo em kWh"
+                                                                        aria-describedby="btnGroupMonth13"
+                                                                    />
+                                                                </InputGroup>
                                                                 <Form.Control.Feedback type="invalid">{touched.month_13 && errors.month_13}</Form.Control.Feedback>
                                                             </Form.Group>
 
@@ -1189,7 +1341,7 @@ export default function NewCustomer() {
                                                                 <Form.Label>Média</Form.Label>
                                                                 <InputGroup className="mb-2">
                                                                     <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupMonthsAverageKwh">Kwh</InputGroup.Text>
+                                                                        <InputGroup.Text id="btnGroupMonthsAverageKwh">kWh</InputGroup.Text>
                                                                     </InputGroup.Prepend>
                                                                     <Form.Control
                                                                         type="text"
@@ -1206,7 +1358,7 @@ export default function NewCustomer() {
                                                                 <Form.Label>Previsão de aumento</Form.Label>
                                                                 <InputGroup className="mb-2">
                                                                     <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupAverageIncrease">Kwh</InputGroup.Text>
+                                                                        <InputGroup.Text id="btnGroupAverageIncrease">kWh</InputGroup.Text>
                                                                     </InputGroup.Prepend>
                                                                     <Form.Control
                                                                         type="text"
@@ -1234,7 +1386,7 @@ export default function NewCustomer() {
                                                                 <Form.Label>Consumo final</Form.Label>
                                                                 <InputGroup className="mb-2">
                                                                     <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupFinalAverageKwh">Kwh</InputGroup.Text>
+                                                                        <InputGroup.Text id="btnGroupFinalAverageKwh">kWh</InputGroup.Text>
                                                                     </InputGroup.Prepend>
                                                                     <Form.Control
                                                                         type="text"
@@ -1335,7 +1487,7 @@ export default function NewCustomer() {
                                                                 <Form.Label>Total de energia gerada mensalmente</Form.Label>
                                                                 <InputGroup className="mb-2">
                                                                     <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupMonthlyGeneratedEnergy">Kwh</InputGroup.Text>
+                                                                        <InputGroup.Text id="btnGroupMonthlyGeneratedEnergy">kWh</InputGroup.Text>
                                                                     </InputGroup.Prepend>
                                                                     <Form.Control
                                                                         type="text"
@@ -1352,7 +1504,7 @@ export default function NewCustomer() {
                                                                 <Form.Label>Total de energia gerada anualmente</Form.Label>
                                                                 <InputGroup className="mb-2">
                                                                     <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupYearlyGeneratedEnergy">Kwh</InputGroup.Text>
+                                                                        <InputGroup.Text id="btnGroupYearlyGeneratedEnergy">kWh</InputGroup.Text>
                                                                     </InputGroup.Prepend>
                                                                     <Form.Control
                                                                         type="text"

@@ -5,7 +5,7 @@ import { NextSeo } from 'next-seo';
 import { Button, Col, Container, Form, InputGroup, Modal, Row, Spinner } from 'react-bootstrap';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { FaCashRegister, FaClipboardList, FaCopy, FaUserTie, FaPlug, FaSolarPanel } from 'react-icons/fa';
+import { FaCashRegister, FaClipboardList, FaCopy, FaMoneyBillWave, FaUserTie, FaPlug, FaSolarPanel } from 'react-icons/fa';
 import cep, { CEP } from 'cep-promise';
 
 import api from '../../../api/api';
@@ -1785,7 +1785,7 @@ export default function EditEstimate() {
                                                                         <Col>
                                                                             <Row>
                                                                                 <Col>
-                                                                                    <h6 className="text-success">Valor final do sitema <FaClipboardList /></h6>
+                                                                                    <h6 className="text-success">Valor final do sitema <FaMoneyBillWave /></h6>
                                                                                 </Col>
                                                                             </Row>
                                                                         </Col>

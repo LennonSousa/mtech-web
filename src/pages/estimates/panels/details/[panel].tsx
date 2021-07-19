@@ -3,7 +3,7 @@ import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { NextSeo } from 'next-seo';
 import { Button, ButtonGroup, Col, Container, ListGroup, Row } from 'react-bootstrap';
-import { FaKey, FaUserEdit } from 'react-icons/fa';
+import { FaKey, FaPencilAlt, FaMoneyBillWave } from 'react-icons/fa';
 
 import api from '../../../../api/api';
 import { TokenVerify } from '../../../../utils/tokenVerify';
@@ -110,7 +110,7 @@ export default function UserDetails() {
                                                                                             variant="success"
                                                                                             onClick={() => handleRoute(`/estimates/panels/edit/${data.id}`)}
                                                                                         >
-                                                                                            <FaUserEdit />
+                                                                                            <FaPencilAlt />
                                                                                         </Button>
                                                                                     </ButtonGroup>
                                                                                 </Col>
@@ -141,7 +141,7 @@ export default function UserDetails() {
                                                                     <Col>
                                                                         <Row>
                                                                             <Col>
-                                                                                <h6 className="text-success">Preços <FaKey /></h6>
+                                                                                <h6 className="text-success">Preços <FaMoneyBillWave /></h6>
                                                                             </Col>
                                                                         </Row>
 

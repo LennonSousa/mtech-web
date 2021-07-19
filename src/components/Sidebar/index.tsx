@@ -9,18 +9,12 @@ import {
     FaList,
     FaPlus,
     FaIdCard,
-    FaMapSigns,
-    FaFileSignature,
-    FaFileContract,
+    FaCompass,
     FaProjectDiagram,
+    FaWarehouse,
     FaClipboardList,
     FaLayerGroup,
-    FaUniversity,
-    FaCity,
-    FaAward,
-    FaBalanceScaleLeft,
-    FaFileExcel,
-    FaSortAlphaDown,
+    FaSolarPanel,
     FaUsers,
     FaUsersCog
 } from 'react-icons/fa';
@@ -135,7 +129,7 @@ const Sidebar: React.FC = () => {
                                                     }
                                                 >
                                                     <Col sm={1}>
-                                                        <FaUsersCog size={14} />
+                                                        <FaSolarPanel size={14} />
                                                     </Col>
                                                     <Col>
                                                         <span>Painéis</span>
@@ -155,7 +149,7 @@ const Sidebar: React.FC = () => {
                                                     }
                                                 >
                                                     <Col sm={1}>
-                                                        <FaUsersCog size={14} />
+                                                        <FaProjectDiagram size={14} />
                                                     </Col>
                                                     <Col>
                                                         <span>Fases</span>
@@ -173,7 +167,7 @@ const Sidebar: React.FC = () => {
                                                     }
                                                 >
                                                     <Col sm={1}>
-                                                        <FaUsersCog size={14} />
+                                                        <FaCompass size={14} />
                                                     </Col>
                                                     <Col>
                                                         <span>Orientações</span>
@@ -191,7 +185,7 @@ const Sidebar: React.FC = () => {
                                                     }
                                                 >
                                                     <Col sm={1}>
-                                                        <FaUsersCog size={14} />
+                                                        <FaWarehouse size={14} />
                                                     </Col>
                                                     <Col>
                                                         <span>Tipos</span>

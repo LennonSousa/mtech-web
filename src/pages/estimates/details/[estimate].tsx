@@ -10,8 +10,9 @@ import {
     FaStickyNote,
     FaSolarPanel,
     FaCashRegister,
+    FaMoneyBillWave,
     FaClipboardList,
-    FaPrint
+    FaPrint,
 } from 'react-icons/fa';
 
 import api from '../../../api/api';
@@ -990,7 +991,7 @@ export default function PropertyDetails() {
 
                                                                 <Row className="mb-3">
                                                                     <Col>
-                                                                        <h6 className="text-success">Valor final do sitema <FaClipboardList /></h6>
+                                                                        <h6 className="text-success">Valor final do sitema <FaMoneyBillWave /></h6>
                                                                     </Col>
                                                                 </Row>
 

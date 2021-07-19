@@ -44,8 +44,9 @@ export interface CalcResultProps {
     estimateItems: EstimateItem[];
 }
 
-export function calculate(props: CalcProps) {
+export function calculate(props: CalcProps, newCalc: boolean) {
     //console.log('props: ', props);
+    // console.log('newCalc: ', newCalc);
 
     const values: CalcProps = {
         kwh: Number(props.kwh),
@@ -115,102 +116,11 @@ export function calculate(props: CalcProps) {
     const systemArea = panelsAmount * 2.1;
 
     // System initial price.
-    let systemInitialPrice = foundCapacity.price;
-
-    let systemTempPrice = systemInitialPrice;
+    let systemSubTotal = foundCapacity.price;
+    let finalSystemPrice = 0;
 
     // Amount structs.
     const structsAmount = Math.ceil(panelsAmount / 4);
-
-    let tempEstimateItems: EstimateItem[] = values.estimateItems.map(estimateItem => {
-        if (estimateItem.order === 0) {
-            return {
-                ...estimateItem,
-                name: foundCapacity.inversor,
-                price: systemInitialPrice * estimateItem.percent / 100 / estimateItem.amount,
-            }
-        }
-
-        if (estimateItem.order === 1) {
-            return {
-                ...estimateItem,
-                name: `${values.panel.name} - ${prettifyCurrency(String(values.panel.capacity))} W`,
-                amount: panelsAmount,
-                price: systemInitialPrice * estimateItem.percent / 100 / panelsAmount,
-            }
-        }
-
-        if (estimateItem.order === 2) {
-            return {
-                ...estimateItem,
-                amount: structsAmount,
-                price: systemInitialPrice * estimateItem.percent / 100 / structsAmount,
-            }
-        }
-
-        return {
-            ...estimateItem,
-            price: systemInitialPrice * estimateItem.percent / 100,
-        }
-    });
-
-    let tempTotal = 0;
-    tempEstimateItems.forEach(item => {
-        tempTotal = Number(tempTotal) + item.amount * item.price;
-    });
-
-    systemTempPrice = tempTotal;
-    systemInitialPrice = systemTempPrice;
-
-    // Discount and increase.
-    let finalSystemPrice = systemInitialPrice - (systemInitialPrice * values.discount / 100);
-
-    if (!values.percent) finalSystemPrice = systemInitialPrice - values.discount;
-
-    if (values.increase > 0) {
-        finalSystemPrice = systemInitialPrice - (systemInitialPrice * values.increase / 100);
-
-        if (!values.percent) finalSystemPrice = systemInitialPrice - values.increase;
-    }
-
-    // Smooth values.
-    tempEstimateItems = tempEstimateItems.map(estimateItem => {
-        if (estimateItem.order === 0) {
-            return {
-                ...estimateItem,
-                price: finalSystemPrice * estimateItem.percent / 100 / estimateItem.amount,
-            }
-        }
-
-        if (estimateItem.order === 1) {
-            return {
-                ...estimateItem,
-                amount: panelsAmount,
-                price: finalSystemPrice * estimateItem.percent / 100 / estimateItem.amount,
-            }
-        }
-
-        if (estimateItem.order === 2) {
-            return {
-                ...estimateItem,
-                amount: structsAmount,
-                price: finalSystemPrice * estimateItem.percent / 100 / estimateItem.amount,
-            }
-        }
-
-        return {
-            ...estimateItem,
-            price: finalSystemPrice * estimateItem.percent / 100,
-        }
-    });
-
-    tempTotal = 0;
-    tempEstimateItems.forEach(item => {
-        tempTotal = Number(tempTotal) + item.amount * item.price;
-    });
-
-    systemTempPrice = tempTotal;
-    finalSystemPrice = systemTempPrice;
 
     // Generated engergy.
     const monthlyGeneratedEnergy = foundCapacity.potency * values.roofOrientation.increment;
@@ -218,6 +128,98 @@ export function calculate(props: CalcProps) {
 
     // Co2 reduction
     const co2Reduction = monthlyGeneratedEnergy * 0.255 * 12;
+
+    let tempTotal = 0;
+
+    if (newCalc) {
+        let tempEstimateItems: EstimateItem[] = values.estimateItems.map(estimateItem => {
+            if (estimateItem.order === 0) {
+                return {
+                    ...estimateItem,
+                    name: foundCapacity.inversor,
+                    amount: 1,
+                    price: systemSubTotal * estimateItem.percent / 100 / estimateItem.amount,
+                }
+            }
+
+            if (estimateItem.order === 1) {
+                return {
+                    ...estimateItem,
+                    name: `${values.panel.name} - ${prettifyCurrency(String(values.panel.capacity))} W`,
+                    amount: panelsAmount,
+                    price: systemSubTotal * estimateItem.percent / 100 / panelsAmount,
+                }
+            }
+
+            if (estimateItem.order === 2) {
+                return {
+                    ...estimateItem,
+                    amount: structsAmount,
+                    price: systemSubTotal * estimateItem.percent / 100 / structsAmount,
+                }
+            }
+
+            return {
+                ...estimateItem,
+                price: systemSubTotal * estimateItem.percent / 100,
+            }
+        });
+
+        tempEstimateItems.forEach(item => {
+            tempTotal = Number(tempTotal) + item.amount * item.price;
+        });
+
+        systemSubTotal = tempTotal;
+
+        // Discount and increase.
+        let finalSystemPrice = systemSubTotal - (systemSubTotal * values.discount / 100);
+
+        if (!values.percent) finalSystemPrice = systemSubTotal - values.discount;
+
+        if (values.increase > 0) {
+            finalSystemPrice = systemSubTotal + (systemSubTotal * values.increase / 100);
+
+            if (!values.percent) finalSystemPrice = systemSubTotal + values.increase;
+        }
+
+        const valuesReturn: CalcResultProps = {
+            monthsAverageKwh,
+            finalAverageKwh,
+            monthlyPaid,
+            yearlyPaid,
+            systemCapacityKwp,
+            monthlyGeneratedEnergy,
+            yearlyGeneratedEnergy,
+            co2Reduction,
+            systemArea,
+            finalSystemCapacityKwp: Number(foundCapacity.potency),
+            systemInitialPrice: systemSubTotal,
+            finalSystemPrice,
+            estimateItems: tempEstimateItems,
+        }
+
+        return valuesReturn;
+    }
+
+    tempTotal = 0;
+    values.estimateItems.forEach(item => {
+        tempTotal = Number(tempTotal) + item.amount * item.price;
+    });
+
+    systemSubTotal = tempTotal;
+
+    // Discount and increase.
+    finalSystemPrice = systemSubTotal - (systemSubTotal * values.discount / 100);
+
+    if (!values.percent) finalSystemPrice = systemSubTotal - values.discount;
+
+    if (values.increase > 0) {
+        finalSystemPrice = systemSubTotal + (systemSubTotal * values.increase / 100);
+
+        if (!values.percent) finalSystemPrice = systemSubTotal + values.increase;
+    }
+
+    //console.log('finalSystemPrice ', finalSystemPrice);
 
     const valuesReturn: CalcResultProps = {
         monthsAverageKwh,
@@ -230,9 +232,9 @@ export function calculate(props: CalcProps) {
         co2Reduction,
         systemArea,
         finalSystemCapacityKwp: Number(foundCapacity.potency),
-        systemInitialPrice,
+        systemInitialPrice: systemSubTotal,
         finalSystemPrice,
-        estimateItems: tempEstimateItems,
+        estimateItems: values.estimateItems,
     }
 
     return valuesReturn;

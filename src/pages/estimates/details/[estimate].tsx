@@ -83,7 +83,7 @@ export default function PropertyDetails() {
                             estimateItems: estimateRes.items,
                         }
 
-                        const calcResultsItem = calculate(valuesCalcItem);
+                        const calcResultsItem = calculate(valuesCalcItem, false);
 
                         if (!calcResultsItem) {
                             console.log('Error to calculate estimate.');
@@ -857,6 +857,53 @@ export default function PropertyDetails() {
                                                                     </Col>
                                                                 </Row>
 
+                                                                <Row>
+                                                                    <Col>
+                                                                        <h6 className="text-success">Itens <FaClipboardList /></h6>
+                                                                    </Col>
+                                                                </Row>
+
+                                                                <Table striped hover size="sm" responsive>
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th>Quantidade</th>
+                                                                            <th>Produto</th>
+                                                                            <th>Unitário</th>
+                                                                            <th>Total</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {
+                                                                            data.items.map((item, index) => {
+                                                                                const total = item.amount * item.price;
+
+                                                                                return <tr key={index}>
+                                                                                    <td>{prettifyCurrency(Number(item.amount).toFixed(2))}</td>
+                                                                                    <td>{item.name}</td>
+                                                                                    <td>{`R$ ${prettifyCurrency(Number(item.price).toFixed(2))}`}</td>
+                                                                                    <td>{`R$ ${prettifyCurrency(total.toFixed(2))}`}</td>
+                                                                                </tr>
+                                                                            })
+                                                                        }
+                                                                    </tbody>
+                                                                </Table>
+
+                                                                <Row className="mb-3">
+                                                                    <Col sm={3} >
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Exibir valores dos itens no orçamento?</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.show_values ? 'Sim' : 'Nâo'}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+                                                                </Row>
+
                                                                 <Row className="mb-3">
                                                                     <Col>
                                                                         <h6 className="text-success">Valores <FaCashRegister /></h6>
@@ -936,53 +983,6 @@ export default function PropertyDetails() {
                                                                         <Row>
                                                                             <Col>
                                                                                 <h6 className="text-secondary">{data.show_discount ? 'Sim' : 'Nâo'}</h6>
-                                                                            </Col>
-                                                                        </Row>
-                                                                    </Col>
-                                                                </Row>
-
-                                                                <Row>
-                                                                    <Col>
-                                                                        <h6 className="text-success">Itens <FaClipboardList /></h6>
-                                                                    </Col>
-                                                                </Row>
-
-                                                                <Table striped hover size="sm" responsive>
-                                                                    <thead>
-                                                                        <tr>
-                                                                            <th>Quantidade</th>
-                                                                            <th>Produto</th>
-                                                                            <th>Unitário</th>
-                                                                            <th>Total</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody>
-                                                                        {
-                                                                            data.items.map((item, index) => {
-                                                                                const total = item.amount * item.price;
-
-                                                                                return <tr key={index}>
-                                                                                    <td>{prettifyCurrency(Number(item.amount).toFixed(2))}</td>
-                                                                                    <td>{item.name}</td>
-                                                                                    <td>{`R$ ${prettifyCurrency(Number(item.price).toFixed(2))}`}</td>
-                                                                                    <td>{`R$ ${prettifyCurrency(total.toFixed(2))}`}</td>
-                                                                                </tr>
-                                                                            })
-                                                                        }
-                                                                    </tbody>
-                                                                </Table>
-
-                                                                <Row className="mb-3">
-                                                                    <Col sm={3} >
-                                                                        <Row>
-                                                                            <Col>
-                                                                                <span className="text-success">Exibir valores dos itens no orçamento?</span>
-                                                                            </Col>
-                                                                        </Row>
-
-                                                                        <Row>
-                                                                            <Col>
-                                                                                <h6 className="text-secondary">{data.show_values ? 'Sim' : 'Nâo'}</h6>
                                                                             </Col>
                                                                         </Row>
                                                                     </Col>

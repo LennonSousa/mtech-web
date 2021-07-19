@@ -1,12 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Row, Col, Form, InputGroup, ListGroup, Modal, Button } from 'react-bootstrap';
+import { Row, Col, Form, InputGroup, Button } from 'react-bootstrap';
 import { FaSave } from 'react-icons/fa';
-import { Formik } from 'formik';
-import * as Yup from 'yup';
 
-import api from '../../api/api';
-import { Estimate } from '../Estimates';
-import { AlertMessage, statusModal } from '../interfaces/AlertMessage';
 import { prettifyCurrency } from '../InputMask/masks';
 
 export interface EstimateItem {
@@ -25,70 +20,20 @@ interface EstimateItemsProps {
     handleListEstimateItems?: (estimateItemsList: EstimateItem[]) => void;
 }
 
-const validationSchema = Yup.object().shape({
-    potency: Yup.string().notRequired(),
-    price: Yup.string().notRequired(),
-    inversor: Yup.string().required('Obrigatório!').max(50, 'Deve conter no máximo 50 caracteres!'),
-});
-
 const EstimateItems: React.FC<EstimateItemsProps> = ({ estimateItem, estimateItemsList, canEdit = true, handleListEstimateItems }) => {
     const [name, setName] = useState('');
     const [amount, setAmount] = useState(0);
-    const [price, setPrice] = useState(0);
+    const [price, setPrice] = useState('0,00');
     const [totalPrice, setTotalPrice] = useState(0);
 
     const [fieldsFormTouched, setFieldsFormTouched] = useState(false);
 
-    const [showModalEditType, setShowModalEditType] = useState(false);
-
-    const handleCloseModalEditType = () => { setShowModalEditType(false); setIconDeleteConfirm(false); setIconDelete(true); }
-    const handleShowModalEditType = () => setShowModalEditType(true);
-
-    const [messageShow, setMessageShow] = useState(false);
-    const [statusMessage, setTypeMessage] = useState<statusModal>("waiting");
-
-    const [iconDelete, setIconDelete] = useState(true);
-    const [iconDeleteConfirm, setIconDeleteConfirm] = useState(false);
-
     useEffect(() => {
         setName(estimateItem.name);
-        setAmount(estimateItem.amount);
-        setPrice(estimateItem.price);
-        setTotalPrice(estimateItem.amount * estimateItem.price);
+        setAmount(Number(estimateItem.amount));
+        setPrice(prettifyCurrency(Number(estimateItem.price).toFixed(2)));
+        setTotalPrice(Number(estimateItem.amount) * Number(estimateItem.price));
     }, [estimateItem]);
-
-    async function deleteLine() {
-        if (iconDelete) {
-            setIconDelete(false);
-            setIconDeleteConfirm(true);
-
-            return;
-        }
-
-        setTypeMessage("waiting");
-        setMessageShow(true);
-
-        try {
-            await api.delete(`estimates/items/${estimateItem.id}`);
-
-            handleCloseModalEditType();
-
-            // if (handleListEstimateItems) handleListEstimateItems();
-        }
-        catch (err) {
-            setIconDeleteConfirm(false);
-            setIconDelete(true);
-
-            setTypeMessage("error");
-
-            setTimeout(() => {
-                setMessageShow(false);
-            }, 4000);
-
-            console.log("Error to delete estimates items");
-            console.log(err);
-        }
-    }
 
     function handleEstimateItem(name: string, amount: number, price: number) {
         const items = estimateItemsList.map(itemList => {
@@ -120,7 +65,7 @@ const EstimateItems: React.FC<EstimateItemsProps> = ({ estimateItem, estimateIte
 
                             setAmount(newAmount);
 
-                            handleEstimateItem(name, newAmount, price);
+                            handleEstimateItem(name, newAmount, Number(price.replace('.', '').replace(',', '.')));
                         }
                         catch {
                             setAmount(1);
@@ -133,7 +78,7 @@ const EstimateItems: React.FC<EstimateItemsProps> = ({ estimateItem, estimateIte
 
                             setAmount(newAmount);
 
-                            handleEstimateItem(name, newAmount, price);
+                            handleEstimateItem(name, newAmount, Number(price.replace('.', '').replace(',', '.')));
                         }
                         catch {
                             setAmount(1);
@@ -143,7 +88,6 @@ const EstimateItems: React.FC<EstimateItemsProps> = ({ estimateItem, estimateIte
                     value={amount}
                     name="amount"
                     isInvalid={!!!amount}
-                    disabled={!canEdit}
                 />
             </Form.Group>
 
@@ -160,7 +104,7 @@ const EstimateItems: React.FC<EstimateItemsProps> = ({ estimateItem, estimateIte
 
                         setFieldsFormTouched(true);
                     }}
-                    value={estimateItem.name}
+                    value={name}
                     name="name"
                     isInvalid={!!!name}
                 />
@@ -173,12 +117,41 @@ const EstimateItems: React.FC<EstimateItemsProps> = ({ estimateItem, estimateIte
                     </InputGroup.Prepend>
                     <Form.Control
                         type="text"
-                        value={prettifyCurrency(price.toFixed(2))}
+                        onChange={e => {
+                            try {
+                                const newTotalPrice = amount * Number(prettifyCurrency(e.target.value).replace('.', '').replace(',', '.'));
+
+                                setTotalPrice(newTotalPrice);
+
+                                setPrice(prettifyCurrency(e.target.value));
+
+                                setFieldsFormTouched(true);
+                            }
+                            catch {
+                                setPrice('0,00');
+                                setFieldsFormTouched(true);
+                            }
+                        }}
+                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                            try {
+                                const newTotalPrice = amount * Number(prettifyCurrency(e.target.value).replace('.', '').replace(',', '.'));
+
+                                setTotalPrice(newTotalPrice);
+
+                                setPrice(prettifyCurrency(e.target.value));
+
+                                setFieldsFormTouched(true);
+                            }
+                            catch {
+                                setPrice('0,00');
+                                setFieldsFormTouched(true);
+                            }
+                        }}
+                        value={price}
                         name="price"
                         isInvalid={!!!price}
                         aria-label="Valor unitário"
                         aria-describedby="btnGroupPrice"
-                        readOnly
                     />
                 </InputGroup>
             </Form.Group>
@@ -205,7 +178,7 @@ const EstimateItems: React.FC<EstimateItemsProps> = ({ estimateItem, estimateIte
                     variant="outline-success"
                     className="button-link"
                     onClick={() => {
-                        handleEstimateItem(name, amount, price);
+                        handleEstimateItem(name, amount, Number(price.replace('.', '').replace(',', '.')));
                     }}
                     disabled={!fieldsFormTouched}
                 >

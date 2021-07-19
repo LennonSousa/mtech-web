@@ -209,8 +209,8 @@ export default function NewCustomer() {
 
     }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    function handleCalcEstimate(values: CalcProps) {
-        const calcResults = calculate(values);
+    function handleCalcEstimate(values: CalcProps, updatedInversor: boolean) {
+        const calcResults = calculate(values, updatedInversor);
 
         if (calcResults) {
             setResultMonthsAverageKwh(calcResults.monthsAverageKwh);
@@ -230,11 +230,11 @@ export default function NewCustomer() {
             setResultPreSystemPrice(calcResults.systemInitialPrice);
             setResultFinalSystemPrice(calcResults.finalSystemPrice);
 
-            setEstimateItemsList(calcResults.estimateItems);
-
             calcResults.estimateItems.forEach(item => {
                 if (item.order === 1) setResultPanelsAmount(item.amount);
             });
+
+            setEstimateItemsList(calcResults.estimateItems);
         }
     }
 
@@ -290,7 +290,7 @@ export default function NewCustomer() {
 
             setValuesCalc(updatedValuesCalc);
 
-            handleCalcEstimate(updatedValuesCalc);
+            handleCalcEstimate(updatedValuesCalc, false);
         }
     }
 
@@ -826,7 +826,7 @@ export default function NewCustomer() {
 
                                                                             const calcValues = handleFormValues(values);
 
-                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                            if (calcValues) handleCalcEstimate(calcValues, true);
                                                                         }}
                                                                         value={values.kwh}
                                                                         name="kwh"
@@ -855,7 +855,7 @@ export default function NewCustomer() {
 
                                                                             const calcValues = handleFormValues(values);
 
-                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                            if (calcValues) handleCalcEstimate(calcValues, true);
                                                                         }}
                                                                         value={values.irradiation}
                                                                         name="irradiation"
@@ -876,7 +876,7 @@ export default function NewCustomer() {
 
                                                                         const calcValues = handleFormValues(values);
 
-                                                                        if (calcValues) handleCalcEstimate(calcValues);
+                                                                        if (calcValues) handleCalcEstimate(calcValues, true);
                                                                     }}
                                                                     onBlur={handleBlur}
                                                                     value={values.panel}
@@ -904,7 +904,7 @@ export default function NewCustomer() {
 
                                                                         const calcValues = handleFormValues(values);
 
-                                                                        if (calcValues) handleCalcEstimate(calcValues);
+                                                                        if (calcValues) handleCalcEstimate(calcValues, true);
                                                                     }}
                                                                     onBlur={handleBlur}
                                                                     value={values.roof_orientation}
@@ -940,7 +940,7 @@ export default function NewCustomer() {
 
                                                                             const calcValues = handleFormValues(values);
 
-                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                            if (calcValues) handleCalcEstimate(calcValues, true);
                                                                         }}
                                                                         value={values.month_01}
                                                                         name="month_01"
@@ -974,7 +974,7 @@ export default function NewCustomer() {
 
                                                                                 const calcValues = handleFormValues(updatedValues);
 
-                                                                                if (calcValues) handleCalcEstimate(calcValues);
+                                                                                if (calcValues) handleCalcEstimate(calcValues, true);
                                                                             }}
                                                                         >
                                                                             <FaCopy />
@@ -1001,7 +1001,7 @@ export default function NewCustomer() {
 
                                                                             const calcValues = handleFormValues(values);
 
-                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                            if (calcValues) handleCalcEstimate(calcValues, true);
                                                                         }}
                                                                         value={values.month_02}
                                                                         name="month_02"
@@ -1030,7 +1030,7 @@ export default function NewCustomer() {
 
                                                                             const calcValues = handleFormValues(values);
 
-                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                            if (calcValues) handleCalcEstimate(calcValues, true);
                                                                         }}
                                                                         value={values.month_03}
                                                                         name="month_03"
@@ -1059,7 +1059,7 @@ export default function NewCustomer() {
 
                                                                             const calcValues = handleFormValues(values);
 
-                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                            if (calcValues) handleCalcEstimate(calcValues, true);
                                                                         }}
                                                                         value={values.month_04}
                                                                         name="month_04"
@@ -1090,7 +1090,7 @@ export default function NewCustomer() {
 
                                                                             const calcValues = handleFormValues(values);
 
-                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                            if (calcValues) handleCalcEstimate(calcValues, true);
                                                                         }}
                                                                         value={values.month_05}
                                                                         name="month_05"
@@ -1119,7 +1119,7 @@ export default function NewCustomer() {
 
                                                                             const calcValues = handleFormValues(values);
 
-                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                            if (calcValues) handleCalcEstimate(calcValues, true);
                                                                         }}
                                                                         value={values.month_06}
                                                                         name="month_06"
@@ -1148,7 +1148,7 @@ export default function NewCustomer() {
 
                                                                             const calcValues = handleFormValues(values);
 
-                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                            if (calcValues) handleCalcEstimate(calcValues, true);
                                                                         }}
                                                                         value={values.month_07}
                                                                         name="month_07"
@@ -1177,7 +1177,7 @@ export default function NewCustomer() {
 
                                                                             const calcValues = handleFormValues(values);
 
-                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                            if (calcValues) handleCalcEstimate(calcValues, true);
                                                                         }}
                                                                         value={values.month_08}
                                                                         name="month_08"
@@ -1208,7 +1208,7 @@ export default function NewCustomer() {
 
                                                                             const calcValues = handleFormValues(values);
 
-                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                            if (calcValues) handleCalcEstimate(calcValues, true);
                                                                         }}
                                                                         value={values.month_09}
                                                                         name="month_09"
@@ -1237,7 +1237,7 @@ export default function NewCustomer() {
 
                                                                             const calcValues = handleFormValues(values);
 
-                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                            if (calcValues) handleCalcEstimate(calcValues, true);
                                                                         }}
                                                                         value={values.month_10}
                                                                         name="month_10"
@@ -1266,7 +1266,7 @@ export default function NewCustomer() {
 
                                                                             const calcValues = handleFormValues(values);
 
-                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                            if (calcValues) handleCalcEstimate(calcValues, true);
                                                                         }}
                                                                         value={values.month_11}
                                                                         name="month_11"
@@ -1295,7 +1295,7 @@ export default function NewCustomer() {
 
                                                                             const calcValues = handleFormValues(values);
 
-                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                            if (calcValues) handleCalcEstimate(calcValues, true);
                                                                         }}
                                                                         value={values.month_12}
                                                                         name="month_12"
@@ -1325,7 +1325,7 @@ export default function NewCustomer() {
 
                                                                             const calcValues = handleFormValues(values);
 
-                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                            if (calcValues) handleCalcEstimate(calcValues, true);
                                                                         }}
                                                                         value={values.month_13}
                                                                         name="month_13"
@@ -1370,7 +1370,7 @@ export default function NewCustomer() {
 
                                                                             const calcValues = handleFormValues(values);
 
-                                                                            if (calcValues) handleCalcEstimate(calcValues);
+                                                                            if (calcValues) handleCalcEstimate(calcValues, true);
                                                                         }}
                                                                         value={values.average_increase}
                                                                         name="average_increase"
@@ -1573,117 +1573,6 @@ export default function NewCustomer() {
 
                                                         <Col className="border-top mt-3 mb-3"></Col>
 
-                                                        <Row className="mb-3">
-                                                            <Col>
-                                                                <Row>
-                                                                    <Col>
-                                                                        <h6 className="text-success">Valores <FaCashRegister /></h6>
-                                                                    </Col>
-                                                                </Row>
-                                                            </Col>
-                                                        </Row>
-
-                                                        <Row className="align-items-center">
-                                                            <Form.Group as={Col} sm={3} controlId="formGridPreSystemPrice">
-                                                                <Form.Label>Subtotal</Form.Label>
-                                                                <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupPreSystemPrice">R$</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
-                                                                    <Form.Control
-                                                                        type="text"
-                                                                        value={prettifyCurrency(String(resultPreSystemPrice.toFixed(2)))}
-                                                                        name="pre_system_value"
-                                                                        aria-label="Valor do sistema "
-                                                                        aria-describedby="btnGroupPreSystemPrice"
-                                                                        readOnly
-                                                                    />
-                                                                </InputGroup>
-                                                            </Form.Group>
-
-                                                            <Col sm={3}>
-                                                                <Form.Switch
-                                                                    id="percent"
-                                                                    label="Valores em Reais (R$)"
-                                                                    checked={!values.percent}
-                                                                    onChange={() => {
-                                                                        setFieldValue('percent', !values.percent);
-
-                                                                        const calcValues = handleFormValues(values);
-
-                                                                        if (calcValues) handleCalcEstimate(calcValues);
-                                                                    }}
-                                                                />
-                                                            </Col>
-
-                                                            <Form.Group as={Col} sm={3} controlId="formGridDiscount">
-                                                                <Form.Label>Desconto</Form.Label>
-                                                                <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupDiscount">{values.percent ? '%' : 'R$'}</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
-                                                                    <Form.Control
-                                                                        type="text"
-                                                                        onChange={(e) => {
-                                                                            setFieldValue('discount', prettifyCurrency(e.target.value));
-                                                                        }}
-                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                                                                            setFieldValue('discount', prettifyCurrency(e.target.value));
-
-                                                                            const calcValues = handleFormValues(values);
-
-                                                                            if (calcValues) handleCalcEstimate(calcValues);
-                                                                        }}
-                                                                        value={values.discount}
-                                                                        name="discount"
-                                                                        isInvalid={!!errors.discount && touched.discount}
-                                                                        aria-label="Valor"
-                                                                        aria-describedby="btnGroupDiscount"
-                                                                    />
-                                                                </InputGroup>
-                                                                <Form.Control.Feedback type="invalid">{touched.discount && errors.discount}</Form.Control.Feedback>
-                                                            </Form.Group>
-
-                                                            <Form.Group as={Col} sm={3} controlId="formGridDiscount">
-                                                                <Form.Label>Acréscimo</Form.Label>
-                                                                <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupDiscount">{values.percent ? '%' : 'R$'}</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
-                                                                    <Form.Control
-                                                                        type="text"
-                                                                        onChange={(e) => {
-                                                                            setFieldValue('increase', prettifyCurrency(e.target.value));
-                                                                        }}
-                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                                                                            setFieldValue('increase', prettifyCurrency(e.target.value));
-
-                                                                            const calcValues = handleFormValues(values);
-
-                                                                            if (calcValues) handleCalcEstimate(calcValues);
-                                                                        }}
-                                                                        value={values.increase}
-                                                                        name="increase"
-                                                                        isInvalid={!!errors.increase && touched.increase}
-                                                                        aria-label="Valor"
-                                                                        aria-describedby="btnGroupDiscount"
-                                                                    />
-                                                                </InputGroup>
-                                                                <Form.Control.Feedback type="invalid">{touched.increase && errors.increase}</Form.Control.Feedback>
-                                                            </Form.Group>
-                                                        </Row>
-
-                                                        <Form.Row className="mb-2">
-                                                            <Form.Switch
-                                                                id="show_discount"
-                                                                label="Exibir descontos no orçamento?"
-                                                                checked={values.show_discount}
-                                                                onChange={() => { setFieldValue('show_discount', !values.show_discount) }}
-                                                            />
-                                                        </Form.Row>
-
-                                                        <Col className="border-top mt-3 mb-3"></Col>
-
                                                         <Row>
                                                             <Col>
                                                                 <Row>
@@ -1721,6 +1610,117 @@ export default function NewCustomer() {
                                                                 />
                                                             })
                                                         }
+
+                                                        <Col className="border-top mt-3 mb-3"></Col>
+
+                                                        <Row className="mb-3">
+                                                            <Col>
+                                                                <Row>
+                                                                    <Col>
+                                                                        <h6 className="text-success">Valores <FaCashRegister /></h6>
+                                                                    </Col>
+                                                                </Row>
+                                                            </Col>
+                                                        </Row>
+
+                                                        <Row className="align-items-center">
+                                                            <Form.Group as={Col} sm={3} controlId="formGridPreSystemPrice">
+                                                                <Form.Label>Subtotal</Form.Label>
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupPreSystemPrice">R$</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        value={prettifyCurrency(String(resultPreSystemPrice.toFixed(2)))}
+                                                                        name="pre_system_value"
+                                                                        aria-label="Valor do sistema "
+                                                                        aria-describedby="btnGroupPreSystemPrice"
+                                                                        readOnly
+                                                                    />
+                                                                </InputGroup>
+                                                            </Form.Group>
+
+                                                            <Col sm={3}>
+                                                                <Form.Switch
+                                                                    id="percent"
+                                                                    label="Valores em Reais (R$)"
+                                                                    checked={!values.percent}
+                                                                    onChange={() => {
+                                                                        setFieldValue('percent', !values.percent);
+
+                                                                        const calcValues = handleFormValues({ ...values, percent: !values.percent });
+
+                                                                        if (calcValues) handleCalcEstimate(calcValues, false);
+                                                                    }}
+                                                                />
+                                                            </Col>
+
+                                                            <Form.Group as={Col} sm={3} controlId="formGridDiscount">
+                                                                <Form.Label>Desconto</Form.Label>
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupDiscount">{values.percent ? '%' : 'R$'}</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        onChange={(e) => {
+                                                                            setFieldValue('discount', prettifyCurrency(e.target.value));
+                                                                        }}
+                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                            setFieldValue('discount', prettifyCurrency(e.target.value));
+
+                                                                            const calcValues = handleFormValues(values);
+
+                                                                            if (calcValues) handleCalcEstimate(calcValues, false);
+                                                                        }}
+                                                                        value={values.discount}
+                                                                        name="discount"
+                                                                        isInvalid={!!errors.discount && touched.discount}
+                                                                        aria-label="Valor"
+                                                                        aria-describedby="btnGroupDiscount"
+                                                                    />
+                                                                </InputGroup>
+                                                                <Form.Control.Feedback type="invalid">{touched.discount && errors.discount}</Form.Control.Feedback>
+                                                            </Form.Group>
+
+                                                            <Form.Group as={Col} sm={3} controlId="formGridDiscount">
+                                                                <Form.Label>Acréscimo</Form.Label>
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Prepend>
+                                                                        <InputGroup.Text id="btnGroupDiscount">{values.percent ? '%' : 'R$'}</InputGroup.Text>
+                                                                    </InputGroup.Prepend>
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        onChange={(e) => {
+                                                                            setFieldValue('increase', prettifyCurrency(e.target.value));
+                                                                        }}
+                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                            setFieldValue('increase', prettifyCurrency(e.target.value));
+
+                                                                            const calcValues = handleFormValues(values);
+
+                                                                            if (calcValues) handleCalcEstimate(calcValues, false);
+                                                                        }}
+                                                                        value={values.increase}
+                                                                        name="increase"
+                                                                        isInvalid={!!errors.increase && touched.increase}
+                                                                        aria-label="Valor"
+                                                                        aria-describedby="btnGroupDiscount"
+                                                                    />
+                                                                </InputGroup>
+                                                                <Form.Control.Feedback type="invalid">{touched.increase && errors.increase}</Form.Control.Feedback>
+                                                            </Form.Group>
+                                                        </Row>
+
+                                                        <Form.Row className="mb-2">
+                                                            <Form.Switch
+                                                                id="show_discount"
+                                                                label="Exibir descontos no orçamento?"
+                                                                checked={values.show_discount}
+                                                                onChange={() => { setFieldValue('show_discount', !values.show_discount) }}
+                                                            />
+                                                        </Form.Row>
 
                                                         <Row className="mb-3">
                                                             <Col>

@@ -92,7 +92,7 @@ export default function PropertyDetails() {
                             estimateItems: estimateRes.items,
                         }
 
-                        const calcResultsItem = calculate(valuesCalcItem);
+                        const calcResultsItem = calculate(valuesCalcItem, false);
 
                         if (!calcResultsItem) {
                             console.log('Error to calculate estimate.');

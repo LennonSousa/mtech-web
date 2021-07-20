@@ -3,9 +3,9 @@ import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { NextSeo } from 'next-seo';
 import { Button, Col, Container, Form, InputGroup, ListGroup, Modal, Row } from 'react-bootstrap';
-import { Formik } from 'formik';
+import { Field, Formik } from 'formik';
 import * as Yup from 'yup';
-import { FaPlus } from 'react-icons/fa';
+import { FaCopy, FaPlus } from 'react-icons/fa';
 
 import api from '../../../../api/api';
 import { TokenVerify } from '../../../../utils/tokenVerify';
@@ -31,6 +31,10 @@ const priceValidationSchema = Yup.object().shape({
     panel: Yup.string().required('Obrigatório!'),
 });
 
+const copyPricesValidationSchema = Yup.object().shape({
+    panel: Yup.string().required('Obrigatório!'),
+});
+
 export default function UserEdit() {
     const router = useRouter();
     const { panel } = router.query;
@@ -40,6 +44,9 @@ export default function UserEdit() {
     const { handleItemSideBar, handleSelectedMenu } = useContext(SideBarContext);
 
     const [data, setData] = useState<Panel>();
+
+    const [panelsList, setPanelsList] = useState<Panel[]>([]);
+    const [selectedPanel, setSelectedPanel] = useState<Panel | undefined>(undefined);
 
     const [loadingData, setLoadingData] = useState(true);
     const [typeLoadingMessage, setTypeLoadingMessage] = useState<PageType>("waiting");
@@ -59,6 +66,11 @@ export default function UserEdit() {
     const handleCloseItemDelete = () => setShowItemDelete(false);
     const handelShowItemDelete = () => setShowItemDelete(true);
 
+    const [showCopyPrices, setShowCopyPrices] = useState(false);
+
+    const handleCloseCopyPrices = () => { setSelectedPanel(undefined); setShowCopyPrices(false); }
+    const handelShowCopyPrices = () => setShowCopyPrices(true);
+
     useEffect(() => {
         handleItemSideBar('estimates');
         handleSelectedMenu('estimates-panels');
@@ -69,6 +81,14 @@ export default function UserEdit() {
                     setData(res.data);
 
                     setLoadingData(false);
+
+                    api.get('panels').then(panelsRes => {
+                        const list: Panel[] = panelsRes.data;
+
+                        setPanelsList(list.filter(item => { return item.id !== panel }));
+                    }).catch(err => {
+                        console.log('Error get panels list, ', err);
+                    });
                 }).catch(err => {
                     console.log('Error get panel to edit, ', err);
 
@@ -247,7 +267,7 @@ export default function UserEdit() {
                                                                                 <h6 className="text-success">Preços</h6>
                                                                             </div>
 
-                                                                            <Col sm={1}>
+                                                                            <Col className="col-row">
                                                                                 <Button
                                                                                     variant="outline-success"
                                                                                     size="sm"
@@ -255,6 +275,17 @@ export default function UserEdit() {
                                                                                     title="Criar um novo preço para este painel."
                                                                                 >
                                                                                     <FaPlus />
+                                                                                </Button>
+                                                                            </Col>
+
+                                                                            <Col className="col-row">
+                                                                                <Button
+                                                                                    variant="outline-success"
+                                                                                    size="sm"
+                                                                                    onClick={handelShowCopyPrices}
+                                                                                    title="Importar valores de outro painel."
+                                                                                >
+                                                                                    <FaCopy />
                                                                                 </Button>
                                                                             </Col>
                                                                         </Row>
@@ -462,6 +493,133 @@ export default function UserEdit() {
                                                                                                 Cancelar
                                                                                             </Button>
                                                                                             <Button variant="success" type="submit">Salvar</Button>
+                                                                                        </>
+
+                                                                                }
+                                                                            </Modal.Footer>
+                                                                        </Form>
+                                                                    )}
+                                                                </Formik>
+                                                            </Modal>
+
+                                                            <Modal show={showCopyPrices} size="lg" onHide={handleCloseCopyPrices}>
+                                                                <Modal.Header closeButton>
+                                                                    <Modal.Title>Importar valores</Modal.Title>
+                                                                </Modal.Header>
+                                                                <Formik
+                                                                    initialValues={
+                                                                        {
+                                                                            panel: '',
+                                                                            prices: [],
+                                                                        }
+                                                                    }
+                                                                    onSubmit={async values => {
+                                                                        if (selectedPanel) {
+                                                                            setTypeMessage("waiting");
+                                                                            setNewItemMessageShow(true);
+
+                                                                            try {
+
+                                                                                values.prices.forEach(price => {
+                                                                                    const pricesToCopy = selectedPanel.prices.filter(item => { return item.id === price });
+
+                                                                                    pricesToCopy.forEach(async priceToCopy => {
+                                                                                        await api.post('panels/prices', {
+                                                                                            potency: priceToCopy.potency,
+                                                                                            price: priceToCopy.price,
+                                                                                            inversor: priceToCopy.inversor,
+                                                                                            panel,
+                                                                                        });
+                                                                                    });
+                                                                                });
+
+                                                                                await handleListPanelPrices();
+
+                                                                                setTypeMessage("success");
+
+                                                                                setTimeout(() => {
+                                                                                    setNewItemMessageShow(false);
+                                                                                    handleCloseCopyPrices();
+                                                                                }, 1000);
+                                                                            }
+                                                                            catch (err) {
+                                                                                setTypeMessage("error");
+
+                                                                                setTimeout(() => {
+                                                                                    setNewItemMessageShow(false);
+                                                                                }, 4000);
+
+                                                                                console.log('error create customer type.');
+                                                                                console.log(err);
+                                                                            }
+                                                                        }
+                                                                    }}
+                                                                    validationSchema={copyPricesValidationSchema}
+                                                                >
+                                                                    {({ handleBlur, handleSubmit, values, setFieldValue, errors, touched }) => (
+                                                                        <Form onSubmit={handleSubmit}>
+                                                                            <Modal.Body>
+                                                                                <Form.Group controlId="formGridSelectPanel">
+                                                                                    <Form.Label>Painel</Form.Label>
+                                                                                    <Form.Control
+                                                                                        as="select"
+                                                                                        onChange={(e) => {
+                                                                                            setFieldValue('panel', e.target.value);
+
+                                                                                            const foundPanel = panelsList.find(item => { return item.id === e.target.value });
+
+                                                                                            if (foundPanel) setSelectedPanel(foundPanel);
+                                                                                        }}
+                                                                                        onBlur={handleBlur}
+                                                                                        value={values.panel}
+                                                                                        name="panel"
+                                                                                        isInvalid={!!errors.panel && touched.panel}
+                                                                                    >
+                                                                                        <option hidden>Selecione um painel</option>
+                                                                                        {
+                                                                                            panelsList.map((item, index) => {
+                                                                                                return <option key={index} value={item.id}>{item.name}</option>
+                                                                                            })
+                                                                                        }
+                                                                                    </Form.Control>
+                                                                                    <Form.Control.Feedback type="invalid">{touched.panel && errors.panel}</Form.Control.Feedback>
+                                                                                </Form.Group>
+
+                                                                                <Col className="border-top mt-3"></Col>
+
+                                                                                <ListGroup className="mt-3">
+                                                                                    {
+                                                                                        selectedPanel && selectedPanel.prices.map((item, index) => {
+                                                                                            return <ListGroup.Item key={index} variant="light">
+                                                                                                <Row className="align-items-center">
+                                                                                                    <Form.Label column>
+                                                                                                        <Field type="checkbox" name="prices" value={item.id} />
+                                                                                                        <span className="col">
+                                                                                                            {item.potency}
+                                                                                                        </span>
+
+                                                                                                        <span className="col">
+                                                                                                            {item.inversor}
+                                                                                                        </span>
+
+                                                                                                        <span className="col">
+                                                                                                            {`R$ ${prettifyCurrency(String(item.price))}`}
+                                                                                                        </span>
+                                                                                                    </Form.Label>
+                                                                                                </Row>
+                                                                                            </ListGroup.Item>
+                                                                                        })
+                                                                                    }
+                                                                                </ListGroup>
+                                                                            </Modal.Body>
+                                                                            <Modal.Footer>
+                                                                                {
+                                                                                    newItemMessageShow ? <AlertMessage status={typeMessage} /> :
+                                                                                        <>
+                                                                                            <Button variant="secondary" onClick={handleCloseCopyPrices}>
+                                                                                                Cancelar
+                                                                                            </Button>
+                                                                                            <Button variant="success" type="submit">Importar</Button>
                                                                                         </>
 
                                                                                 }

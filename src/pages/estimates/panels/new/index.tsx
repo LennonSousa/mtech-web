@@ -62,16 +62,16 @@ export default function NewUser() {
     return (
         <>
             <NextSeo
-                title="Criar usuário"
-                description="Criar usuário da plataforma de gerenciamento da Mtech Solar."
+                title="Criar painel"
+                description="Criar painel da plataforma de gerenciamento da Mtech Solar."
                 openGraph={{
                     url: 'https://app.mtechsolar.com.br',
-                    title: 'Criar usuário',
-                    description: 'Criar usuário da plataforma de gerenciamento da Mtech Solar.',
+                    title: 'Criar painel',
+                    description: 'Criar painel da plataforma de gerenciamento da Mtech Solar.',
                     images: [
                         {
                             url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
-                            alt: 'Criar usuário | Plataforma Mtech Solar',
+                            alt: 'Criar painel | Plataforma Mtech Solar',
                         },
                         { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
                     ],

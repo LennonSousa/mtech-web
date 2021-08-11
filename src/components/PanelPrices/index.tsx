@@ -6,7 +6,7 @@ import * as Yup from 'yup';
 
 import api from '../../api/api';
 import { Panel } from '../Panels';
-import { AlertMessage, statusModal } from '../interfaces/AlertMessage';
+import { AlertMessage, statusModal } from '../Interfaces/AlertMessage';
 import { prettifyCurrency } from '../InputMask/masks';
 
 export interface PanelPrice {

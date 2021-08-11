@@ -5,20 +5,20 @@ import { Formik } from 'formik';
 import * as Yup from 'yup';
 
 import api from '../../api/api';
-import { Estimate } from '../Estimates';
+import { Project } from '../Projects';
 import { AlertMessage, statusModal } from '../Interfaces/AlertMessage';
 
-export interface RoofType {
+export interface ProjectStatus {
     id: string;
     name: string;
     order: number;
-    estimates: Estimate[];
+    projects: Project[];
 }
 
-interface RoofTypesProps {
-    roofType: RoofType;
-    listTypes: RoofType[];
-    handleListTypes(): Promise<void>;
+interface ProjectStatusProps {
+    status: ProjectStatus;
+    listStatus: ProjectStatus[];
+    handleListStatus(): Promise<void>;
 }
 
 const validationSchema = Yup.object().shape({
@@ -26,19 +26,19 @@ const validationSchema = Yup.object().shape({
     order: Yup.number().required(),
 });
 
-const RoofTypes: React.FC<RoofTypesProps> = ({ roofType, listTypes, handleListTypes }) => {
-    const [showModalEditType, setShowModalEditType] = useState(false);
+const ProjectStatusItem: React.FC<ProjectStatusProps> = ({ status, listStatus, handleListStatus }) => {
+    const [showModalEditStatus, setShowModalEditStatus] = useState(false);
 
-    const handleCloseModalEditType = () => { setShowModalEditType(false); setIconDeleteConfirm(false); setIconDelete(true); }
-    const handleShowModalEditType = () => setShowModalEditType(true);
+    const handleCloseModalEditStatus = () => { setShowModalEditStatus(false); setIconDeleteConfirm(false); setIconDelete(true); }
+    const handleShowModalEditStatus = () => setShowModalEditStatus(true);
 
     const [messageShow, setMessageShow] = useState(false);
-    const [statusMessage, setTypeMessage] = useState<statusModal>("waiting");
+    const [typeMessage, setTypeMessage] = useState<statusModal>("waiting");
 
     const [iconDelete, setIconDelete] = useState(true);
     const [iconDeleteConfirm, setIconDeleteConfirm] = useState(false);
 
-    async function deleteLine() {
+    async function deleteStatus() {
         if (iconDelete) {
             setIconDelete(false);
             setIconDeleteConfirm(true);
@@ -50,26 +50,26 @@ const RoofTypes: React.FC<RoofTypesProps> = ({ roofType, listTypes, handleListTy
         setMessageShow(true);
 
         try {
-            await api.delete(`roofs/types/${roofType.id}`);
+            await api.delete(`projects/status/${status.id}`);
 
-            const list = listTypes.filter(item => { return item.id !== roofType.id });
+            const list = listStatus.filter(item => { return item.id !== status.id });
 
-            list.forEach(async (roofType, index) => {
+            list.forEach(async (status, index) => {
                 try {
-                    await api.put(`roofs/types/${roofType.id}`, {
-                        name: roofType.name,
+                    await api.put(`projects/status/${status.id}`, {
+                        name: status.name,
                         order: index
                     });
                 }
                 catch (err) {
-                    console.log('error to save roof type order after deleting.');
+                    console.log('error to save status order after deleting.');
                     console.log(err)
                 }
             });
 
-            handleCloseModalEditType();
+            handleCloseModalEditStatus();
 
-            handleListTypes();
+            handleListStatus();
         }
         catch (err) {
             setIconDeleteConfirm(false);
@@ -81,7 +81,7 @@ const RoofTypes: React.FC<RoofTypesProps> = ({ roofType, listTypes, handleListTy
                 setMessageShow(false);
             }, 4000);
 
-            console.log("Error to delete roof type");
+            console.log("Error to delete status");
             console.log(err);
         }
     }
@@ -93,22 +93,22 @@ const RoofTypes: React.FC<RoofTypesProps> = ({ roofType, listTypes, handleListTy
                     <FaBars />
                 </Col>
 
-                <Col><span>{roofType.name}</span></Col>
+                <Col><span>{status.name}</span></Col>
 
                 <Col className="text-end">
-                    <Button variant="outline-success" className="button-link" onClick={handleShowModalEditType}><FaPencilAlt /> Editar</Button>
+                    <Button variant="outline-success" className="button-link" onClick={handleShowModalEditStatus}><FaPencilAlt /> Editar</Button>
                 </Col>
             </Row>
 
-            <Modal show={showModalEditType} onHide={handleCloseModalEditType}>
+            <Modal show={showModalEditStatus} onHide={handleCloseModalEditStatus}>
                 <Modal.Header closeButton>
                     <Modal.Title>Edtiar item</Modal.Title>
                 </Modal.Header>
                 <Formik
                     initialValues={
                         {
-                            name: roofType.name,
-                            order: roofType.order,
+                            name: status.name,
+                            order: status.order,
                         }
                     }
                     onSubmit={async values => {
@@ -116,24 +116,24 @@ const RoofTypes: React.FC<RoofTypesProps> = ({ roofType, listTypes, handleListTy
                         setMessageShow(true);
 
                         try {
-                            if (listTypes) {
-                                await api.put(`roofs/types/${roofType.id}`, {
+                            if (listStatus) {
+                                await api.put(`projects/status/${status.id}`, {
                                     name: values.name,
-                                    order: roofType.order
+                                    order: status.order
                                 });
 
-                                await handleListTypes();
+                                await handleListStatus();
 
                                 setTypeMessage("success");
 
                                 setTimeout(() => {
                                     setMessageShow(false);
-                                    handleCloseModalEditType();
+                                    handleCloseModalEditStatus();
                                 }, 2000);
                             }
                         }
                         catch (err) {
-                            console.log('error edit roofType.');
+                            console.log('error edit status.');
                             console.log(err);
 
                             setTypeMessage("error");
@@ -148,7 +148,7 @@ const RoofTypes: React.FC<RoofTypesProps> = ({ roofType, listTypes, handleListTy
                     {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
                         <Form onSubmit={handleSubmit}>
                             <Modal.Body>
-                                <Form.Group controlId="statusFormGridName">
+                                <Form.Group controlId="lineFormGridName">
                                     <Form.Label>Nome</Form.Label>
                                     <Form.Control type="text"
                                         placeholder="Nome"
@@ -165,13 +165,13 @@ const RoofTypes: React.FC<RoofTypesProps> = ({ roofType, listTypes, handleListTy
                             </Modal.Body>
                             <Modal.Footer>
                                 {
-                                    messageShow ? <AlertMessage status={statusMessage} /> :
+                                    messageShow ? <AlertMessage status={typeMessage} /> :
                                         <>
-                                            <Button variant="secondary" onClick={handleCloseModalEditType}>Cancelar</Button>
+                                            <Button variant="secondary" onClick={handleCloseModalEditStatus}>Cancelar</Button>
                                             <Button
                                                 title="Excluir item"
                                                 variant={iconDelete ? "outline-danger" : "outline-warning"}
-                                                onClick={deleteLine}
+                                                onClick={deleteStatus}
                                             >
                                                 {
                                                     iconDelete && "Excluir"
@@ -194,4 +194,4 @@ const RoofTypes: React.FC<RoofTypesProps> = ({ roofType, listTypes, handleListTy
     )
 }
 
-export default RoofTypes;
+export default ProjectStatusItem;

@@ -25,7 +25,7 @@ import { cpf, cnpj, cellphone } from '../../../components/InputMask/masks';
 import { statesCities } from '../../../components/StatesCities';
 import PageBack from '../../../components/PageBack';
 import { PageWaiting, PageType } from '../../../components/PageWaiting';
-import { AlertMessage, statusModal } from '../../../components/interfaces/AlertMessage';
+import { AlertMessage, statusModal } from '../../../components/Interfaces/AlertMessage';
 import { prettifyCurrency } from '../../../components/InputMask/masks';
 import { calculate, CalcProps } from '../../../utils/calcEstimate';
 
@@ -471,7 +471,6 @@ export default function NewCustomer() {
                                             >
                                                 {({ handleChange, handleBlur, handleSubmit, setFieldValue, setValues, values, errors, touched }) => (
                                                     <Form onSubmit={handleSubmit}>
-
                                                         <Row className="mb-3">
                                                             <Col>
                                                                 <Row>

@@ -7,6 +7,7 @@ import {
     FaUserTie,
     FaFileAlt,
     FaList,
+    FaHistory,
     FaPlus,
     FaIdCard,
     FaCompass,
@@ -255,42 +256,7 @@ const Sidebar: React.FC = () => {
 
                                 {
                                     can(user, "projects", "update:any") && <>
-                                        <Link href="/docs/project">
-                                            <a title="Listar os documentos para projetos" data-title="Listar os documentos para projetos">
-                                                <Row
-                                                    className={
-                                                        selectedMenu === 'projects-docs' ? styles.selectedMenuCardBodyItem :
-                                                            styles.menuCardBodyItem
-                                                    }
-                                                >
-                                                    <Col sm={1}>
-                                                        <FaIdCard size={14} />
-                                                    </Col>
-                                                    <Col>
-                                                        <span>Documentos</span>
-                                                    </Col>
-                                                </Row>
-                                            </a>
-                                        </Link>
                                         <Dropdown.Divider />
-
-                                        <Link href="/projects/types">
-                                            <a title="Listar os tipos" data-title="Listar os tipos">
-                                                <Row
-                                                    className={
-                                                        selectedMenu === 'projects-types' ? styles.selectedMenuCardBodyItem :
-                                                            styles.menuCardBodyItem
-                                                    }
-                                                >
-                                                    <Col sm={1}>
-                                                        <FaProjectDiagram size={14} />
-                                                    </Col>
-                                                    <Col>
-                                                        <span>Tipos</span>
-                                                    </Col>
-                                                </Row>
-                                            </a>
-                                        </Link>
 
                                         <Link href="/projects/status">
                                             <a title="Listar as fases" data-title="Listar as fases">
@@ -310,19 +276,37 @@ const Sidebar: React.FC = () => {
                                             </a>
                                         </Link>
 
-                                        <Link href="/projects/lines">
-                                            <a title="Listar as linhas de crédito" data-title="Listar as linhas de crédito">
+                                        <Link href="/projects/events">
+                                            <a title="Listar os eventos" data-title="Listar os eventos">
                                                 <Row
                                                     className={
-                                                        selectedMenu === 'projects-lines' ? styles.selectedMenuCardBodyItem :
+                                                        selectedMenu === 'projects-events' ? styles.selectedMenuCardBodyItem :
                                                             styles.menuCardBodyItem
                                                     }
                                                 >
                                                     <Col sm={1}>
-                                                        <FaLayerGroup size={14} />
+                                                        <FaHistory size={14} />
                                                     </Col>
                                                     <Col>
-                                                        <span>Linhas</span>
+                                                        <span>Eventos</span>
+                                                    </Col>
+                                                </Row>
+                                            </a>
+                                        </Link>
+
+                                        <Link href="/projects/attachments">
+                                            <a title="Listar os anexos obrigatórios." data-title="Listar os anexos obrigatórios.">
+                                                <Row
+                                                    className={
+                                                        selectedMenu === 'projects-attachments-required' ? styles.selectedMenuCardBodyItem :
+                                                            styles.menuCardBodyItem
+                                                    }
+                                                >
+                                                    <Col sm={1}>
+                                                        <FaFileAlt size={14} />
+                                                    </Col>
+                                                    <Col>
+                                                        <span>Anexos</span>
                                                     </Col>
                                                 </Row>
                                             </a>

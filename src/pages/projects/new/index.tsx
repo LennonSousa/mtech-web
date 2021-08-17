@@ -1,8 +1,8 @@
-import { ChangeEvent, useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { NextSeo } from 'next-seo';
-import { Button, Col, Container, Form, InputGroup, ListGroup, Modal, Row, Spinner } from 'react-bootstrap';
+import { Button, Col, Container, Form, InputGroup, ListGroup, Row, Spinner } from 'react-bootstrap';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { FaHistory, FaUserTie, FaUserTag } from 'react-icons/fa';
@@ -13,7 +13,7 @@ import api from '../../../api/api';
 import { TokenVerify } from '../../../utils/tokenVerify';
 import { SideBarContext } from '../../../contexts/SideBarContext';
 import { AuthContext } from '../../../contexts/AuthContext';
-import { User, can } from '../../../components/Users';
+import { can } from '../../../components/Users';
 import { ProjectStatus } from '../../../components/ProjectStatus';
 import { EventProject } from '../../../components/EventsProject';
 import ProjectEvents, { ProjectEvent } from '../../../components/ProjectEvents';
@@ -45,8 +45,7 @@ const validationSchema = Yup.object().shape({
     inversor: Yup.string().required('Obrigatório!'),
     roof_orientation: Yup.string().required('Obrigatório!'),
     roof_type: Yup.string().required('Obrigatório!'),
-    price: Yup.number().required('Obrigatório!'),
-    seler: Yup.string().required('Obrigatório!'),
+    price: Yup.string().required('Obrigatório!'),
     notes: Yup.string().notRequired().nullable(),
     financier_same: Yup.boolean().notRequired(),
     financier: Yup.string().required('Obrigatório!'),
@@ -76,6 +75,8 @@ export default function NewProject() {
     const [spinnerCep, setSpinnerCep] = useState(false);
     const [documentType, setDocumentType] = useState("CPF");
     const [cities, setCities] = useState<string[]>([]);
+    const [financierDocumentType, setFinancierDocumentType] = useState("CPF");
+    const [financierCities, setFinancierCities] = useState<string[]>([]);
     const [loadingData, setLoadingData] = useState(true);
     const [hasErrors, setHasErrors] = useState(false);
     const [typeLoadingMessage, setTypeLoadingMessage] = useState<PageType>("waiting");
@@ -100,12 +101,12 @@ export default function NewProject() {
                     setHasErrors(true);
                 });
 
-                api.get('docs/project').then(res => {
-                    let docsProjectRes: EventProject[] = res.data;
+                api.get('events/project').then(res => {
+                    let eventsProjectRes: EventProject[] = res.data;
 
-                    docsProjectRes = docsProjectRes.filter(eventProject => { return eventProject.active });
+                    eventsProjectRes = eventsProjectRes.filter(eventProject => { return eventProject.active });
 
-                    setProjectEvents(docsProjectRes.map((eventProject, index) => {
+                    setProjectEvents(eventsProjectRes.map((eventProject, index) => {
                         return {
                             id: index.toString(),
                             notes: '',
@@ -182,7 +183,7 @@ export default function NewProject() {
                                                         </Col>
                                                     </Row>
                                                     <Row>
-                                                        <Members user={user} />
+                                                        <Members name={user.name} />
                                                     </Row>
                                                 </Col>
                                             </Row>
@@ -208,7 +209,6 @@ export default function NewProject() {
                                                     roof_orientation: '',
                                                     roof_type: '',
                                                     price: '0,00',
-                                                    seller: '',
                                                     notes: '',
                                                     financier_same: false,
                                                     financier: '',
@@ -230,6 +230,15 @@ export default function NewProject() {
                                                     setMessageShow(true);
 
                                                     try {
+                                                        const events = projectEvents.map(projectEvent => {
+                                                            return {
+                                                                notes: projectEvent.notes,
+                                                                done: projectEvent.done,
+                                                                done_at: projectEvent.done_at,
+                                                                event: projectEvent.event.id,
+                                                            }
+                                                        });
+
                                                         const res = await api.post('projects', {
                                                             customer: values.customer,
                                                             document: values.document,
@@ -250,7 +259,6 @@ export default function NewProject() {
                                                             roof_orientation: values.roof_orientation,
                                                             roof_type: values.roof_type,
                                                             price: Number(values.price.replace(".", "").replace(",", ".")),
-                                                            seller: values.seller,
                                                             notes: values.notes,
                                                             financier_same: values.financier_same,
                                                             financier: values.financier,
@@ -266,7 +274,7 @@ export default function NewProject() {
                                                             financier_city: values.financier_city,
                                                             financier_state: values.financier_state,
                                                             status: values.status,
-                                                            events: projectEvents,
+                                                            events,
                                                         });
 
                                                         setTypeMessage("success");
@@ -665,6 +673,8 @@ export default function NewProject() {
                                                             </Form.Group>
                                                         </Row>
 
+                                                        <Col className="border-top mb-3"></Col>
+
                                                         <Row className="mb-3">
                                                             <Col>
                                                                 <Row>
@@ -715,23 +725,23 @@ export default function NewProject() {
                                                             </Form.Group>
 
                                                             <Form.Group as={Col} sm={4} controlId="formGridFinancierDocument">
-                                                                <Form.Label>{documentType}</Form.Label>
+                                                                <Form.Label>{financierDocumentType}</Form.Label>
                                                                 <Form.Control
                                                                     type="text"
                                                                     maxLength={18}
                                                                     onChange={(e) => {
                                                                         setFieldValue('financier_document', e.target.value.length <= 14 ? cpf(e.target.value) : cnpj(e.target.value), false);
                                                                         if (e.target.value.length > 14)
-                                                                            setDocumentType("CNPJ");
+                                                                            setFinancierDocumentType("CNPJ");
                                                                         else
-                                                                            setDocumentType("CPF");
+                                                                            setFinancierDocumentType("CPF");
                                                                     }}
                                                                     onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
                                                                         setFieldValue('financier_document', e.target.value.length <= 14 ? cpf(e.target.value) : cnpj(e.target.value));
                                                                         if (e.target.value.length > 14)
-                                                                            setDocumentType("CNPJ");
+                                                                            setFinancierDocumentType("CNPJ");
                                                                         else
-                                                                            setDocumentType("CPF");
+                                                                            setFinancierDocumentType("CPF");
                                                                     }}
                                                                     value={values.financier_document}
                                                                     name="financier_document"
@@ -756,7 +766,7 @@ export default function NewProject() {
                                                             </Form.Group>
 
                                                             <Form.Group as={Col} sm={3} controlId="formGridFinancierCellphone">
-                                                                <Form.Label>Celular secundáiro</Form.Label>
+                                                                <Form.Label>Celular</Form.Label>
                                                                 <Form.Control
                                                                     type="text"
                                                                     maxLength={15}
@@ -806,7 +816,7 @@ export default function NewProject() {
                                                                                     const stateCities = statesCities.estados.find(item => { return item.sigla === state })
 
                                                                                     if (stateCities)
-                                                                                        setCities(stateCities.cidades);
+                                                                                        setFinancierCities(stateCities.cidades);
 
                                                                                     setFieldValue('financier_street', street);
                                                                                     setFieldValue('financier_neighborhood', neighborhood);
@@ -907,7 +917,7 @@ export default function NewProject() {
                                                                         const stateCities = statesCities.estados.find(item => { return item.sigla === e.target.value })
 
                                                                         if (stateCities)
-                                                                            setCities(stateCities.cidades);
+                                                                            setFinancierCities(stateCities.cidades);
                                                                     }}
                                                                     onBlur={handleBlur}
                                                                     value={values.financier_state ? values.financier_state : '...'}
@@ -937,7 +947,7 @@ export default function NewProject() {
                                                                 >
                                                                     <option hidden>...</option>
                                                                     {
-                                                                        !!values.state && cities.map((financier_city, index) => {
+                                                                        !!values.state && financierCities.map((financier_city, index) => {
                                                                             return <option key={index} value={financier_city}>{financier_city}</option>
                                                                         })
                                                                     }
@@ -961,86 +971,29 @@ export default function NewProject() {
                                                             </Form.Group>
                                                         </Row>
 
-                                                        <Form.Group as={Col} sm={4} controlId="formGridStatus">
-                                                            <Form.Label>Fase</Form.Label>
-                                                            <Form.Control
-                                                                as="select"
-                                                                onChange={handleChange}
-                                                                onBlur={handleBlur}
-                                                                value={values.status}
-                                                                name="status"
-                                                                isInvalid={!!errors.status && touched.status}
-                                                            >
-                                                                <option hidden>...</option>
-                                                                {
-                                                                    projectStatus.map((status, index) => {
-                                                                        return <option key={index} value={status.id}>{status.name}</option>
-                                                                    })
-                                                                }
-                                                            </Form.Control>
-                                                            <Form.Control.Feedback type="invalid">{touched.status && errors.status}</Form.Control.Feedback>
-                                                        </Form.Group>
-
-                                                        <Col className="border-top mb-3"></Col>
-
                                                         <Row className="mb-3">
-                                                            <Col>
-                                                                <Row>
-                                                                    <div className="member-container">
-                                                                        <h6 className="text-success">Histórico <FaHistory /></h6>
-                                                                    </div>
-                                                                </Row>
-
-                                                                <Row className="mt-2">
+                                                            <Form.Group as={Col} sm={4} controlId="formGridStatus">
+                                                                <Form.Label>Fase</Form.Label>
+                                                                <Form.Control
+                                                                    as="select"
+                                                                    onChange={handleChange}
+                                                                    onBlur={handleBlur}
+                                                                    value={values.status}
+                                                                    name="status"
+                                                                    isInvalid={!!errors.status && touched.status}
+                                                                >
+                                                                    <option hidden>...</option>
                                                                     {
-                                                                        !!projectEvents.length ? <Col>
-                                                                            <Row className="mb-2" style={{ padding: '0 1rem' }}>
-                                                                                <Col sm={4}>
-                                                                                    <h6>Evento</h6>
-                                                                                </Col>
-
-                                                                                <Col sm={5}>
-                                                                                    <h6>Detalhes</h6>
-                                                                                </Col>
-
-                                                                                <Col className="text-center">
-                                                                                    <h6>Concluído</h6>
-                                                                                </Col>
-                                                                            </Row>
-
-                                                                            <Row>
-                                                                                <Col>
-                                                                                    <ListGroup>
-                                                                                        {
-                                                                                            projectEvents.map((event, index) => {
-                                                                                                return <ProjectEvents
-                                                                                                    key={index}
-                                                                                                    projectEvent={event}
-                                                                                                    listEvents={projectEvents}
-                                                                                                    handleListEvents={handleListEvents}
-                                                                                                    isNewItem
-                                                                                                />
-                                                                                            })
-                                                                                        }
-                                                                                    </ListGroup>
-                                                                                </Col>
-                                                                            </Row>
-
-                                                                        </Col> :
-                                                                            <Col>
-                                                                                <AlertMessage
-                                                                                    status="warning"
-                                                                                    message="Nenhum evento registrado para esse projeto."
-                                                                                />
-                                                                            </Col>
+                                                                        projectStatus.map((status, index) => {
+                                                                            return <option key={index} value={status.id}>{status.name}</option>
+                                                                        })
                                                                     }
-                                                                </Row>
-                                                            </Col>
+                                                                </Form.Control>
+                                                                <Form.Control.Feedback type="invalid">{touched.status && errors.status}</Form.Control.Feedback>
+                                                            </Form.Group>
                                                         </Row>
 
-                                                        <Col className="border-top mb-3"></Col>
-
-                                                        <Row className="justify-content-end">
+                                                        <Row className="mb-3 justify-content-end">
                                                             {
                                                                 messageShow ? <Col sm={3}><AlertMessage status={typeMessage} /></Col> :
                                                                     <Col sm={1}>
@@ -1052,6 +1005,64 @@ export default function NewProject() {
                                                     </Form>
                                                 )}
                                             </Formik>
+
+                                            <Col className="border-top mb-3"></Col>
+
+                                            <Row className="mb-3">
+                                                <Col>
+                                                    <Row>
+                                                        <div className="member-container">
+                                                            <h6 className="text-success">Histórico <FaHistory /></h6>
+                                                        </div>
+                                                    </Row>
+
+                                                    <Row className="mt-2">
+                                                        {
+                                                            !!projectEvents.length ? <Col>
+                                                                <Row className="mb-2" style={{ padding: '0 1rem' }}>
+                                                                    <Col sm={4}>
+                                                                        <h6>Evento</h6>
+                                                                    </Col>
+
+                                                                    <Col sm={5}>
+                                                                        <h6>Detalhes</h6>
+                                                                    </Col>
+
+                                                                    <Col className="text-center">
+                                                                        <h6>Concluído</h6>
+                                                                    </Col>
+                                                                </Row>
+
+                                                                <Row>
+                                                                    <Col>
+                                                                        <ListGroup>
+                                                                            {
+                                                                                projectEvents.map((event, index) => {
+                                                                                    return <ProjectEvents
+                                                                                        key={index}
+                                                                                        projectEvent={event}
+                                                                                        listEvents={projectEvents}
+                                                                                        handleListEvents={handleListEvents}
+                                                                                        isNewItem
+                                                                                        isNewProject
+                                                                                    />
+                                                                                })
+                                                                            }
+                                                                        </ListGroup>
+                                                                    </Col>
+                                                                </Row>
+
+                                                            </Col> :
+                                                                <Col>
+                                                                    <AlertMessage
+                                                                        status="warning"
+                                                                        message="Nenhum evento registrado para esse projeto."
+                                                                    />
+                                                                </Col>
+                                                        }
+                                                    </Row>
+                                                </Col>
+                                            </Row>
                                         </Container>
                                 }
                             </> :

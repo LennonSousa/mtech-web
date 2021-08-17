@@ -20,12 +20,11 @@ export interface Project {
     city: string;
     state: string;
     coordinates: string;
-    capacity: string;
+    capacity: number;
     inversor: string;
     roof_orientation: string;
     roof_type: string;
     price: number;
-    seler: string;
     notes: string;
     financier_same: boolean;
     financier: string;
@@ -44,8 +43,8 @@ export interface Project {
     created_at: Date;
     updated_by: string;
     updated_at: Date;
-    seller_id: User;
     status: ProjectStatus;
+    seller: User | null;
     events: ProjectEvent[];
     attachmentsRequired: ProjectAttachmentRequired[];
     attachments: ProjectAttachment[];

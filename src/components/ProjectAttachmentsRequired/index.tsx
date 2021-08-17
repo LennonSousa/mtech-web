@@ -23,7 +23,7 @@ export interface ProjectAttachmentRequired {
 interface ProjectAttachmentRequiredProps {
     attachment: ProjectAttachmentRequired;
     canEdit?: boolean;
-    handleListAttachments?: () => Promise<void>;
+    handleListAttachmentsRequired?: () => Promise<void>;
 }
 
 const validationSchema = Yup.object().shape({
@@ -31,7 +31,7 @@ const validationSchema = Yup.object().shape({
     received_at: Yup.date().required('Obrigatório!'),
 });
 
-const AttachmentsRequired: React.FC<ProjectAttachmentRequiredProps> = ({ attachment, canEdit = true, handleListAttachments }) => {
+const AttachmentsRequired: React.FC<ProjectAttachmentRequiredProps> = ({ attachment, canEdit = true, handleListAttachmentsRequired }) => {
     const [showModalEditDoc, setShowModalEditDoc] = useState(false);
 
     const handleCloseModalEditDoc = () => { setShowModalEditDoc(false); setIconDeleteConfirm(false); setIconDelete(true); }
@@ -80,7 +80,7 @@ const AttachmentsRequired: React.FC<ProjectAttachmentRequiredProps> = ({ attachm
 
             handleCloseModalEditDoc();
 
-            if (handleListAttachments) handleListAttachments();
+            if (handleListAttachmentsRequired) handleListAttachmentsRequired();
         }
         catch (err) {
             setIconDeleteConfirm(false);
@@ -102,9 +102,11 @@ const AttachmentsRequired: React.FC<ProjectAttachmentRequiredProps> = ({ attachm
         <>
             <ListGroup.Item variant="light">
                 <Row className="align-items-center">
-                    <Col><span>{attachment.name}</span></Col>
+                    <Col><span>{attachment.attachmentRequired.description}</span></Col>
 
-                    <Col sm={1} className="text-right">
+                    <Col className="col-row"><span>{`Recebido em ${format(new Date(attachment.received_at), 'dd/MM/yyyy')}`}</span></Col>
+
+                    <Col sm={1} className="col-row text-right">
                         <Button
                             variant="outline-success"
                             className="button-link"
@@ -116,7 +118,7 @@ const AttachmentsRequired: React.FC<ProjectAttachmentRequiredProps> = ({ attachm
                     </Col>
 
                     {
-                        canEdit && <Col sm={2} className="text-right">
+                        canEdit && <Col sm={2} className="col-row text-right">
                             <Button
                                 variant="outline-success"
                                 className="button-link"
@@ -151,7 +153,7 @@ const AttachmentsRequired: React.FC<ProjectAttachmentRequiredProps> = ({ attachm
                                 received_at: `${values.received_at} 12:00:00`,
                             });
 
-                            if (handleListAttachments) await handleListAttachments();
+                            if (handleListAttachmentsRequired) await handleListAttachmentsRequired();
 
                             setTypeMessage("success");
 

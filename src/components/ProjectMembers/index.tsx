@@ -2,13 +2,11 @@ import { useState } from 'react';
 import { Button, Toast } from 'react-bootstrap';
 import { FaUserTie } from 'react-icons/fa';
 
-import { User } from '../Users';
-
 interface MemberProps {
-    user: User;
+    name: string;
 }
 
-const Members: React.FC<MemberProps> = ({ user }) => {
+const Members: React.FC<MemberProps> = ({ name }) => {
     const [showUserDetails, setShowUserDetails] = useState(false);
 
     const toggleShowUserDetails = () => setShowUserDetails(!showUserDetails);
@@ -19,9 +17,9 @@ const Members: React.FC<MemberProps> = ({ user }) => {
                 onClick={toggleShowUserDetails}
                 className="member-item"
                 variant="success"
-                title={user.name}
+                title={name}
             >
-                {user.name.split(' ', 1)[0]}
+                {name.split(' ', 1)[0]}
             </Button>
 
             <Toast
@@ -37,7 +35,7 @@ const Members: React.FC<MemberProps> = ({ user }) => {
                 }}
             >
                 <Toast.Header>
-                    <FaUserTie style={{ marginRight: '.5rem' }} /><strong className="me-auto">{user.name}</strong>
+                    <FaUserTie style={{ marginRight: '.5rem' }} /><strong className="me-auto">{name}</strong>
                 </Toast.Header>
             </Toast>
         </div>

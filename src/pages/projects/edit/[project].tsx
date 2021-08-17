@@ -2,71 +2,74 @@ import { ChangeEvent, useContext, useEffect, useState } from 'react';
 import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { NextSeo } from 'next-seo';
-import { FaUserTie, FaHistory, FaPlus, FaSearchPlus, FaFileAlt, FaIdCard } from 'react-icons/fa';
-import {
-    Button,
-    Col,
-    Container,
-    Form,
-    FormControl,
-    InputGroup,
-    ListGroup,
-    Modal,
-    Row,
-    Toast
-} from 'react-bootstrap';
+import { Button, Col, Container, Form, InputGroup, ListGroup, Modal, Row, Spinner } from 'react-bootstrap';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { format, subDays } from 'date-fns';
-import filesize from "filesize";
+import { FaHistory, FaFileAlt, FaPlus, FaUserTie, FaUserTag } from 'react-icons/fa';
+import { format } from 'date-fns';
+import cep, { CEP } from 'cep-promise';
 import { CircularProgressbar } from 'react-circular-progressbar';
+import filesize from "filesize";
 
 import api from '../../../api/api';
 import { TokenVerify } from '../../../utils/tokenVerify';
 import { SideBarContext } from '../../../contexts/SideBarContext';
 import { AuthContext } from '../../../contexts/AuthContext';
+import { can } from '../../../components/Users';
 import { Project } from '../../../components/Projects';
-import { Customer } from '../../../components/Customers';
-import Members from '../../../components/ProjectMembers';
-import { User, can } from '../../../components/Users';
-import { ProjectType } from '../../../components/ProjectTypes';
-import { ProjectLine } from '../../../components/ProjectLines';
 import { ProjectStatus } from '../../../components/ProjectStatus';
-import { Bank } from '../../../components/Banks';
-import { Property } from '../../../components/Properties';
-import { DocsProject } from '../../../components/DocsProject';
-import EventsProject from '../../../components/EventsProject';
+import { EventProject } from '../../../components/EventsProject';
+import { AttachmentRequired } from '../../../components/AttachmentsRequiredProject';
+import ProjectEvents from '../../../components/ProjectEvents';
 import ProjectAttachments from '../../../components/ProjectAttachments';
+import ProjectAttachmentsRequired from '../../../components/ProjectAttachmentsRequired';
+
+import Members from '../../../components/ProjectMembers';
+import { statesCities } from '../../../components/StatesCities';
+import { cpf, cnpj, cellphone } from '../../../components/InputMask/masks';
 import PageBack from '../../../components/PageBack';
-import { AlertMessage, statusModal } from '../../../components/Interfaces/AlertMessage';
 import { PageWaiting, PageType } from '../../../components/PageWaiting';
+import { AlertMessage, statusModal } from '../../../components/Interfaces/AlertMessage';
 import { prettifyCurrency } from '../../../components/InputMask/masks';
 
 import "react-circular-progressbar/dist/styles.css";
 import styles from './styles.module.css';
 
 const validationSchema = Yup.object().shape({
-    value: Yup.string().notRequired(),
-    deal: Yup.string().notRequired(),
-    paid: Yup.boolean().notRequired(),
-    paid_date: Yup.string().notRequired().nullable(),
-    contract: Yup.string().notRequired().nullable(),
-    analyst: Yup.string().notRequired().nullable(),
-    analyst_contact: Yup.string().notRequired().nullable(),
-    notes: Yup.string().notRequired(),
-    warnings: Yup.boolean().notRequired(),
-    warnings_text: Yup.string().notRequired().nullable(),
     customer: Yup.string().required('Obrigatório!'),
-    type: Yup.string().required('Obrigatório!'),
-    line: Yup.string().required('Obrigatório!'),
+    document: Yup.string().min(14, 'CPF inválido!').max(18, 'CNPJ inválido!').required('Obrigatório!'),
+    phone: Yup.string().notRequired().nullable(),
+    cellphone: Yup.string().notRequired().nullable(),
+    contacts: Yup.string().notRequired().nullable(),
+    email: Yup.string().email('E-mail inválido!').notRequired().nullable(),
+    zip_code: Yup.string().notRequired().min(8, 'Deve conter no mínimo 8 caracteres!').max(8, 'Deve conter no máximo 8 caracteres!'),
+    street: Yup.string().notRequired(),
+    number: Yup.string().notRequired(),
+    neighborhood: Yup.string().notRequired(),
+    complement: Yup.string().notRequired().nullable(),
+    city: Yup.string().required('Obrigatório!'),
+    state: Yup.string().required('Obrigatório!'),
+    coordinates: Yup.string().notRequired(),
+    capacity: Yup.string().notRequired(),
+    inversor: Yup.string().required('Obrigatório!'),
+    roof_orientation: Yup.string().required('Obrigatório!'),
+    roof_type: Yup.string().required('Obrigatório!'),
+    price: Yup.string().required('Obrigatório!'),
+    notes: Yup.string().notRequired().nullable(),
+    financier_same: Yup.boolean().notRequired(),
+    financier: Yup.string().required('Obrigatório!'),
+    financier_document: Yup.string().required('Obrigatório!'),
+    financier_rg: Yup.string().notRequired().nullable(),
+    financier_cellphone: Yup.string().notRequired().nullable(),
+    financier_email: Yup.string().notRequired().nullable(),
+    financier_zip_code: Yup.string().notRequired(),
+    financier_street: Yup.string().notRequired(),
+    financier_number: Yup.string().notRequired(),
+    financier_neighborhood: Yup.string().notRequired(),
+    financier_complement: Yup.string().notRequired().nullable(),
+    financier_city: Yup.string().required('Obrigatório!'),
+    financier_state: Yup.string().required('Obrigatório!'),
     status: Yup.string().required('Obrigatório!'),
-    bank: Yup.string().required('Obrigatório!'),
-    property: Yup.string().required('Obrigatório!'),
-});
-
-const validationSchemaEvents = Yup.object().shape({
-    description: Yup.string().required('Obrigatório!'),
-    project: Yup.string().required('Obrigatório!'),
 });
 
 const attachmentValidationSchema = Yup.object().shape({
@@ -74,11 +77,7 @@ const attachmentValidationSchema = Yup.object().shape({
     path: Yup.string().required('Obrigatório!'),
     size: Yup.number().lessThan(200 * 1024 * 1024, 'O arquivo não pode ultrapassar 200MB.').notRequired().nullable(),
     received_at: Yup.date().required('Obrigatório!'),
-    expire: Yup.boolean().notRequired().nullable(),
-    expire_at: Yup.date().required('Obrigatório!'),
-    schedule: Yup.boolean().notRequired(),
-    schedule_at: Yup.number().required('Obrigatório!'),
-    customer: Yup.string().required('Obrigatório!'),
+    project: Yup.string().required('Obrigatório!'),
 });
 
 export default function NewCustomer() {
@@ -88,16 +87,13 @@ export default function NewCustomer() {
     const { loading, user } = useContext(AuthContext);
 
     const [projectData, setProjectData] = useState<Project>();
-    const [customers, setCustomers] = useState<Customer[]>([]);
-    const [users, setUsers] = useState<User[]>([]);
-    const [usersToAdd, setUsersToAdd] = useState<User[]>([]);
-    const [customerResults, setCustomerResults] = useState<Customer[]>([]);
-    const [projectTypes, setProjectTypes] = useState<ProjectType[]>([]);
-    const [projectLines, setProjectLines] = useState<ProjectLine[]>([]);
     const [projectStatus, setProjectStatus] = useState<ProjectStatus[]>([]);
-    const [banks, setBanks] = useState<Bank[]>([]);
-    const [properties, setProperties] = useState<Property[]>([]);
 
+    const [spinnerCep, setSpinnerCep] = useState(false);
+    const [documentType, setDocumentType] = useState("CPF");
+    const [cities, setCities] = useState<string[]>([]);
+    const [financierDocumentType, setFinancierDocumentType] = useState("CPF");
+    const [financierCities, setFinancierCities] = useState<string[]>([]);
     const [loadingData, setLoadingData] = useState(true);
     const [hasErrors, setHasErrors] = useState(false);
     const [typeLoadingMessage, setTypeLoadingMessage] = useState<PageType>("waiting");
@@ -106,23 +102,8 @@ export default function NewCustomer() {
     const [isUploading, setIsUploading] = useState(false);
     const [uploadingPercentage, setUploadingPercentage] = useState(0);
     const [messageShow, setMessageShow] = useState(false);
-    const [eventMessageShow, setEventMessageShow] = useState(false);
     const [messageShowNewAttachment, setMessageShowNewAttachment] = useState(false);
     const [typeMessage, setTypeMessage] = useState<statusModal>("waiting");
-
-    const [showUsers, setShowUsers] = useState(false);
-
-    const toggleShowUsers = () => setShowUsers(!showUsers);
-
-    const [showModalChooseCustomer, setShowModalChooseCustomer] = useState(false);
-
-    const handleCloseModalChooseCustomer = () => setShowModalChooseCustomer(false);
-    const handleShowModalChooseCustomer = () => setShowModalChooseCustomer(true);
-
-    const [showModalNewEvent, setShowModalNewEvent] = useState(false);
-
-    const handleCloseModalNewEvent = () => setShowModalNewEvent(false);
-    const handleShowModalNewEvent = () => setShowModalNewEvent(true);
 
     const [showModalNewAttachment, setShowModalNewAttachment] = useState(false);
 
@@ -147,48 +128,24 @@ export default function NewCustomer() {
                     api.get(`projects/${project}`).then(res => {
                         let projectRes: Project = res.data;
 
-                        api.get('customers').then(res => {
-                            setCustomers(res.data);
-                        }).catch(err => {
-                            console.log('Error to get project status, ', err);
+                        if (projectRes.document.length > 14)
+                            setDocumentType("CNPJ");
 
-                            setTypeLoadingMessage("error");
-                            setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
-                            setHasErrors(true);
-                        });
+                        try {
+                            const stateCities = statesCities.estados.find(item => { return item.sigla === projectRes.state })
 
-                        api.get('users').then(res => {
-                            setUsers(res.data);
-                            const usersRes: User[] = res.data;
+                            if (stateCities)
+                                setCities(stateCities.cidades);
+                        }
+                        catch { }
 
-                            handleUsersToAdd(usersRes, projectRes);
-                        }).catch(err => {
-                            console.log('Error to get users on project edit, ', err);
+                        try {
+                            const stateCities = statesCities.estados.find(item => { return item.sigla === projectRes.financier_state })
 
-                            setTypeLoadingMessage("error");
-                            setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
-                            setHasErrors(true);
-                        });
-
-                        api.get('projects/types').then(res => {
-                            setProjectTypes(res.data);
-                        }).catch(err => {
-                            console.log('Error to get project types, ', err);
-
-                            setTypeLoadingMessage("error");
-                            setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
-                            setHasErrors(true);
-                        });
-
-                        api.get('projects/lines').then(res => {
-                            setProjectLines(res.data);
-                        }).catch(err => {
-                            console.log('Error to get project lines, ', err);
-
-                            setTypeLoadingMessage("error");
-                            setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
-                            setHasErrors(true);
-                        });
+                            if (stateCities)
+                                setFinancierCities(stateCities.cidades);
+                        }
+                        catch { }
 
                         api.get('projects/status').then(res => {
                             setProjectStatus(res.data);
@@ -200,35 +157,57 @@ export default function NewCustomer() {
                             setHasErrors(true);
                         });
 
-                        api.get('banks').then(res => {
-                            setBanks(res.data);
+                        api.get('events/project').then(res => {
+                            let eventsProject: EventProject[] = res.data;
+
+                            eventsProject = eventsProject.filter(eventProject => { return eventProject.active });
+
+                            projectRes = {
+                                ...projectRes, events: eventsProject.map(eventProject => {
+                                    const projectEvent = projectRes.events.find(projectEvent => { return projectEvent.event.id === eventProject.id });
+
+                                    if (projectEvent)
+                                        return projectEvent;
+
+                                    return {
+                                        id: '0',
+                                        notes: '',
+                                        done: false,
+                                        done_at: new Date(),
+                                        event: eventProject,
+                                        project: projectRes,
+                                    };
+                                })
+                            }
                         }).catch(err => {
-                            console.log('Error to get banks, ', err);
+                            console.log('Error to get events project to edit, ', err);
 
                             setTypeLoadingMessage("error");
                             setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
                             setHasErrors(true);
                         });
 
-                        api.get('docs/project').then(res => {
-                            let docsProject: DocsProject[] = res.data;
+                        api.get('attachments-required/project').then(res => {
+                            let attachmentsRequiredProject: AttachmentRequired[] = res.data;
 
-                            docsProject = docsProject.filter(docProject => { return docProject.active });
+                            attachmentsRequiredProject = attachmentsRequiredProject.filter(attachmentRequired => { return attachmentRequired.active });
 
                             projectRes = {
-                                ...projectRes, docs: docsProject.map(docProject => {
-                                    const projectDoc = projectRes.docs.find(projectDoc => { return projectDoc.doc.id === docProject.id });
+                                ...projectRes, attachmentsRequired: attachmentsRequiredProject.map(attachmentRequired => {
+                                    const projectAttachmentRequired = projectRes.attachmentsRequired.find(projectAttachmentRequired => {
+                                        return projectAttachmentRequired.attachmentRequired.id === attachmentRequired.id
+                                    });
 
-                                    if (projectDoc)
-                                        return { ...projectDoc, project: projectRes };
+                                    if (projectAttachmentRequired)
+                                        return projectAttachmentRequired;
 
                                     return {
                                         id: '0',
+                                        name: '',
                                         path: '',
                                         received_at: new Date(),
-                                        checked: false,
+                                        attachmentRequired: attachmentRequired,
                                         project: projectRes,
-                                        doc: docProject,
                                     };
                                 })
                             }
@@ -236,19 +215,7 @@ export default function NewCustomer() {
                             setProjectData(projectRes);
                             setLoadingData(false);
                         }).catch(err => {
-                            console.log('Error to get docs project to edit, ', err);
-
-                            setTypeLoadingMessage("error");
-                            setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
-                            setHasErrors(true);
-                        });
-
-                        api.get(`customers/${projectRes.customer.id}/properties`).then(res => {
-                            setProperties(res.data);
-
-                            setProjectData(projectRes);
-                        }).catch(err => {
-                            console.log('Error to get customer properties ', err);
+                            console.log('Error to get attachments-required project to edit, ', err);
 
                             setTypeLoadingMessage("error");
                             setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
@@ -267,70 +234,87 @@ export default function NewCustomer() {
     }, [user, project]); // eslint-disable-line react-hooks/exhaustive-deps
 
     async function handleListEvents() {
-        const res = await api.get(`projects/${project}`);
-
-        setProjectData(res.data);
-    }
-
-    function handleSearch(event: ChangeEvent<HTMLInputElement>) {
-        if (customers) {
-            const term = event.target.value;
-
-            if (term === "") {
-                setCustomerResults([]);
-                return;
-            }
-
-            let resultsUpdated: Customer[] = [];
-
-            const customersFound = customers.filter(product => {
-                return product.name.toLocaleLowerCase().includes(term.toLocaleLowerCase());
-            });
-
-            if (!!customersFound.length) resultsUpdated = customersFound;
-
-            setCustomerResults(resultsUpdated);
-        }
-    }
-
-    async function handleListMembers() {
-        if (projectData) {
+        try {
             const res = await api.get(`projects/${project}`);
 
-            const updatedCustomer: Project = res.data;
-            setProjectData({ ...projectData, members: updatedCustomer.members });
+            let projectRes: Project = res.data;
 
-            handleUsersToAdd(users, updatedCustomer);
-        }
-    }
+            const eventsRes = await api.get('events/project');
 
-    async function createMember(userId: string) {
-        if (projectData) {
-            try {
-                await api.post('members/project', {
-                    project: projectData.id,
-                    user: userId,
-                });
+            let eventsProject: EventProject[] = eventsRes.data;
 
-                toggleShowUsers();
+            eventsProject = eventsProject.filter(eventProject => { return eventProject.active });
 
-                handleListMembers();
-            }
-            catch (err) {
-                console.log("Error to create project member");
-                console.log(err);
-            }
-        }
-    }
+            projectRes = {
+                ...projectRes, events: eventsProject.map(eventProject => {
+                    const projectEvent = projectRes.events.find(projectEvent => { return projectEvent.event.id === eventProject.id });
 
-    async function handleUsersToAdd(usersList: User[], project: Project) {
-        setUsersToAdd(
-            usersList.filter(user => {
-                return !project.members.find(member => {
-                    return member.user.id === user.id
+                    if (projectEvent)
+                        return projectEvent;
+
+                    return {
+                        id: '0',
+                        notes: '',
+                        done: false,
+                        done_at: new Date(),
+                        event: eventProject,
+                        project: projectRes,
+                    };
                 })
-            })
-        )
+            }
+
+            setProjectData(projectRes);
+        }
+        catch (err) {
+            console.log('Error to get events to edit, ', err);
+
+            setTypeLoadingMessage("error");
+            setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
+            setHasErrors(true);
+        }
+    }
+
+    async function handleListAttachmentsRequired() {
+        try {
+            const res = await api.get(`projects/${project}`);
+
+            let projectRes: Project = res.data;
+
+            const eventsRes = await api.get('attachments-required/project');
+
+            let attachmentsRequiredProject: AttachmentRequired[] = eventsRes.data;
+
+            attachmentsRequiredProject = attachmentsRequiredProject.filter(attachmentRequired => { return attachmentRequired.active });
+
+            projectRes = {
+                ...projectRes, attachmentsRequired: attachmentsRequiredProject.map(attachmentRequired => {
+                    const projectAttachmentRequired = projectRes.attachmentsRequired.find(projectAttachmentRequired => {
+                        return projectAttachmentRequired.attachmentRequired.id === attachmentRequired.id
+                    });
+
+                    if (projectAttachmentRequired)
+                        return projectAttachmentRequired;
+
+                    return {
+                        id: '0',
+                        name: '',
+                        path: '',
+                        received_at: new Date(),
+                        attachmentRequired: attachmentRequired,
+                        project: projectRes,
+                    };
+                })
+            }
+
+            setProjectData(projectRes);
+        }
+        catch (err) {
+            console.log('Error to get events to edit, ', err);
+
+            setTypeLoadingMessage("error");
+            setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
+            setHasErrors(true);
+        }
     }
 
     async function handleListAttachments() {
@@ -352,33 +336,6 @@ export default function NewCustomer() {
             const imagesToPreview = image.name;
 
             setFilePreview(imagesToPreview);
-        }
-    }
-
-    function handleChecks(event: ChangeEvent<HTMLInputElement>) {
-        if (projectData) {
-            const updatedDocs = projectData.docs.map(projecDoc => {
-                if (projecDoc.doc.id === event.target.value)
-                    return { ...projecDoc, checked: !projecDoc.checked }
-
-                return projecDoc;
-            });
-
-            setProjectData({ ...projectData, docs: updatedDocs });
-        }
-    }
-
-    function handleReceivedAt(docId: string, value: string) {
-        if (projectData) {
-            const updatedDocs = projectData.docs.map(projecDoc => {
-
-                if (projecDoc.doc.id === docId)
-                    return { ...projecDoc, received_at: new Date(new Date(`${value} 12:00:00`)) }
-
-                return projecDoc;
-            });
-
-            setProjectData({ ...projectData, docs: updatedDocs });
         }
     }
 
@@ -426,82 +383,51 @@ export default function NewCustomer() {
                                                                 <Col>
                                                                     <Row>
                                                                         <Col>
-                                                                            <h6 className="text-success">Membros</h6>
+                                                                            <h6 className="text-success">Vendedor</h6>
                                                                         </Col>
                                                                     </Row>
                                                                     <Row>
-                                                                        {
-                                                                            projectData.members.map(member => {
-                                                                                return <Members
-                                                                                    key={member.id}
-                                                                                    member={member}
-                                                                                    canRemove={projectData.members.length > 1}
-                                                                                    handleListMembers={handleListMembers}
-                                                                                />
-                                                                            })
-                                                                        }
-                                                                        <div className="member-container">
-                                                                            <Button
-                                                                                onClick={toggleShowUsers}
-                                                                                className="member-item"
-                                                                                variant="secondary"
-                                                                                disabled={usersToAdd.length < 1}
-                                                                                title="Adicionar um membro responsável para este projeto."
-                                                                            >
-                                                                                <FaPlus />
-                                                                            </Button>
-
-                                                                            <Toast
-                                                                                show={showUsers}
-                                                                                onClose={toggleShowUsers}
-                                                                                style={{
-                                                                                    position: 'absolute',
-                                                                                    top: 0,
-                                                                                    left: 0,
-                                                                                    zIndex: 999,
-                                                                                    width: 'auto',
-                                                                                    maxWidth: 'fit-content',
-                                                                                }}
-                                                                            >
-                                                                                <Toast.Header>
-                                                                                    <FaUserTie style={{ marginRight: '.5rem' }} /><strong className="me-auto">Adicionar um membro</strong>
-                                                                                </Toast.Header>
-                                                                                <Toast.Body>
-                                                                                    <ListGroup>
-                                                                                        {
-                                                                                            usersToAdd.map(user => {
-                                                                                                return <ListGroup.Item key={user.id} action onClick={() => createMember(user.id)}>
-                                                                                                    {user.name}
-                                                                                                </ListGroup.Item>
-                                                                                            })
-                                                                                        }
-                                                                                    </ListGroup>
-                                                                                </Toast.Body>
-                                                                            </Toast>
-                                                                        </div>
+                                                                        <Members name={projectData.seller ? projectData.seller.name : projectData.created_by} />
                                                                     </Row>
                                                                 </Col>
                                                             </Row>
 
                                                             <Formik
                                                                 initialValues={{
-                                                                    value: prettifyCurrency(String(projectData.value)),
-                                                                    deal: prettifyCurrency(String(projectData.deal)),
-                                                                    paid: projectData.paid,
-                                                                    paid_date: projectData.paid_date,
-                                                                    contract: projectData.contract,
-                                                                    analyst: projectData.analyst,
-                                                                    analyst_contact: projectData.analyst_contact,
+                                                                    customer: projectData.customer,
+                                                                    document: projectData.document,
+                                                                    phone: projectData.phone,
+                                                                    cellphone: projectData.cellphone,
+                                                                    contacts: projectData.contacts,
+                                                                    email: projectData.email,
+                                                                    zip_code: projectData.zip_code,
+                                                                    street: projectData.street,
+                                                                    number: projectData.number,
+                                                                    neighborhood: projectData.neighborhood,
+                                                                    complement: projectData.complement,
+                                                                    city: projectData.city,
+                                                                    state: projectData.state,
+                                                                    coordinates: projectData.coordinates,
+                                                                    capacity: prettifyCurrency(String(projectData.capacity)),
+                                                                    inversor: projectData.inversor,
+                                                                    roof_orientation: projectData.roof_orientation,
+                                                                    roof_type: projectData.roof_type,
+                                                                    price: prettifyCurrency(String(projectData.price)),
                                                                     notes: projectData.notes,
-                                                                    warnings: projectData.warnings,
-                                                                    warnings_text: projectData.warnings_text,
-                                                                    customer: projectData.customer.id,
-                                                                    customerName: projectData.customer.name,
-                                                                    type: projectData.type.id,
-                                                                    line: projectData.line.id,
+                                                                    financier_same: projectData.financier_same,
+                                                                    financier: projectData.financier,
+                                                                    financier_document: projectData.financier_document,
+                                                                    financier_rg: projectData.financier_rg,
+                                                                    financier_cellphone: projectData.financier_cellphone,
+                                                                    financier_email: projectData.financier_email,
+                                                                    financier_zip_code: projectData.financier_zip_code,
+                                                                    financier_street: projectData.financier_street,
+                                                                    financier_number: projectData.financier_number,
+                                                                    financier_neighborhood: projectData.financier_neighborhood,
+                                                                    financier_complement: projectData.financier_complement,
+                                                                    financier_city: projectData.financier_city,
+                                                                    financier_state: projectData.financier_state,
                                                                     status: projectData.status.id,
-                                                                    bank: projectData.bank.id,
-                                                                    property: projectData.property.id,
                                                                 }}
                                                                 onSubmit={async values => {
                                                                     setTypeMessage("waiting");
@@ -509,41 +435,41 @@ export default function NewCustomer() {
 
                                                                     try {
                                                                         await api.put(`projects/${projectData.id}`, {
-                                                                            value: Number(values.value.replace(".", "").replace(",", ".")),
-                                                                            deal: Number(values.deal.replace(".", "").replace(",", ".")),
-                                                                            paid: values.paid,
-                                                                            paid_date: values.paid_date,
-                                                                            contract: values.contract,
-                                                                            analyst: values.analyst,
-                                                                            analyst_contact: values.analyst_contact,
-                                                                            notes: values.notes,
-                                                                            warnings: values.warnings,
-                                                                            warnings_text: values.warnings_text,
                                                                             customer: values.customer,
-                                                                            type: values.type,
-                                                                            line: values.line,
+                                                                            document: values.document,
+                                                                            phone: values.phone,
+                                                                            cellphone: values.cellphone,
+                                                                            contacts: values.contacts,
+                                                                            email: values.email,
+                                                                            zip_code: values.zip_code,
+                                                                            street: values.street,
+                                                                            number: values.number,
+                                                                            neighborhood: values.neighborhood,
+                                                                            complement: values.complement,
+                                                                            city: values.city,
+                                                                            state: values.state,
+                                                                            coordinates: values.coordinates,
+                                                                            capacity: Number(values.capacity.replace(".", "").replace(",", ".")),
+                                                                            inversor: values.inversor,
+                                                                            roof_orientation: values.roof_orientation,
+                                                                            roof_type: values.roof_type,
+                                                                            price: Number(values.price.replace(".", "").replace(",", ".")),
+                                                                            seller: '',
+                                                                            notes: values.notes,
+                                                                            financier_same: values.financier_same,
+                                                                            financier: values.financier,
+                                                                            financier_document: values.financier_document,
+                                                                            financier_rg: values.financier_rg,
+                                                                            financier_cellphone: values.financier_cellphone,
+                                                                            financier_email: values.financier_email,
+                                                                            financier_zip_code: values.financier_zip_code,
+                                                                            financier_street: values.financier_street,
+                                                                            financier_number: values.financier_number,
+                                                                            financier_neighborhood: values.financier_neighborhood,
+                                                                            financier_complement: values.financier_complement,
+                                                                            financier_city: values.financier_city,
+                                                                            financier_state: values.financier_state,
                                                                             status: values.status,
-                                                                            bank: values.bank,
-                                                                            property: values.property,
-                                                                        });
-
-                                                                        projectData.docs.forEach(async doc => {
-                                                                            if (doc.id === '0') {
-                                                                                await api.post('projects/docs', {
-                                                                                    path: doc.path,
-                                                                                    received_at: doc.received_at,
-                                                                                    checked: doc.checked,
-                                                                                    project: doc.project.id,
-                                                                                    doc: doc.doc.id,
-                                                                                });
-                                                                                return
-                                                                            }
-
-                                                                            await api.put(`projects/docs/${doc.id}`, {
-                                                                                ...doc,
-                                                                                project: doc.project.id,
-                                                                                doc: doc.doc.id,
-                                                                            });
                                                                         });
 
                                                                         setTypeMessage("success");
@@ -565,246 +491,661 @@ export default function NewCustomer() {
                                                                 {({ handleChange, handleBlur, handleSubmit, setFieldValue, values, errors, touched }) => (
                                                                     <Form onSubmit={handleSubmit}>
                                                                         <Row className="mb-3">
-                                                                            <Col sm={6}>
-                                                                                <Form.Label>Cliente</Form.Label>
-                                                                                <InputGroup className="mb-2">
-                                                                                    <FormControl
-                                                                                        placeholder="Escolha um cliente"
-                                                                                        type="name"
-                                                                                        onChange={handleChange}
-                                                                                        onBlur={handleBlur}
-                                                                                        value={values.customerName}
-                                                                                        name="customerName"
-                                                                                        aria-label="Nome do cliente"
-                                                                                        aria-describedby="btnGroupAddon"
-                                                                                        isInvalid={!!errors.customerName}
-                                                                                        readOnly
-                                                                                    />
-                                                                                    <Button
-                                                                                        id="btnGroupAddon"
-                                                                                        variant="success"
-                                                                                        onClick={handleShowModalChooseCustomer}
-                                                                                    >
-                                                                                        <FaSearchPlus />
-                                                                                    </Button>
-                                                                                </InputGroup>
-                                                                                <Form.Control.Feedback type="invalid">{errors.customerName}</Form.Control.Feedback>
+                                                                            <Col>
+                                                                                <Row>
+                                                                                    <Col>
+                                                                                        <h6 className="text-success">Cliente <FaUserTie /></h6>
+                                                                                    </Col>
+                                                                                </Row>
                                                                             </Col>
+                                                                        </Row>
 
-                                                                            <Form.Group as={Col} sm={6} controlId="formGridProperty">
-                                                                                <Form.Label>Fazenda/imóvel</Form.Label>
-                                                                                <Form.Select
+                                                                        <Row className="mb-3">
+                                                                            <Form.Group as={Col} sm={8} controlId="formGridName">
+                                                                                <Form.Label>Nome do cliente*</Form.Label>
+                                                                                <Form.Control
+                                                                                    type="name"
                                                                                     onChange={handleChange}
                                                                                     onBlur={handleBlur}
-                                                                                    value={values.property}
-                                                                                    name="property"
-                                                                                    disabled={!!!values.customer}
-                                                                                    isInvalid={!!errors.property && touched.property}
-                                                                                >
-                                                                                    <option hidden>...</option>
-                                                                                    {
-                                                                                        properties.map((property, index) => {
-                                                                                            return <option key={index} value={property.id}>{property.name}</option>
-                                                                                        })
-                                                                                    }
-                                                                                </Form.Select>
-                                                                                <Form.Control.Feedback type="invalid">{touched.property && errors.property}</Form.Control.Feedback>
+                                                                                    value={values.customer}
+                                                                                    name="customer"
+                                                                                    isInvalid={!!errors.customer && touched.customer}
+                                                                                />
+                                                                                <Form.Control.Feedback type="invalid">{touched.customer && errors.customer}</Form.Control.Feedback>
+                                                                            </Form.Group>
+
+                                                                            <Form.Group as={Col} sm={4} controlId="formGridDocument">
+                                                                                <Form.Label>{documentType}</Form.Label>
+                                                                                <Form.Control
+                                                                                    type="text"
+                                                                                    maxLength={18}
+                                                                                    onChange={(e) => {
+                                                                                        setFieldValue('document', e.target.value.length <= 14 ? cpf(e.target.value) : cnpj(e.target.value), false);
+                                                                                        if (e.target.value.length > 14)
+                                                                                            setDocumentType("CNPJ");
+                                                                                        else
+                                                                                            setDocumentType("CPF");
+                                                                                    }}
+                                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                                        setFieldValue('document', e.target.value.length <= 14 ? cpf(e.target.value) : cnpj(e.target.value));
+                                                                                        if (e.target.value.length > 14)
+                                                                                            setDocumentType("CNPJ");
+                                                                                        else
+                                                                                            setDocumentType("CPF");
+                                                                                    }}
+                                                                                    value={values.document}
+                                                                                    name="document"
+                                                                                    isInvalid={!!errors.document && touched.document}
+                                                                                />
+                                                                                <Form.Control.Feedback type="invalid">{touched.document && errors.document}</Form.Control.Feedback>
                                                                             </Form.Group>
                                                                         </Row>
 
                                                                         <Row className="mb-3">
-                                                                            <Form.Group as={Col} sm={6} controlId="formGridType">
-                                                                                <Form.Label>Tipo de projeto</Form.Label>
-                                                                                <Form.Select
-                                                                                    onChange={handleChange}
-                                                                                    onBlur={handleBlur}
-                                                                                    value={values.type}
-                                                                                    name="type"
-                                                                                    isInvalid={!!errors.type && touched.type}
-                                                                                >
-                                                                                    <option hidden>...</option>
-                                                                                    {
-                                                                                        projectTypes.map((type, index) => {
-                                                                                            return <option key={index} value={type.id}>{type.name}</option>
-                                                                                        })
-                                                                                    }
-                                                                                </Form.Select>
-                                                                                <Form.Control.Feedback type="invalid">{touched.type && errors.type}</Form.Control.Feedback>
+                                                                            <Form.Group as={Col} sm={3} controlId="formGridPhone">
+                                                                                <Form.Label>Celular</Form.Label>
+                                                                                <Form.Control
+                                                                                    type="text"
+                                                                                    maxLength={15}
+                                                                                    onChange={(e) => {
+                                                                                        setFieldValue('phone', cellphone(e.target.value));
+                                                                                    }}
+                                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                                        setFieldValue('phone', cellphone(e.target.value));
+                                                                                    }}
+                                                                                    value={values.phone}
+                                                                                    name="phone"
+                                                                                    isInvalid={!!errors.phone && touched.phone}
+                                                                                />
+                                                                                <Form.Control.Feedback type="invalid">{touched.phone && errors.phone}</Form.Control.Feedback>
                                                                             </Form.Group>
 
-                                                                            <Form.Group as={Col} sm={6} controlId="formGridLine">
-                                                                                <Form.Label>Linha de crédito</Form.Label>
-                                                                                <Form.Select
+                                                                            <Form.Group as={Col} sm={3} controlId="formGridCellphone">
+                                                                                <Form.Label>Celular secundáiro</Form.Label>
+                                                                                <Form.Control
+                                                                                    type="text"
+                                                                                    maxLength={15}
+                                                                                    onChange={(e) => {
+                                                                                        setFieldValue('cellphone', cellphone(e.target.value));
+                                                                                    }}
+                                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                                        setFieldValue('cellphone', cellphone(e.target.value));
+                                                                                    }}
+                                                                                    value={values.cellphone}
+                                                                                    name="cellphone"
+                                                                                    isInvalid={!!errors.cellphone && touched.cellphone}
+                                                                                />
+                                                                                <Form.Control.Feedback type="invalid">{touched.cellphone && errors.cellphone}</Form.Control.Feedback>
+                                                                            </Form.Group>
+
+                                                                            <Form.Group as={Col} sm={6} controlId="formGridEmail">
+                                                                                <Form.Label>E-mail</Form.Label>
+                                                                                <Form.Control
+                                                                                    type="email"
                                                                                     onChange={handleChange}
                                                                                     onBlur={handleBlur}
-                                                                                    value={values.line}
-                                                                                    name="line"
-                                                                                    isInvalid={!!errors.line && touched.line}
-                                                                                >
-                                                                                    <option hidden>...</option>
-                                                                                    {
-                                                                                        projectLines.map((line, index) => {
-                                                                                            return <option key={index} value={line.id}>{line.name}</option>
-                                                                                        })
-                                                                                    }
-                                                                                </Form.Select>
-                                                                                <Form.Control.Feedback type="invalid">{touched.line && errors.line}</Form.Control.Feedback>
+                                                                                    value={values.email}
+                                                                                    name="email"
+                                                                                    isInvalid={!!errors.email && touched.email}
+                                                                                />
+                                                                                <Form.Control.Feedback type="invalid">{touched.email && errors.email}</Form.Control.Feedback>
                                                                             </Form.Group>
                                                                         </Row>
 
                                                                         <Row className="mb-3">
-                                                                            <Form.Group as={Col} sm={6} controlId="formGridBank">
-                                                                                <Form.Label>Banco</Form.Label>
-                                                                                <Form.Select
+                                                                            <Form.Group as={Col} controlId="formGridContacts">
+                                                                                <Form.Label>Outros contatos</Form.Label>
+                                                                                <Form.Control
+                                                                                    type="text"
                                                                                     onChange={handleChange}
                                                                                     onBlur={handleBlur}
-                                                                                    value={values.bank}
-                                                                                    name="bank"
-                                                                                    isInvalid={!!errors.bank && touched.bank}
-                                                                                >
-                                                                                    <option hidden>...</option>
-                                                                                    {
-                                                                                        banks.map((bank, index) => {
-                                                                                            return <option
-                                                                                                key={index}
-                                                                                                value={bank.id}
-                                                                                            >
-                                                                                                {`${bank.institution.name} - ${bank.sector}`}
-                                                                                            </option>
-                                                                                        })
-                                                                                    }
-                                                                                </Form.Select>
-                                                                                <Form.Control.Feedback type="invalid">{touched.bank && errors.bank}</Form.Control.Feedback>
+                                                                                    value={values.contacts}
+                                                                                    name="contacts"
+                                                                                    isInvalid={!!errors.contacts && touched.contacts}
+                                                                                />
+                                                                                <Form.Control.Feedback type="invalid">{touched.contacts && errors.contacts}</Form.Control.Feedback>
+                                                                            </Form.Group>
+                                                                        </Row>
+
+                                                                        <Row className="mb-3">
+                                                                            <Form.Group as={Col} lg={2} md={3} sm={5} controlId="formGridZipCode">
+                                                                                <Form.Label>CEP</Form.Label>
+                                                                                <Form.Control
+                                                                                    type="text"
+                                                                                    placeholder="00000000"
+                                                                                    autoComplete="off"
+                                                                                    onChange={(e) => {
+                                                                                        handleChange(e);
+
+                                                                                        if (e.target.value !== '' && e.target.value.length === 8) {
+                                                                                            setSpinnerCep(true);
+                                                                                            cep(e.target.value)
+                                                                                                .then((cep: CEP) => {
+                                                                                                    const { street, neighborhood, city, state } = cep;
+
+                                                                                                    const stateCities = statesCities.estados.find(item => { return item.sigla === state })
+
+                                                                                                    if (stateCities)
+                                                                                                        setCities(stateCities.cidades);
+
+                                                                                                    setFieldValue('street', street);
+                                                                                                    setFieldValue('neighborhood', neighborhood);
+                                                                                                    setFieldValue('city', city);
+                                                                                                    setFieldValue('state', state);
+
+                                                                                                    setSpinnerCep(false);
+                                                                                                })
+                                                                                                .catch(() => {
+                                                                                                    setSpinnerCep(false);
+                                                                                                });
+                                                                                        }
+                                                                                    }}
+                                                                                    value={values.zip_code}
+                                                                                    name="zip_code"
+                                                                                    isInvalid={!!errors.zip_code && touched.zip_code}
+                                                                                />
+                                                                                <Form.Control.Feedback type="invalid">{touched.zip_code && errors.zip_code}</Form.Control.Feedback>
                                                                             </Form.Group>
 
-                                                                            <Form.Group as={Col} sm={6} controlId="formGridStatus">
-                                                                                <Form.Label>Fase do projeto</Form.Label>
-                                                                                <Form.Select
+                                                                            <Col style={{ display: 'flex', alignItems: 'center' }}>
+                                                                                {
+                                                                                    spinnerCep && <Spinner
+                                                                                        as="span"
+                                                                                        animation="border"
+                                                                                        variant="info"
+                                                                                        role="status"
+                                                                                        aria-hidden="true"
+                                                                                    />
+                                                                                }
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row className="mb-2">
+                                                                            <Form.Group as={Col} sm={10} controlId="formGridStreet">
+                                                                                <Form.Label>Rua</Form.Label>
+                                                                                <Form.Control
+                                                                                    type="address"
                                                                                     onChange={handleChange}
                                                                                     onBlur={handleBlur}
-                                                                                    value={values.status}
-                                                                                    name="status"
-                                                                                    isInvalid={!!errors.status && touched.status}
-                                                                                >
-                                                                                    <option hidden>...</option>
-                                                                                    {
-                                                                                        projectStatus.map((status, index) => {
-                                                                                            return <option key={index} value={status.id}>{status.name}</option>
-                                                                                        })
-                                                                                    }
-                                                                                </Form.Select>
-                                                                                <Form.Control.Feedback type="invalid">{touched.status && errors.status}</Form.Control.Feedback>
+                                                                                    value={values.street}
+                                                                                    name="street"
+                                                                                    isInvalid={!!errors.street && touched.street}
+                                                                                />
+                                                                                <Form.Control.Feedback type="invalid">{touched.street && errors.street}</Form.Control.Feedback>
+                                                                            </Form.Group>
+
+                                                                            <Form.Group as={Col} sm={2} controlId="formGridNumber">
+                                                                                <Form.Label>Número</Form.Label>
+                                                                                <Form.Control
+                                                                                    type="text"
+                                                                                    onChange={handleChange}
+                                                                                    onBlur={handleBlur}
+                                                                                    value={values.number}
+                                                                                    name="number"
+                                                                                    isInvalid={!!errors.number && touched.number}
+                                                                                />
+                                                                                <Form.Control.Feedback type="invalid">{touched.number && errors.number}</Form.Control.Feedback>
+                                                                            </Form.Group>
+                                                                        </Row>
+
+                                                                        <Row className="mb-3">
+                                                                            <Form.Group as={Col} controlId="formGridComplement">
+                                                                                <Form.Label>Complemento</Form.Label>
+                                                                                <Form.Control
+                                                                                    type="text"
+                                                                                    onChange={handleChange}
+                                                                                    onBlur={handleBlur}
+                                                                                    value={values.complement}
+                                                                                    name="complement"
+                                                                                    isInvalid={!!errors.complement && touched.complement}
+                                                                                />
+                                                                                <Form.Control.Feedback type="invalid">{touched.complement && errors.complement}</Form.Control.Feedback>
                                                                             </Form.Group>
                                                                         </Row>
 
                                                                         <Row className="mb-2">
-                                                                            <Form.Group as={Col} sm={5} controlId="formGridAnalyst">
-                                                                                <Form.Label>Analista no banco</Form.Label>
+                                                                            <Form.Group as={Col} sm={6} controlId="formGridNeighborhood">
+                                                                                <Form.Label>Bairro</Form.Label>
                                                                                 <Form.Control
                                                                                     type="text"
                                                                                     onChange={handleChange}
                                                                                     onBlur={handleBlur}
-                                                                                    value={values.analyst}
-                                                                                    name="analyst"
-                                                                                    isInvalid={!!errors.analyst && touched.analyst}
+                                                                                    value={values.neighborhood}
+                                                                                    name="neighborhood"
+                                                                                    isInvalid={!!errors.neighborhood && touched.neighborhood}
                                                                                 />
-                                                                                <Form.Control.Feedback type="invalid">{touched.analyst && errors.analyst}</Form.Control.Feedback>
+                                                                                <Form.Control.Feedback type="invalid">{touched.neighborhood && errors.neighborhood}</Form.Control.Feedback>
                                                                             </Form.Group>
 
-                                                                            <Form.Group as={Col} sm={7} controlId="formGridAnalystContact">
-                                                                                <Form.Label>Contatos do analista</Form.Label>
+                                                                            <Form.Group as={Col} sm={2} controlId="formGridState">
+                                                                                <Form.Label>Estado</Form.Label>
                                                                                 <Form.Control
-                                                                                    type="text"
+                                                                                    as="select"
+                                                                                    onChange={(e) => {
+                                                                                        setFieldValue('state', e.target.value);
+
+                                                                                        const stateCities = statesCities.estados.find(item => { return item.sigla === e.target.value })
+
+                                                                                        if (stateCities)
+                                                                                            setCities(stateCities.cidades);
+                                                                                    }}
+                                                                                    onBlur={handleBlur}
+                                                                                    value={values.state ? values.state : '...'}
+                                                                                    name="state"
+                                                                                    isInvalid={!!errors.state && touched.state}
+                                                                                >
+                                                                                    <option hidden>...</option>
+                                                                                    {
+                                                                                        statesCities.estados.map((estado, index) => {
+                                                                                            return <option key={index} value={estado.sigla}>{estado.nome}</option>
+                                                                                        })
+                                                                                    }
+                                                                                </Form.Control>
+                                                                                <Form.Control.Feedback type="invalid">{touched.state && errors.state}</Form.Control.Feedback>
+                                                                            </Form.Group>
+
+                                                                            <Form.Group as={Col} sm={4} controlId="formGridCity">
+                                                                                <Form.Label>Cidade</Form.Label>
+                                                                                <Form.Control
+                                                                                    as="select"
                                                                                     onChange={handleChange}
                                                                                     onBlur={handleBlur}
-                                                                                    value={values.analyst_contact}
-                                                                                    name="analyst_contact"
-                                                                                    isInvalid={!!errors.analyst_contact && touched.analyst_contact}
-                                                                                />
-                                                                                <Form.Control.Feedback type="invalid">{touched.analyst_contact && errors.analyst_contact}</Form.Control.Feedback>
+                                                                                    value={values.city ? values.city : '...'}
+                                                                                    name="city"
+                                                                                    isInvalid={!!errors.city && touched.city}
+                                                                                    disabled={!!!values.state}
+                                                                                >
+                                                                                    <option hidden>...</option>
+                                                                                    {
+                                                                                        !!values.state && cities.map((city, index) => {
+                                                                                            return <option key={index} value={city}>{city}</option>
+                                                                                        })
+                                                                                    }
+                                                                                </Form.Control>
+                                                                                <Form.Control.Feedback type="invalid">{touched.city && errors.city}</Form.Control.Feedback>
                                                                             </Form.Group>
                                                                         </Row>
 
-                                                                        <Row className="align-items-center mb-2">
-                                                                            <Form.Group as={Col} sm={3} controlId="formGridValue">
-                                                                                <Form.Label>Valor</Form.Label>
-                                                                                <InputGroup className="mb-2">
-                                                                                    <InputGroup.Text id="btnGroupValue">R$</InputGroup.Text>
-                                                                                    <Form.Control
-                                                                                        type="text"
-                                                                                        onChange={(e) => {
-                                                                                            setFieldValue('value', prettifyCurrency(e.target.value));
-                                                                                        }}
-                                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                                                                                            setFieldValue('value', prettifyCurrency(e.target.value));
-                                                                                        }}
-                                                                                        value={values.value}
-                                                                                        name="value"
-                                                                                        isInvalid={!!errors.value && touched.value}
-                                                                                        aria-label="Valor do projeto"
-                                                                                        aria-describedby="btnGroupValue"
-                                                                                    />
-                                                                                </InputGroup>
-                                                                                <Form.Control.Feedback type="invalid">{touched.value && errors.value}</Form.Control.Feedback>
-                                                                            </Form.Group>
+                                                                        <Col className="border-top mt-3 mb-3"></Col>
 
-                                                                            <Form.Group as={Col} sm={2} controlId="formGridDeal">
-                                                                                <Form.Label>Acordo</Form.Label>
-                                                                                <InputGroup className="mb-2">
-                                                                                    <InputGroup.Text id="btnGroupDeal">%</InputGroup.Text>
-                                                                                    <Form.Control
-                                                                                        type="text"
-                                                                                        onChange={(e) => {
-                                                                                            setFieldValue('deal', prettifyCurrency(e.target.value));
-                                                                                        }}
-                                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                                                                                            setFieldValue('deal', prettifyCurrency(e.target.value));
-                                                                                        }}
-                                                                                        value={values.deal}
-                                                                                        name="deal"
-                                                                                        isInvalid={!!errors.deal && touched.deal}
-                                                                                        aria-label="Acordo"
-                                                                                        aria-describedby="btnGroupDeal"
-                                                                                    />
-                                                                                </InputGroup>
-                                                                                <Form.Control.Feedback type="invalid">{touched.deal && errors.deal}</Form.Control.Feedback>
-                                                                            </Form.Group>
-
-                                                                            <Form.Group as={Col} sm={2} controlId="formGridPaid">
-                                                                                <Form.Switch
-                                                                                    id="paid"
-                                                                                    label="Pago?"
-                                                                                    checked={values.paid}
-                                                                                    onChange={() => { setFieldValue('paid', !values.paid) }}
-                                                                                />
-                                                                            </Form.Group>
-
-                                                                            {
-                                                                                values.paid && <Form.Group as={Col} sm={3} controlId="formGridPaidDate">
-                                                                                    <Form.Label>Data do pagamento</Form.Label>
-                                                                                    <Form.Control
-                                                                                        type="date"
-                                                                                        onChange={handleChange}
-                                                                                        onBlur={handleBlur}
-                                                                                        value={values.paid_date}
-                                                                                        name="paid_date"
-                                                                                        isInvalid={!!errors.paid_date && touched.paid_date}
-                                                                                    />
-                                                                                    <Form.Control.Feedback type="invalid">{touched.paid_date && errors.paid_date}</Form.Control.Feedback>
-                                                                                </Form.Group>
-                                                                            }
-
-                                                                            <Form.Group as={Col} sm={4} controlId="formGridContract">
-                                                                                <Form.Label>Contrato</Form.Label>
+                                                                        <Row className="mb-2">
+                                                                            <Form.Group as={Col} sm={4} controlId="formGridCoordinates">
+                                                                                <Form.Label>Coordenadas</Form.Label>
                                                                                 <Form.Control
                                                                                     type="text"
                                                                                     onChange={handleChange}
                                                                                     onBlur={handleBlur}
-                                                                                    value={values.contract}
-                                                                                    name="contract"
-                                                                                    isInvalid={!!errors.contract && touched.contract}
+                                                                                    value={values.coordinates}
+                                                                                    name="coordinates"
+                                                                                    isInvalid={!!errors.coordinates && touched.coordinates}
                                                                                 />
-                                                                                <Form.Control.Feedback type="invalid">{touched.contract && errors.contract}</Form.Control.Feedback>
+                                                                                <Form.Control.Feedback type="invalid">{touched.coordinates && errors.coordinates}</Form.Control.Feedback>
+                                                                            </Form.Group>
+
+                                                                            <Form.Group as={Col} sm={3} controlId="formGridCapacity">
+                                                                                <Form.Label>Capacidade do projeto</Form.Label>
+                                                                                <InputGroup className="mb-2">
+                                                                                    <InputGroup.Text id="btnGroupCapacity">kWp</InputGroup.Text>
+                                                                                    <Form.Control
+                                                                                        type="text"
+                                                                                        onChange={(e) => {
+                                                                                            setFieldValue('capacity', prettifyCurrency(e.target.value));
+                                                                                        }}
+                                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                                            setFieldValue('capacity', prettifyCurrency(e.target.value));
+                                                                                        }}
+                                                                                        value={values.capacity}
+                                                                                        name="capacity"
+                                                                                        isInvalid={!!errors.capacity && touched.capacity}
+                                                                                        aria-label="Capacidade do projeto"
+                                                                                        aria-describedby="btnGroupCapacity"
+                                                                                    />
+                                                                                </InputGroup>
+                                                                                <Form.Control.Feedback type="invalid">{touched.capacity && errors.capacity}</Form.Control.Feedback>
+                                                                            </Form.Group>
+
+                                                                            <Form.Group as={Col} sm={5} controlId="formGridInversor">
+                                                                                <Form.Label>Inversor</Form.Label>
+                                                                                <Form.Control
+                                                                                    type="text"
+                                                                                    onChange={handleChange}
+                                                                                    onBlur={handleBlur}
+                                                                                    value={values.inversor}
+                                                                                    name="inversor"
+                                                                                    isInvalid={!!errors.inversor && touched.inversor}
+                                                                                />
+                                                                                <Form.Control.Feedback type="invalid">{touched.inversor && errors.inversor}</Form.Control.Feedback>
+                                                                            </Form.Group>
+                                                                        </Row>
+
+                                                                        <Row className="mb-2">
+                                                                            <Form.Group as={Col} sm={4} controlId="formGridRoofOrientation">
+                                                                                <Form.Label>Orientação do telhado</Form.Label>
+                                                                                <Form.Control
+                                                                                    type="text"
+                                                                                    onChange={handleChange}
+                                                                                    onBlur={handleBlur}
+                                                                                    value={values.roof_orientation}
+                                                                                    name="roof_orientation"
+                                                                                    isInvalid={!!errors.roof_orientation && touched.roof_orientation}
+                                                                                />
+                                                                                <Form.Control.Feedback type="invalid">{touched.roof_orientation && errors.roof_orientation}</Form.Control.Feedback>
+                                                                            </Form.Group>
+
+                                                                            <Form.Group as={Col} sm={5} controlId="formGridRoofType">
+                                                                                <Form.Label>Tipo do telhado</Form.Label>
+                                                                                <Form.Control
+                                                                                    type="text"
+                                                                                    onChange={handleChange}
+                                                                                    onBlur={handleBlur}
+                                                                                    value={values.roof_type}
+                                                                                    name="roof_type"
+                                                                                    isInvalid={!!errors.roof_type && touched.roof_type}
+                                                                                />
+                                                                                <Form.Control.Feedback type="invalid">{touched.roof_type && errors.roof_type}</Form.Control.Feedback>
+                                                                            </Form.Group>
+
+                                                                            <Form.Group as={Col} sm={3} controlId="formGridPrice">
+                                                                                <Form.Label>Valor</Form.Label>
+                                                                                <InputGroup className="mb-2">
+                                                                                    <InputGroup.Text id="btnGroupPrice">R$</InputGroup.Text>
+                                                                                    <Form.Control
+                                                                                        type="text"
+                                                                                        onChange={(e) => {
+                                                                                            setFieldValue('price', prettifyCurrency(e.target.value));
+                                                                                        }}
+                                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                                            setFieldValue('price', prettifyCurrency(e.target.value));
+                                                                                        }}
+                                                                                        value={values.price}
+                                                                                        name="price"
+                                                                                        isInvalid={!!errors.price && touched.price}
+                                                                                        aria-label="Valor do projeto"
+                                                                                        aria-describedby="btnGroupPrice"
+                                                                                    />
+                                                                                </InputGroup>
+                                                                                <Form.Control.Feedback type="invalid">{touched.price && errors.price}</Form.Control.Feedback>
+                                                                            </Form.Group>
+                                                                        </Row>
+
+                                                                        <Row className="mb-3">
+                                                                            <Col>
+                                                                                <Row>
+                                                                                    <Col>
+                                                                                        <h6 className="text-success">Financiador <FaUserTag /></h6>
+                                                                                    </Col>
+                                                                                </Row>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row className="mb-2">
+                                                                            <Form.Switch
+                                                                                id="financier_same"
+                                                                                label="Repetir informações do cliente"
+                                                                                checked={values.financier_same}
+                                                                                onChange={() => {
+                                                                                    setFieldValue('financier_same', !values.financier_same);
+
+                                                                                    if (!values.financier_same) {
+                                                                                        setFieldValue('financier', values.customer);
+                                                                                        setFieldValue('financier_document', values.document);
+                                                                                        setFieldValue('financier_cellphone', values.cellphone);
+                                                                                        setFieldValue('financier_email', values.email);
+                                                                                        setFieldValue('financier_zip_code', values.zip_code);
+                                                                                        setFieldValue('financier_street', values.street);
+                                                                                        setFieldValue('financier_number', values.number);
+                                                                                        setFieldValue('financier_neighborhood', values.neighborhood);
+                                                                                        setFieldValue('financier_complement', values.complement);
+                                                                                        setFieldValue('financier_city', values.city);
+                                                                                        setFieldValue('financier_state', values.state);
+                                                                                    }
+                                                                                }}
+                                                                            />
+                                                                        </Row>
+
+                                                                        <Row className="mb-3">
+                                                                            <Form.Group as={Col} sm={8} controlId="formGridFinancierName">
+                                                                                <Form.Label>Nome*</Form.Label>
+                                                                                <Form.Control
+                                                                                    type="name"
+                                                                                    onChange={handleChange}
+                                                                                    onBlur={handleBlur}
+                                                                                    value={values.financier}
+                                                                                    name="financier"
+                                                                                    isInvalid={!!errors.financier && touched.financier}
+                                                                                />
+                                                                                <Form.Control.Feedback type="invalid">{touched.financier && errors.financier}</Form.Control.Feedback>
+                                                                            </Form.Group>
+
+                                                                            <Form.Group as={Col} sm={4} controlId="formGridFinancierDocument">
+                                                                                <Form.Label>{financierDocumentType}</Form.Label>
+                                                                                <Form.Control
+                                                                                    type="text"
+                                                                                    maxLength={18}
+                                                                                    onChange={(e) => {
+                                                                                        setFieldValue('financier_document', e.target.value.length <= 14 ? cpf(e.target.value) : cnpj(e.target.value), false);
+                                                                                        if (e.target.value.length > 14)
+                                                                                            setFinancierDocumentType("CNPJ");
+                                                                                        else
+                                                                                            setFinancierDocumentType("CPF");
+                                                                                    }}
+                                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                                        setFieldValue('financier_document', e.target.value.length <= 14 ? cpf(e.target.value) : cnpj(e.target.value));
+                                                                                        if (e.target.value.length > 14)
+                                                                                            setFinancierDocumentType("CNPJ");
+                                                                                        else
+                                                                                            setFinancierDocumentType("CPF");
+                                                                                    }}
+                                                                                    value={values.financier_document}
+                                                                                    name="financier_document"
+                                                                                    isInvalid={!!errors.financier_document && touched.financier_document}
+                                                                                />
+                                                                                <Form.Control.Feedback type="invalid">{touched.financier_document && errors.financier_document}</Form.Control.Feedback>
+                                                                            </Form.Group>
+                                                                        </Row>
+
+                                                                        <Row className="mb-3">
+                                                                            <Form.Group as={Col} sm={3} controlId="formGridFinancierRg">
+                                                                                <Form.Label>RG</Form.Label>
+                                                                                <Form.Control
+                                                                                    type="text"
+                                                                                    onChange={handleChange}
+                                                                                    onBlur={handleBlur}
+                                                                                    value={values.financier_rg}
+                                                                                    name="financier_rg"
+                                                                                    isInvalid={!!errors.financier_rg && touched.financier_rg}
+                                                                                />
+                                                                                <Form.Control.Feedback type="invalid">{touched.financier_rg && errors.financier_rg}</Form.Control.Feedback>
+                                                                            </Form.Group>
+
+                                                                            <Form.Group as={Col} sm={3} controlId="formGridFinancierCellphone">
+                                                                                <Form.Label>Celular</Form.Label>
+                                                                                <Form.Control
+                                                                                    type="text"
+                                                                                    maxLength={15}
+                                                                                    onChange={(e) => {
+                                                                                        setFieldValue('financier_cellphone', cellphone(e.target.value));
+                                                                                    }}
+                                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                                        setFieldValue('financier_cellphone', cellphone(e.target.value));
+                                                                                    }}
+                                                                                    value={values.cellphone}
+                                                                                    name="financier_cellphone"
+                                                                                    isInvalid={!!errors.financier_cellphone && touched.financier_cellphone}
+                                                                                />
+                                                                                <Form.Control.Feedback type="invalid">{touched.financier_cellphone && errors.financier_cellphone}</Form.Control.Feedback>
+                                                                            </Form.Group>
+
+                                                                            <Form.Group as={Col} sm={6} controlId="formGridFinancierEmail">
+                                                                                <Form.Label>E-mail</Form.Label>
+                                                                                <Form.Control
+                                                                                    type="email"
+                                                                                    onChange={handleChange}
+                                                                                    onBlur={handleBlur}
+                                                                                    value={values.financier_email}
+                                                                                    name="financier_email"
+                                                                                    isInvalid={!!errors.financier_email && touched.financier_email}
+                                                                                />
+                                                                                <Form.Control.Feedback type="invalid">{touched.financier_email && errors.financier_email}</Form.Control.Feedback>
+                                                                            </Form.Group>
+                                                                        </Row>
+
+                                                                        <Row className="mb-3">
+                                                                            <Form.Group as={Col} lg={2} md={3} sm={5} controlId="formGridFinancierZipCode">
+                                                                                <Form.Label>CEP</Form.Label>
+                                                                                <Form.Control
+                                                                                    type="text"
+                                                                                    placeholder="00000000"
+                                                                                    autoComplete="off"
+                                                                                    onChange={(e) => {
+                                                                                        handleChange(e);
+
+                                                                                        if (e.target.value !== '' && e.target.value.length === 8) {
+                                                                                            setSpinnerCep(true);
+                                                                                            cep(e.target.value)
+                                                                                                .then((cep: CEP) => {
+                                                                                                    const { street, neighborhood, city, state } = cep;
+
+                                                                                                    const stateCities = statesCities.estados.find(item => { return item.sigla === state })
+
+                                                                                                    if (stateCities)
+                                                                                                        setFinancierCities(stateCities.cidades);
+
+                                                                                                    setFieldValue('financier_street', street);
+                                                                                                    setFieldValue('financier_neighborhood', neighborhood);
+                                                                                                    setFieldValue('financier_city', city);
+                                                                                                    setFieldValue('financier_state', state);
+
+                                                                                                    setSpinnerCep(false);
+                                                                                                })
+                                                                                                .catch(() => {
+                                                                                                    setSpinnerCep(false);
+                                                                                                });
+                                                                                        }
+                                                                                    }}
+                                                                                    value={values.zip_code}
+                                                                                    name="financier_zip_code"
+                                                                                    isInvalid={!!errors.financier_zip_code && touched.financier_zip_code}
+                                                                                />
+                                                                                <Form.Control.Feedback type="invalid">{touched.financier_zip_code && errors.financier_zip_code}</Form.Control.Feedback>
+                                                                            </Form.Group>
+
+                                                                            <Col style={{ display: 'flex', alignItems: 'center' }}>
+                                                                                {
+                                                                                    spinnerCep && <Spinner
+                                                                                        as="span"
+                                                                                        animation="border"
+                                                                                        variant="info"
+                                                                                        role="status"
+                                                                                        aria-hidden="true"
+                                                                                    />
+                                                                                }
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row className="mb-2">
+                                                                            <Form.Group as={Col} sm={10} controlId="formGridFinancierStreet">
+                                                                                <Form.Label>Rua</Form.Label>
+                                                                                <Form.Control
+                                                                                    type="address"
+                                                                                    onChange={handleChange}
+                                                                                    onBlur={handleBlur}
+                                                                                    value={values.financier_street}
+                                                                                    name="financier_street"
+                                                                                    isInvalid={!!errors.financier_street && touched.financier_street}
+                                                                                />
+                                                                                <Form.Control.Feedback type="invalid">{touched.financier_street && errors.financier_street}</Form.Control.Feedback>
+                                                                            </Form.Group>
+
+                                                                            <Form.Group as={Col} sm={2} controlId="formGridFinancierNumber">
+                                                                                <Form.Label>Número</Form.Label>
+                                                                                <Form.Control
+                                                                                    type="text"
+                                                                                    onChange={handleChange}
+                                                                                    onBlur={handleBlur}
+                                                                                    value={values.financier_number}
+                                                                                    name="financier_number"
+                                                                                    isInvalid={!!errors.financier_number && touched.financier_number}
+                                                                                />
+                                                                                <Form.Control.Feedback type="invalid">{touched.financier_number && errors.financier_number}</Form.Control.Feedback>
+                                                                            </Form.Group>
+                                                                        </Row>
+
+                                                                        <Row className="mb-3">
+                                                                            <Form.Group as={Col} controlId="formGridFinancierComplement">
+                                                                                <Form.Label>Complemento</Form.Label>
+                                                                                <Form.Control
+                                                                                    type="text"
+                                                                                    onChange={handleChange}
+                                                                                    onBlur={handleBlur}
+                                                                                    value={values.financier_complement}
+                                                                                    name="financier_complement"
+                                                                                    isInvalid={!!errors.financier_complement && touched.financier_complement}
+                                                                                />
+                                                                                <Form.Control.Feedback type="invalid">{touched.financier_complement && errors.financier_complement}</Form.Control.Feedback>
+                                                                            </Form.Group>
+                                                                        </Row>
+
+                                                                        <Row className="mb-2">
+                                                                            <Form.Group as={Col} sm={6} controlId="formGridFinancierNeighborhood">
+                                                                                <Form.Label>Bairro</Form.Label>
+                                                                                <Form.Control
+                                                                                    type="text"
+                                                                                    onChange={handleChange}
+                                                                                    onBlur={handleBlur}
+                                                                                    value={values.financier_neighborhood}
+                                                                                    name="financier_neighborhood"
+                                                                                    isInvalid={!!errors.financier_neighborhood && touched.financier_neighborhood}
+                                                                                />
+                                                                                <Form.Control.Feedback type="invalid">{touched.financier_neighborhood && errors.financier_neighborhood}</Form.Control.Feedback>
+                                                                            </Form.Group>
+
+                                                                            <Form.Group as={Col} sm={2} controlId="formGridFinancierState">
+                                                                                <Form.Label>Estado</Form.Label>
+                                                                                <Form.Control
+                                                                                    as="select"
+                                                                                    onChange={(e) => {
+                                                                                        setFieldValue('financier_state', e.target.value);
+
+                                                                                        const stateCities = statesCities.estados.find(item => { return item.sigla === e.target.value })
+
+                                                                                        if (stateCities)
+                                                                                            setFinancierCities(stateCities.cidades);
+                                                                                    }}
+                                                                                    onBlur={handleBlur}
+                                                                                    value={values.financier_state ? values.financier_state : '...'}
+                                                                                    name="financier_state"
+                                                                                    isInvalid={!!errors.financier_state && touched.financier_state}
+                                                                                >
+                                                                                    <option hidden>...</option>
+                                                                                    {
+                                                                                        statesCities.estados.map((estado, index) => {
+                                                                                            return <option key={index} value={estado.sigla}>{estado.nome}</option>
+                                                                                        })
+                                                                                    }
+                                                                                </Form.Control>
+                                                                                <Form.Control.Feedback type="invalid">{touched.financier_state && errors.financier_state}</Form.Control.Feedback>
+                                                                            </Form.Group>
+
+                                                                            <Form.Group as={Col} sm={4} controlId="formGridFinancierCity">
+                                                                                <Form.Label>Cidade</Form.Label>
+                                                                                <Form.Control
+                                                                                    as="select"
+                                                                                    onChange={handleChange}
+                                                                                    onBlur={handleBlur}
+                                                                                    value={values.financier_city ? values.financier_city : '...'}
+                                                                                    name="financier_city"
+                                                                                    isInvalid={!!errors.financier_city && touched.financier_city}
+                                                                                    disabled={!!!values.state}
+                                                                                >
+                                                                                    <option hidden>...</option>
+                                                                                    {
+                                                                                        !!values.state && financierCities.map((financier_city, index) => {
+                                                                                            return <option key={index} value={financier_city}>{financier_city}</option>
+                                                                                        })
+                                                                                    }
+                                                                                </Form.Control>
+                                                                                <Form.Control.Feedback type="invalid">{touched.financier_city && errors.financier_city}</Form.Control.Feedback>
                                                                             </Form.Group>
                                                                         </Row>
 
@@ -823,70 +1164,27 @@ export default function NewCustomer() {
                                                                             </Form.Group>
                                                                         </Row>
 
-                                                                        <Row className="mb-2">
-                                                                            <Form.Switch
-                                                                                id="warnings"
-                                                                                label="Pendências"
-                                                                                checked={values.warnings}
-                                                                                onChange={() => { setFieldValue('warnings', !values.warnings) }}
-                                                                            />
-                                                                        </Row>
+                                                                        <Form.Group as={Col} sm={4} controlId="formGridStatus">
+                                                                            <Form.Label>Fase</Form.Label>
+                                                                            <Form.Control
+                                                                                as="select"
+                                                                                onChange={handleChange}
+                                                                                onBlur={handleBlur}
+                                                                                value={values.status}
+                                                                                name="status"
+                                                                                isInvalid={!!errors.status && touched.status}
+                                                                            >
+                                                                                <option hidden>...</option>
+                                                                                {
+                                                                                    projectStatus.map((status, index) => {
+                                                                                        return <option key={index} value={status.id}>{status.name}</option>
+                                                                                    })
+                                                                                }
+                                                                            </Form.Control>
+                                                                            <Form.Control.Feedback type="invalid">{touched.status && errors.status}</Form.Control.Feedback>
+                                                                        </Form.Group>
 
-                                                                        <Row className="mb-3">
-                                                                            <Form.Group as={Col} controlId="formGridWarningsText">
-                                                                                <Form.Control
-                                                                                    as="textarea"
-                                                                                    rows={4}
-                                                                                    disabled={!values.warnings}
-                                                                                    style={{ resize: 'none' }}
-                                                                                    onChange={handleChange}
-                                                                                    onBlur={handleBlur}
-                                                                                    value={values.warnings_text}
-                                                                                    name="warnings_text"
-                                                                                />
-                                                                            </Form.Group>
-                                                                        </Row>
-
-                                                                        <Col className="border-top mb-3"></Col>
-
-                                                                        <Row className="mb-4">
-                                                                            <Form.Group as={Col} controlId="formGridDocs">
-                                                                                <h6 className="text-success">Documentação <FaIdCard /></h6>
-                                                                                <ListGroup className="mb-3">
-                                                                                    {
-                                                                                        projectData.docs.map((doc, index) => {
-                                                                                            return <ListGroup.Item key={index} action as="div" variant="light">
-                                                                                                <Row className="align-items-center">
-                                                                                                    <Col sm={8}>
-                                                                                                        <Form.Check
-                                                                                                            checked={doc.checked}
-                                                                                                            type="checkbox"
-                                                                                                            label={doc.doc.name}
-                                                                                                            name="type"
-                                                                                                            id={`formCustomerDocs${doc.doc.id}`}
-                                                                                                            value={doc.doc.id}
-                                                                                                            onChange={handleChecks}
-                                                                                                        />
-                                                                                                    </Col>
-
-                                                                                                    <Form.Label column sm={2}>Data do recebimento</Form.Label>
-                                                                                                    <Col sm={2}>
-                                                                                                        <Form.Control
-                                                                                                            type="date"
-                                                                                                            className="form-control"
-                                                                                                            onChange={e => handleReceivedAt(doc.doc.id, e.target.value)}
-                                                                                                            value={format(new Date(doc.received_at), 'yyyy-MM-dd')}
-                                                                                                            name={`receivedAt${doc.doc.id}`}
-                                                                                                        />
-                                                                                                    </Col>
-                                                                                                </Row>
-                                                                                            </ListGroup.Item>
-                                                                                        })
-                                                                                    }
-                                                                                </ListGroup>
-                                                                            </Form.Group>
-                                                                        </Row>
-                                                                        <Row className="justify-content-end">
+                                                                        <Row className="mb-3 justify-content-end">
                                                                             {
                                                                                 messageShow ? <Col sm={3}><AlertMessage status={typeMessage} /></Col> :
                                                                                     <Col sm={1}>
@@ -895,75 +1193,6 @@ export default function NewCustomer() {
 
                                                                             }
                                                                         </Row>
-
-                                                                        <Modal show={showModalChooseCustomer} onHide={handleCloseModalChooseCustomer}>
-                                                                            <Modal.Header closeButton>
-                                                                                <Modal.Title>Lista de clientes</Modal.Title>
-                                                                            </Modal.Header>
-
-                                                                            <Modal.Body>
-                                                                                <Form.Group controlId="categoryFormGridName">
-                                                                                    <Form.Label>Nome do cliente</Form.Label>
-                                                                                    <Form.Control type="search"
-                                                                                        placeholder="Digite para pesquisar"
-                                                                                        autoComplete="off"
-                                                                                        onChange={handleSearch}
-                                                                                    />
-                                                                                </Form.Group>
-                                                                            </Modal.Body>
-
-                                                                            <Modal.Dialog scrollable style={{ marginTop: 0, width: '100%' }}>
-                                                                                <Modal.Body style={{ maxHeight: 'calc(100vh - 3.5rem)' }}>
-                                                                                    <Row>
-                                                                                        <Col>
-                                                                                            <ListGroup className="mt-3 mb-3">
-                                                                                                {
-                                                                                                    customerResults.map((customer, index) => {
-                                                                                                        return <ListGroup.Item
-                                                                                                            key={index}
-                                                                                                            action
-                                                                                                            variant="light"
-                                                                                                            onClick={() => {
-                                                                                                                setFieldValue('customer', customer.id);
-                                                                                                                setFieldValue('customerName', customer.name);
-
-                                                                                                                api.get(`customers/${customer.id}/properties`).then(res => {
-                                                                                                                    setProperties(res.data);
-
-                                                                                                                    setFieldValue('property', '');
-
-                                                                                                                    handleCloseModalChooseCustomer();
-                                                                                                                }).catch(err => {
-                                                                                                                    console.log('Error to get customer properties ', err);
-                                                                                                                });
-                                                                                                            }}
-                                                                                                        >
-                                                                                                            <Row>
-                                                                                                                <Col>
-                                                                                                                    <h6>{customer.name}</h6>
-                                                                                                                </Col>
-                                                                                                            </Row>
-                                                                                                            <Row>
-                                                                                                                <Col>
-                                                                                                                    <span
-                                                                                                                        className="text-italic"
-                                                                                                                    >
-                                                                                                                        {`${customer.document} - ${customer.city}/${customer.state}`}
-                                                                                                                    </span>
-                                                                                                                </Col>
-                                                                                                            </Row>
-                                                                                                        </ListGroup.Item>
-                                                                                                    })
-                                                                                                }
-                                                                                            </ListGroup>
-                                                                                        </Col>
-                                                                                    </Row>
-                                                                                </Modal.Body>
-                                                                                <Modal.Footer>
-                                                                                    <Button variant="secondary" onClick={handleCloseModalChooseCustomer}>Cancelar</Button>
-                                                                                </Modal.Footer>
-                                                                            </Modal.Dialog>
-                                                                        </Modal>
                                                                     </Form>
                                                                 )}
                                                             </Formik>
@@ -976,29 +1205,22 @@ export default function NewCustomer() {
                                                                         <div className="member-container">
                                                                             <h6 className="text-success">Histórico <FaHistory /></h6>
                                                                         </div>
-
-                                                                        <Col sm={1}>
-                                                                            <Button
-                                                                                variant="outline-success"
-                                                                                size="sm"
-                                                                                onClick={handleShowModalNewEvent}
-                                                                                title="Criar um novo evento para este projeto."
-                                                                            >
-                                                                                <FaPlus />
-                                                                            </Button>
-                                                                        </Col>
                                                                     </Row>
 
                                                                     <Row className="mt-2">
                                                                         {
                                                                             !!projectData.events.length ? <Col>
                                                                                 <Row className="mb-2" style={{ padding: '0 1rem' }}>
-                                                                                    <Col sm={10}>
-                                                                                        <h6>Descrição</h6>
+                                                                                    <Col sm={4}>
+                                                                                        <h6>Evento</h6>
+                                                                                    </Col>
+
+                                                                                    <Col sm={5}>
+                                                                                        <h6>Detalhes</h6>
                                                                                     </Col>
 
                                                                                     <Col className="text-center">
-                                                                                        <h6>Data de registro</h6>
+                                                                                        <h6>Concluído</h6>
                                                                                     </Col>
                                                                                 </Row>
 
@@ -1007,10 +1229,51 @@ export default function NewCustomer() {
                                                                                         <ListGroup>
                                                                                             {
                                                                                                 projectData.events.map((event, index) => {
-                                                                                                    return <EventsProject
+                                                                                                    return <ProjectEvents
                                                                                                         key={index}
-                                                                                                        event={event}
+                                                                                                        projectEvent={event}
+                                                                                                        listEvents={projectData.events}
                                                                                                         handleListEvents={handleListEvents}
+                                                                                                        isNewItem={event.id === '0' ? true : false}
+                                                                                                    />
+                                                                                                })
+                                                                                            }
+                                                                                        </ListGroup>
+                                                                                    </Col>
+                                                                                </Row>
+
+                                                                            </Col> :
+                                                                                <Col>
+                                                                                    <AlertMessage
+                                                                                        status="warning"
+                                                                                        message="Nenhum evento registrado para esse projeto."
+                                                                                    />
+                                                                                </Col>
+                                                                        }
+                                                                    </Row>
+                                                                </Col>
+                                                            </Row>
+
+                                                            <Row className="mb-3">
+                                                                <Col>
+                                                                    <Row>
+                                                                        <div className="member-container">
+                                                                            <h6 className="text-success">Anexos obrigatórios <FaFileAlt /></h6>
+                                                                        </div>
+                                                                    </Row>
+
+                                                                    <Row className="mt-2">
+                                                                        {
+                                                                            !!projectData.attachmentsRequired.length ? <Col>
+                                                                                <Row>
+                                                                                    <Col>
+                                                                                        <ListGroup>
+                                                                                            {
+                                                                                                projectData.attachmentsRequired.map((attachment, index) => {
+                                                                                                    return <ProjectAttachmentsRequired
+                                                                                                        key={index}
+                                                                                                        attachment={attachment}
+                                                                                                        handleListAttachmentsRequired={handleListAttachmentsRequired}
                                                                                                     />
                                                                                                 })
                                                                                             }
@@ -1033,16 +1296,16 @@ export default function NewCustomer() {
                                                             <Row className="mb-3">
                                                                 <Form.Group as={Col} controlId="formGridAttachments">
                                                                     <Row>
-                                                                        <div className="member-container">
-                                                                            <h6 className="text-success">Anexos <FaFileAlt /></h6>
-                                                                        </div>
+                                                                        <Col className="col-row">
+                                                                            <h6 className="text-success">Outros anexos <FaFileAlt /></h6>
+                                                                        </Col>
 
                                                                         <Col sm={1}>
                                                                             <Button
                                                                                 variant="outline-success"
                                                                                 size="sm"
                                                                                 onClick={handleShowModalNewAttachment}
-                                                                                title="Criar um novo anexo para este cliente."
+                                                                                title="Criar um novo anexo para esse cliente."
                                                                             >
                                                                                 <FaPlus />
                                                                             </Button>
@@ -1075,83 +1338,6 @@ export default function NewCustomer() {
                                                                 </Form.Group>
                                                             </Row>
 
-                                                            <Modal show={showModalNewEvent} onHide={handleCloseModalNewEvent}>
-                                                                <Modal.Header closeButton>
-                                                                    <Modal.Title>Criar evento</Modal.Title>
-                                                                </Modal.Header>
-                                                                <Formik
-                                                                    initialValues={
-                                                                        {
-                                                                            description: '',
-                                                                            project: projectData.id,
-                                                                        }
-                                                                    }
-                                                                    onSubmit={async values => {
-                                                                        setTypeMessage("waiting");
-                                                                        setEventMessageShow(true);
-
-                                                                        try {
-                                                                            await api.post('events/project', {
-                                                                                description: values.description,
-                                                                                project: values.project,
-                                                                            });
-
-                                                                            await handleListEvents();
-
-                                                                            setTypeMessage("success");
-
-                                                                            setTimeout(() => {
-                                                                                setEventMessageShow(false);
-                                                                                handleCloseModalNewEvent();
-                                                                            }, 1000);
-                                                                        }
-                                                                        catch (err) {
-                                                                            console.log('error to create event.');
-                                                                            console.log(err);
-
-                                                                            setTypeMessage("error");
-
-                                                                            setTimeout(() => {
-                                                                                setEventMessageShow(false);
-                                                                            }, 4000);
-                                                                        }
-                                                                    }}
-                                                                    validationSchema={validationSchemaEvents}
-                                                                >
-                                                                    {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
-                                                                        <Form onSubmit={handleSubmit}>
-                                                                            <Modal.Body>
-                                                                                <Form.Group controlId="eventFormGridDescription">
-                                                                                    <Form.Label>Descrição</Form.Label>
-                                                                                    <Form.Control
-                                                                                        as="textarea"
-                                                                                        rows={4}
-                                                                                        style={{ resize: 'none' }}
-                                                                                        onChange={handleChange}
-                                                                                        onBlur={handleBlur}
-                                                                                        value={values.description}
-                                                                                        name="description"
-                                                                                        isInvalid={!!errors.description && touched.description}
-                                                                                    />
-                                                                                    <Form.Control.Feedback type="invalid">{touched.description && errors.description}</Form.Control.Feedback>
-                                                                                </Form.Group>
-
-                                                                            </Modal.Body>
-                                                                            <Modal.Footer>
-                                                                                {
-                                                                                    eventMessageShow ? <AlertMessage status={typeMessage} /> :
-                                                                                        <>
-                                                                                            <Button variant="secondary" onClick={handleCloseModalNewEvent}>Cancelar</Button>
-                                                                                            <Button variant="success" type="submit">Salvar</Button>
-                                                                                        </>
-
-                                                                                }
-                                                                            </Modal.Footer>
-                                                                        </Form>
-                                                                    )}
-                                                                </Formik>
-                                                            </Modal>
-
                                                             <Modal show={showModalNewAttachment} onHide={handleCloseModalNewAttachment}>
                                                                 <Modal.Header closeButton>
                                                                     <Modal.Title>Criar um anexo</Modal.Title>
@@ -1163,11 +1349,7 @@ export default function NewCustomer() {
                                                                             path: '',
                                                                             size: 0,
                                                                             received_at: format(new Date(), 'yyyy-MM-dd'),
-                                                                            expire: false,
-                                                                            expire_at: format(new Date(), 'yyyy-MM-dd'),
-                                                                            schedule: false,
-                                                                            schedule_at: 0,
-                                                                            customer: projectData.id,
+                                                                            project: projectData.id,
                                                                         }
                                                                     }
                                                                     onSubmit={async values => {
@@ -1177,8 +1359,6 @@ export default function NewCustomer() {
                                                                             setIsUploading(true);
                                                                             setMessageShowNewAttachment(true);
 
-                                                                            const scheduleAt = format(subDays(new Date(`${values.expire_at} 12:00:00`), values.schedule_at), 'yyyy-MM-dd');
-
                                                                             try {
                                                                                 const data = new FormData();
 
@@ -1187,13 +1367,9 @@ export default function NewCustomer() {
                                                                                 data.append('file', fileToSave);
 
                                                                                 data.append('received_at', `${values.received_at} 12:00:00`);
-                                                                                data.append('expire', String(values.expire));
-                                                                                data.append('expire_at', `${values.expire_at} 12:00:00`);
-                                                                                data.append('schedule', String(values.schedule));
-                                                                                data.append('schedule_at', `${scheduleAt} 12:00:00`);
-                                                                                data.append('project', values.customer);
+                                                                                data.append('project', values.project);
 
-                                                                                await api.post(`projects/${projectData.id}/attachments`, data, {
+                                                                                await api.post(`projects/${values.project}/attachments`, data, {
                                                                                     onUploadProgress: e => {
                                                                                         const progress = Math.round((e.loaded * 100) / e.total);
 
@@ -1320,57 +1496,6 @@ export default function NewCustomer() {
                                                                                         <Form.Control.Feedback type="invalid">{touched.received_at && errors.received_at}</Form.Control.Feedback>
                                                                                     </Col>
                                                                                 </Form.Group>
-
-                                                                                <Form.Group className="mb-3" controlId="formGridExpire">
-                                                                                    <Form.Switch
-                                                                                        label="Expira?"
-                                                                                        checked={values.expire}
-                                                                                        onChange={() => { setFieldValue('expire', !values.expire) }}
-                                                                                    />
-                                                                                </Form.Group>
-
-                                                                                {
-                                                                                    values.expire && <>
-                                                                                        <Row className="mb-3">
-                                                                                            <Form.Group as={Col} sm={6} controlId="formGridExpireAt">
-                                                                                                <Form.Label>Data de expiração</Form.Label>
-                                                                                                <Form.Control
-                                                                                                    type="date"
-                                                                                                    onChange={handleChange}
-                                                                                                    onBlur={handleBlur}
-                                                                                                    value={values.expire_at}
-                                                                                                    name="expire_at"
-                                                                                                    isInvalid={!!errors.expire_at && touched.expire_at}
-                                                                                                />
-                                                                                                <Form.Control.Feedback type="invalid">{touched.expire_at && errors.expire_at}</Form.Control.Feedback>
-                                                                                            </Form.Group>
-                                                                                        </Row>
-                                                                                        <Form.Group className="mb-3" controlId="formGridSchedule">
-                                                                                            <Form.Switch
-                                                                                                label="Notificar"
-                                                                                                checked={values.schedule}
-                                                                                                onChange={() => { setFieldValue('schedule', !values.schedule) }}
-                                                                                            />
-                                                                                        </Form.Group>
-
-                                                                                        {
-                                                                                            values.schedule && <Row className="mb-3">
-                                                                                                <Form.Group as={Col} sm={3} controlId="formGridScheduleAt">
-                                                                                                    <Form.Label>Dias antes</Form.Label>
-                                                                                                    <Form.Control
-                                                                                                        type="number"
-                                                                                                        onChange={handleChange}
-                                                                                                        onBlur={handleBlur}
-                                                                                                        value={values.schedule_at}
-                                                                                                        name="schedule_at"
-                                                                                                        isInvalid={!!errors.schedule_at && touched.schedule_at}
-                                                                                                    />
-                                                                                                    <Form.Control.Feedback type="invalid">{touched.schedule_at && errors.schedule_at}</Form.Control.Feedback>
-                                                                                                </Form.Group>
-                                                                                            </Row>
-                                                                                        }
-                                                                                    </>
-                                                                                }
                                                                             </Modal.Body>
                                                                             <Modal.Footer>
                                                                                 {

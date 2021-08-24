@@ -53,7 +53,7 @@ const AttachmentsRequiredProject: React.FC<AttachmentRequiredProps> = ({ attachm
             await handleListAttachmentsRequired();
         }
         catch (err) {
-            console.log("Error to pause attachmentRequired");
+            console.log("Error to pause required attachment");
             console.log(err);
         }
 

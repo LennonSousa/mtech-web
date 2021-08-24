@@ -25,13 +25,14 @@ interface ProjectEventProps {
     handleListEvents?: (listEvents?: ProjectEvent[]) => Promise<void>;
     canEdit?: boolean;
     isNewItem?: boolean;
+    isNewProject?: boolean;
 }
 
 const validationSchema = Yup.object().shape({
-    description: Yup.string().required('Obrigatório!'),
+    notes: Yup.string().notRequired(),
 });
 
-const ProjectEvent: React.FC<ProjectEventProps> = ({ projectEvent, handleListEvents, listEvents, canEdit = true, isNewItem = false, }) => {
+const ProjectEvent: React.FC<ProjectEventProps> = ({ projectEvent, handleListEvents, listEvents, canEdit = true, isNewItem = false, isNewProject = false }) => {
     const [showModalEditEvent, setShowModalEditEvent] = useState(false);
 
     const handleCloseModalEditEvent = () => setShowModalEditEvent(false);
@@ -64,7 +65,7 @@ const ProjectEvent: React.FC<ProjectEventProps> = ({ projectEvent, handleListEve
                     <Col className="text-center">
                         {
                             projectEvent.done && <>
-                                <FaCheck />
+                                <FaCheck />{` `}
                                 <span>
                                     {format(new Date(projectEvent.done_at), 'dd/MM/yyyy')}
                                 </span>
@@ -91,7 +92,7 @@ const ProjectEvent: React.FC<ProjectEventProps> = ({ projectEvent, handleListEve
                         setMessageShow(true);
 
                         try {
-                            if (isNewItem) {
+                            if (isNewItem && isNewProject) {
                                 const newListItem: ProjectEvent[] = listEvents.map(event => {
                                     if (event.id === projectEvent.id) {
                                         return {
@@ -105,22 +106,27 @@ const ProjectEvent: React.FC<ProjectEventProps> = ({ projectEvent, handleListEve
                                 });
 
                                 if (handleListEvents) await handleListEvents(newListItem);
-
-                                setTypeMessage("success");
-
-                                setTimeout(() => {
-                                    setMessageShow(false);
-                                    handleCloseModalEditEvent();
-                                }, 1000);
                             }
+                            else {
+                                if (projectEvent.id === '0') {
+                                    await api.post('projects/events', {
+                                        notes: values.notes,
+                                        done: values.done,
+                                        done_at: values.done_at,
+                                        event: projectEvent.event.id,
+                                        project: projectEvent.project?.id,
+                                    });
+                                }
+                                else {
+                                    await api.put(`projects/events/${projectEvent.id}`, {
+                                        notes: values.notes,
+                                        done: values.done,
+                                        done_at: values.done_at,
+                                    });
+                                }
 
-                            await api.put(`projects/events/${projectEvent.id}`, {
-                                notes: values.notes,
-                                done: values.done,
-                                done_at: values.done_at,
-                            });
-
-                            if (handleListEvents) await handleListEvents();
+                                if (handleListEvents) await handleListEvents();
+                            }
 
                             setTypeMessage("success");
 
@@ -145,7 +151,13 @@ const ProjectEvent: React.FC<ProjectEventProps> = ({ projectEvent, handleListEve
                     {({ handleChange, handleBlur, handleSubmit, values, setFieldValue, errors, touched }) => (
                         <Form onSubmit={handleSubmit}>
                             <Modal.Body>
-                                <Form.Group controlId="projectEventFormGridDescription">
+                                <Row className="mb-3">
+                                    <Col>
+                                        <h6 className="form-control-plaintext text-success text-wrap">{projectEvent.event.description}</h6>
+                                    </Col>
+                                </Row>
+
+                                <Form.Group className="mb-3" controlId="projectEventFormGridDescription">
                                     <Form.Label>Descrição</Form.Label>
                                     <Form.Control
                                         as="textarea"

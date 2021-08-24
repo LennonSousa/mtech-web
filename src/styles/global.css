@@ -53,6 +53,7 @@ a:hover {
     position: relative;
     padding-right: 0px;
     padding-left: 15px;
+    flex: 0 0;
 }
 
 .member-item {
@@ -79,6 +80,11 @@ a:hover {
 .page-item.active .page-link {
     background-color: var(--green);
     border-color: var(--green);
+}
+
+.form-check-input:checked {
+    border-color: var(--green) !important;
+    background-color: var(--green) !important;
 }
 
 .custom-control-input:checked~.custom-control-label::before {

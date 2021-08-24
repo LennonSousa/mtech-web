@@ -34,6 +34,8 @@ const Members: React.FC<MemberProps> = ({ user }) => {
                     top: 0,
                     left: 0,
                     zIndex: 999,
+                    width: 'auto',
+                    maxWidth: 'fit-content',
                 }}
             >
                 <Toast.Header>

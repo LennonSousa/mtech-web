@@ -112,9 +112,7 @@ const EstimateItems: React.FC<EstimateItemsProps> = ({ estimateItem, estimateIte
 
             <Form.Group as={Col} sm={2} controlId="formGridPrice">
                 <InputGroup className="mb-2">
-                    <InputGroup.Prepend>
-                        <InputGroup.Text id="btnGroupPrice">R$</InputGroup.Text>
-                    </InputGroup.Prepend>
+                    <InputGroup.Text id="btnGroupPrice">R$</InputGroup.Text>
                     <Form.Control
                         type="text"
                         onChange={e => {
@@ -158,9 +156,7 @@ const EstimateItems: React.FC<EstimateItemsProps> = ({ estimateItem, estimateIte
 
             <Form.Group as={Col} sm={2} controlId="formGridTotalPrice">
                 <InputGroup className="mb-2">
-                    <InputGroup.Prepend>
-                        <InputGroup.Text id="btnGroupTotalPrice">R$</InputGroup.Text>
-                    </InputGroup.Prepend>
+                    <InputGroup.Text id="btnGroupTotalPrice">R$</InputGroup.Text>
                     <Form.Control
                         type="text"
                         value={prettifyCurrency(totalPrice.toFixed(2))}

@@ -138,13 +138,11 @@ const PanelPrices: React.FC<PanelPricesProps> = ({ panelPrice, canEdit = true, h
                     {({ handleChange, handleBlur, handleSubmit, values, setFieldValue, errors, touched }) => (
                         <Form onSubmit={handleSubmit}>
                             <Modal.Body>
-                                <Form.Row>
+                                <Row>
                                     <Form.Group as={Col} sm={6} controlId="formGridPotency">
                                         <Form.Label>Potência</Form.Label>
                                         <InputGroup className="mb-2">
-                                            <InputGroup.Prepend>
-                                                <InputGroup.Text id="btnGroupPotency">kWp</InputGroup.Text>
-                                            </InputGroup.Prepend>
+                                            <InputGroup.Text id="btnGroupPotency">kWp</InputGroup.Text>
                                             <Form.Control
                                                 type="text"
                                                 onChange={(e) => {
@@ -166,9 +164,7 @@ const PanelPrices: React.FC<PanelPricesProps> = ({ panelPrice, canEdit = true, h
                                     <Form.Group as={Col} sm={6} controlId="formGridPrice">
                                         <Form.Label>Valor</Form.Label>
                                         <InputGroup className="mb-2">
-                                            <InputGroup.Prepend>
-                                                <InputGroup.Text id="btnGroupPrice">R$</InputGroup.Text>
-                                            </InputGroup.Prepend>
+                                            <InputGroup.Text id="btnGroupPrice">R$</InputGroup.Text>
                                             <Form.Control
                                                 type="text"
                                                 onChange={(e) => {
@@ -186,7 +182,7 @@ const PanelPrices: React.FC<PanelPricesProps> = ({ panelPrice, canEdit = true, h
                                         </InputGroup>
                                         <Form.Control.Feedback type="invalid">{touched.price && errors.price}</Form.Control.Feedback>
                                     </Form.Group>
-                                </Form.Row>
+                                </Row>
 
                                 <Form.Group controlId="statusFormGridInversor">
                                     <Form.Label>Inversor</Form.Label>

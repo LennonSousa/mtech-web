@@ -50,7 +50,7 @@ const ProjectAttachments: React.FC<ProjectAttachmentsProps> = ({ attachment, can
                 { responseType: "blob" }
             );
 
-            const fileName = `${attachment.project.id.replace('.', '')} - ${attachment.name.replace('.', '')}`;
+            const fileName = `${attachment.project.customer.replace('.', '')} - ${attachment.name.replace('.', '')}`;
 
             FileSaver.saveAs(res.data, fileName);
         }
@@ -102,7 +102,9 @@ const ProjectAttachments: React.FC<ProjectAttachmentsProps> = ({ attachment, can
                 <Row className="align-items-center">
                     <Col><span>{attachment.name}</span></Col>
 
-                    <Col sm={1} className="text-right">
+                    <Col className="col-row"><span>{`Recebido em ${format(new Date(attachment.received_at), 'dd/MM/yyyy')}`}</span></Col>
+
+                    <Col className="col-row text-right">
                         <Button
                             variant="outline-success"
                             className="button-link"
@@ -114,7 +116,7 @@ const ProjectAttachments: React.FC<ProjectAttachmentsProps> = ({ attachment, can
                     </Col>
 
                     {
-                        canEdit && <Col sm={2} className="text-right">
+                        canEdit && <Col className="col-row text-right">
                             <Button
                                 variant="outline-success"
                                 className="button-link"

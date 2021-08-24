@@ -11,7 +11,7 @@ import { CircularProgressbar } from 'react-circular-progressbar';
 import api from '../../api/api';
 import { AttachmentRequired } from '../AttachmentsRequiredProject';
 import { Project } from '../Projects';
-import { AlertMessage, statusModal } from '../faces/AlertMessage'
+import { AlertMessage, statusModal } from '../Interfaces/AlertMessage'
 
 import "react-circular-progressbar/dist/styles.css";
 import styles from './styles.module.css';

@@ -12,7 +12,7 @@ import { AuthContext } from '../../../contexts/AuthContext';
 import { can } from '../../../components/Users';
 import Panels, { Panel } from '../../../components/Panels';
 import { PageWaiting } from '../../../components/PageWaiting';
-import { AlertMessage, statusModal } from '../../../components/faces/AlertMessage';
+import { AlertMessage, statusModal } from '../../../components/Interfaces/AlertMessage';
 
 export default function PanelsPage() {
     const router = useRouter();

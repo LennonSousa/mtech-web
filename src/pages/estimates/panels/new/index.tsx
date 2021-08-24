@@ -14,7 +14,7 @@ import { AuthContext } from '../../../../contexts/AuthContext';
 import { can } from '../../../../components/Users';
 import { Panel } from '../../../../components/Panels';
 import PageBack from '../../../../components/PageBack';
-import { AlertMessage, statusModal } from '../../../../components/faces/AlertMessage';
+import { AlertMessage, statusModal } from '../../../../components/Interfaces/AlertMessage';
 import { PageWaiting, PageType } from '../../../../components/PageWaiting';
 
 const validationSchema = Yup.object().shape({

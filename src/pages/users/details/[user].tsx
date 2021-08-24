@@ -14,7 +14,7 @@ import { User, UserRole, can, translatedRoles } from '../../../components/Users'
 
 import PageBack from '../../../components/PageBack';
 import { PageWaiting, PageType } from '../../../components/PageWaiting';
-import { AlertMessage } from '../../../components/faces/AlertMessage';
+import { AlertMessage } from '../../../components/Interfaces/AlertMessage';
 
 import styles from './styles.module.css';
 

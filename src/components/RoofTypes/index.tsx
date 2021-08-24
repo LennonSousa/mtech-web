@@ -6,7 +6,7 @@ import * as Yup from 'yup';
 
 import api from '../../api/api';
 import { Estimate } from '../Estimates';
-import { AlertMessage, statusModal } from '../interfaces/AlertMessage';
+import { AlertMessage, statusModal } from '../faces/AlertMessage'
 
 export interface RoofType {
     id: string;

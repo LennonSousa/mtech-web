@@ -15,7 +15,7 @@ import { can } from '../../../../components/Users';
 import { Panel } from '../../../../components/Panels';
 import PanelPrices from '../../../../components/PanelPrices';
 import PageBack from '../../../../components/PageBack';
-import { AlertMessage, statusModal } from '../../../../components/interfaces/AlertMessage';
+import { AlertMessage, statusModal } from '../../../../components/faces/AlertMessage';
 import { PageWaiting, PageType } from '../../../../components/PageWaiting';
 import { prettifyCurrency } from '../../../../components/InputMask/masks';
 

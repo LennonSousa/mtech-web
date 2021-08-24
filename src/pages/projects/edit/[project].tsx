@@ -29,7 +29,7 @@ import { statesCities } from '../../../components/StatesCities';
 import { cpf, cnpj, cellphone } from '../../../components/InputMask/masks';
 import PageBack from '../../../components/PageBack';
 import { PageWaiting, PageType } from '../../../components/PageWaiting';
-import { AlertMessage, statusModal } from '../../../components/interfaces/AlertMessage';
+import { AlertMessage, statusModal } from '../../../components/faces/AlertMessage';
 import { prettifyCurrency } from '../../../components/InputMask/masks';
 
 import "react-circular-progressbar/dist/styles.css";

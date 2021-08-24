@@ -8,7 +8,7 @@ import FileSaver from 'file-saver';
 
 import api from '../../api/api';
 import { Project } from '../Projects';
-import { AlertMessage, statusModal } from '../interfaces/AlertMessage';
+import { AlertMessage, statusModal } from '../faces/AlertMessage'
 
 export interface ProjectAttachment {
     id: string;

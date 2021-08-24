@@ -8,7 +8,7 @@ import { FaCheck, FaClock } from 'react-icons/fa';
 import api from '../../api/api';
 import { EventProject } from '../EventsProject';
 import { Project } from '../Projects';
-import { AlertMessage, statusModal } from '../Interfaces/AlertMessage';
+import { AlertMessage, statusModal } from '../interfaces/AlertMessage';
 
 export interface ProjectEvent {
     id: string;

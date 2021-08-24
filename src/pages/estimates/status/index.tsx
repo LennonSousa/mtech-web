@@ -15,7 +15,7 @@ import { AuthContext } from '../../../contexts/AuthContext';
 import { can } from '../../../components/Users';
 import EstimateStatusItem, { EstimateStatus } from '../../../components/EstimateStatus';
 import { PageWaiting } from '../../../components/PageWaiting';
-import { AlertMessage, statusModal } from '../../../components/Interfaces/AlertMessage';
+import { AlertMessage, statusModal } from '../../../components/interfaces/AlertMessage';
 
 const validationSchema = Yup.object().shape({
     name: Yup.string().required('Obrigatório!').max(50, 'Deve conter no máximo 50 caracteres!'),

@@ -7,19 +7,19 @@ import { format } from 'date-fns';
 import FileSaver from 'file-saver';
 
 import api from '../../api/api';
-import { Project } from '../Projects';
+import { Income } from '../Incomings';
 import { AlertMessage, statusModal } from '../Interfaces/AlertMessage'
 
-export interface ProjectAttachment {
+export interface IncomeAttachment {
     id: string;
     name: string;
     path: string;
     received_at: Date;
-    project: Project;
+    income: Income;
 }
 
-interface ProjectAttachmentsProps {
-    attachment: ProjectAttachment;
+interface IncomeAttachmentsProps {
+    attachment: IncomeAttachment;
     canEdit?: boolean;
     handleListAttachments?: () => Promise<void>;
 }
@@ -29,11 +29,11 @@ const validationSchema = Yup.object().shape({
     received_at: Yup.date().required('Obrigatório!'),
 });
 
-const ProjectAttachments: React.FC<ProjectAttachmentsProps> = ({ attachment, canEdit = true, handleListAttachments }) => {
-    const [showModalEditDoc, setShowModalEditDoc] = useState(false);
+const IncomeAttachments: React.FC<IncomeAttachmentsProps> = ({ attachment, canEdit = true, handleListAttachments }) => {
+    const [showModalEdit, setShowModalEdit] = useState(false);
 
-    const handleCloseModalEditDoc = () => { setShowModalEditDoc(false); setIconDeleteConfirm(false); setIconDelete(true); }
-    const handleShowModalEditDoc = () => setShowModalEditDoc(true);
+    const handleCloseModalEditDoc = () => { setShowModalEdit(false); setIconDeleteConfirm(false); setIconDelete(true); }
+    const handleShowModalEditDoc = () => setShowModalEdit(true);
 
     const [messageShow, setMessageShow] = useState(false);
     const [typeMessage, setTypeMessage] = useState<statusModal>("waiting");
@@ -46,11 +46,11 @@ const ProjectAttachments: React.FC<ProjectAttachmentsProps> = ({ attachment, can
         setDownloadingAttachment(true);
 
         try {
-            const res = await api.get(`projects/attachments/${attachment.id}`,
+            const res = await api.get(`incomings/attachments/${attachment.id}`,
                 { responseType: "blob" }
             );
 
-            const fileName = `${attachment.project.customer.replace('.', '')} - ${attachment.name.replace('.', '')}`;
+            const fileName = `${attachment.income.description.replace('.', '')} - ${attachment.name.replace('.', '')}`;
 
             FileSaver.saveAs(res.data, fileName);
         }
@@ -74,7 +74,7 @@ const ProjectAttachments: React.FC<ProjectAttachmentsProps> = ({ attachment, can
         setMessageShow(true);
 
         try {
-            await api.delete(`projects/attachments/${attachment.id}`);
+            await api.delete(`incomings/attachments/${attachment.id}`);
 
             handleCloseModalEditDoc();
 
@@ -111,7 +111,9 @@ const ProjectAttachments: React.FC<ProjectAttachmentsProps> = ({ attachment, can
                             onClick={handleDownloadAttachment}
                             title="Baixar o anexo."
                         >
-                            {downloadingAttachment ? <Spinner animation="border" variant="success" size="sm" /> : <FaCloudDownloadAlt />}
+                            {
+                                downloadingAttachment ? <Spinner animation="border" variant="success" size="sm" /> : <FaCloudDownloadAlt />
+                            }
                         </Button>
                     </Col>
 
@@ -130,7 +132,7 @@ const ProjectAttachments: React.FC<ProjectAttachmentsProps> = ({ attachment, can
                 </Row>
             </ListGroup.Item>
 
-            <Modal show={showModalEditDoc} onHide={handleCloseModalEditDoc}>
+            <Modal show={showModalEdit} onHide={handleCloseModalEditDoc}>
                 <Modal.Header closeButton>
                     <Modal.Title>Edtiar anexo</Modal.Title>
                 </Modal.Header>
@@ -146,7 +148,7 @@ const ProjectAttachments: React.FC<ProjectAttachmentsProps> = ({ attachment, can
                         setMessageShow(true);
 
                         try {
-                            await api.put(`projects/attachments/${attachment.id}`, {
+                            await api.put(`incomings/attachments/${attachment.id}`, {
                                 name: values.name,
                                 received_at: `${values.received_at} 12:00:00`,
                             });
@@ -252,4 +254,4 @@ const ProjectAttachments: React.FC<ProjectAttachmentsProps> = ({ attachment, can
     )
 }
 
-export default ProjectAttachments;
+export default IncomeAttachments;

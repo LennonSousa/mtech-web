@@ -58,7 +58,7 @@ export function Header() {
                 </Navbar.Collapse>
             </div>
 
-            <Form inline>
+            <Form>
                 <Row>
                     {
                         user && <Col>
@@ -81,6 +81,8 @@ export function Header() {
                                     top: 0,
                                     right: 0,
                                     zIndex: 999,
+                                    width: 'auto',
+                                    maxWidth: 'fit-content',
                                 }}
                             >
                                 <Toast.Header className="justify-content-center">

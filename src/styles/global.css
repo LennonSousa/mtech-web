@@ -82,6 +82,11 @@ a:hover {
     border-color: var(--green);
 }
 
+.form-check-input:checked {
+    border-color: var(--green) !important;
+    background-color: var(--green) !important;
+}
+
 .custom-control-input:checked~.custom-control-label::before {
     border-color: var(--green) !important;
     background-color: var(--green) !important;

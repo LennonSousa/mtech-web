@@ -686,7 +686,8 @@ export default function NewProject() {
                                                         </Row>
 
                                                         <Row className="mb-2">
-                                                            <Form.Switch
+                                                            <Form.Check
+                                                                type="switch"
                                                                 id="financier_same"
                                                                 label="Repetir informações do cliente"
                                                                 checked={values.financier_same}

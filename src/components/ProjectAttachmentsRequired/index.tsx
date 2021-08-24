@@ -253,9 +253,9 @@ const AttachmentsRequired: React.FC<ProjectAttachmentRequiredProps> = ({ attachm
                         <Form onSubmit={handleSubmit}>
                             <Modal.Body>
                                 <Row className="mb-3">
-                                    <div className="member-container">
+                                    <Col>
                                         <h6 className="text-success text-wrap">{attachment.attachmentRequired.description}</h6>
-                                    </div>
+                                    </Col>
                                 </Row>
 
                                 {

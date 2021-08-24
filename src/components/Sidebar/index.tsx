@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { Accordion, Card, Dropdown, Nav, NavDropdown, Row, Col } from 'react-bootstrap';
+import { Accordion, AccordionButton, Card, Dropdown, Nav, NavDropdown, Row, Col } from 'react-bootstrap';
 import {
     FaColumns,
     FaUserTie,
@@ -53,7 +53,7 @@ const Sidebar: React.FC = () => {
         showPageHeader && user ? <div className={styles.sideBarContainer}>
             <Accordion activeKey={itemSideBar} className={styles.accordionContainer}>
                 <Card className={styles.menuCard}>
-                    <Accordion.Toggle
+                    <AccordionButton
                         as={Card.Header}
                         className={styles.menuCardHeader}
                         eventKey="dashboard"
@@ -62,12 +62,12 @@ const Sidebar: React.FC = () => {
                         <div>
                             <FaColumns /> <span>Painel</span>
                         </div>
-                    </Accordion.Toggle>
+                    </AccordionButton>
                 </Card>
 
                 {
                     can(user, "estimates", "read:any") && <Card className={styles.menuCard}>
-                        <Accordion.Toggle
+                        <AccordionButton
                             as={Card.Header}
                             className={styles.menuCardHeader}
                             eventKey="estimates"
@@ -76,7 +76,7 @@ const Sidebar: React.FC = () => {
                             <div>
                                 <FaUserTie /> <span>Orçamento</span>
                             </div>
-                        </Accordion.Toggle>
+                        </AccordionButton>
 
                         <Accordion.Collapse eventKey="estimates">
                             <Card.Body className={styles.menuCardBody}>
@@ -203,7 +203,7 @@ const Sidebar: React.FC = () => {
 
                 {
                     can(user, "projects", "read:any") && <Card className={styles.menuCard}>
-                        <Accordion.Toggle
+                        <AccordionButton
                             as={Card.Header}
                             className={styles.menuCardHeader}
                             eventKey="projects"
@@ -212,7 +212,7 @@ const Sidebar: React.FC = () => {
                             <div>
                                 <FaFileAlt /> <span>Projetos</span>
                             </div>
-                        </Accordion.Toggle>
+                        </AccordionButton>
 
                         <Accordion.Collapse eventKey="projects">
                             <Card.Body className={styles.menuCardBody}>
@@ -320,7 +320,7 @@ const Sidebar: React.FC = () => {
 
                 {
                     can(user, "users", "read:any") && <Card className={styles.menuCard}>
-                        <Accordion.Toggle
+                        <AccordionButton
                             as={Card.Header}
                             className={styles.menuCardHeader}
                             eventKey="users"
@@ -329,7 +329,7 @@ const Sidebar: React.FC = () => {
                             <div>
                                 <FaUsers /> <span>Usuários</span>
                             </div>
-                        </Accordion.Toggle>
+                        </AccordionButton>
                         <Accordion.Collapse eventKey="users">
                             <Card.Body className={styles.menuCardBody}>
                                 <Link href="/users">

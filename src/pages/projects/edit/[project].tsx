@@ -866,28 +866,31 @@ export default function NewCustomer() {
                                                                         </Row>
 
                                                                         <Row className="mb-2">
-                                                                            <Form.Switch
-                                                                                id="financier_same"
-                                                                                label="Repetir informações do cliente"
-                                                                                checked={values.financier_same}
-                                                                                onChange={() => {
-                                                                                    setFieldValue('financier_same', !values.financier_same);
+                                                                            <Col>
+                                                                                <Form.Check
+                                                                                    id="financier_same"
+                                                                                    type="switch"
+                                                                                    label="Repetir informações do cliente"
+                                                                                    checked={values.financier_same}
+                                                                                    onChange={() => {
+                                                                                        setFieldValue('financier_same', !values.financier_same);
 
-                                                                                    if (!values.financier_same) {
-                                                                                        setFieldValue('financier', values.customer);
-                                                                                        setFieldValue('financier_document', values.document);
-                                                                                        setFieldValue('financier_cellphone', values.cellphone);
-                                                                                        setFieldValue('financier_email', values.email);
-                                                                                        setFieldValue('financier_zip_code', values.zip_code);
-                                                                                        setFieldValue('financier_street', values.street);
-                                                                                        setFieldValue('financier_number', values.number);
-                                                                                        setFieldValue('financier_neighborhood', values.neighborhood);
-                                                                                        setFieldValue('financier_complement', values.complement);
-                                                                                        setFieldValue('financier_city', values.city);
-                                                                                        setFieldValue('financier_state', values.state);
-                                                                                    }
-                                                                                }}
-                                                                            />
+                                                                                        if (!values.financier_same) {
+                                                                                            setFieldValue('financier', values.customer);
+                                                                                            setFieldValue('financier_document', values.document);
+                                                                                            setFieldValue('financier_cellphone', values.cellphone);
+                                                                                            setFieldValue('financier_email', values.email);
+                                                                                            setFieldValue('financier_zip_code', values.zip_code);
+                                                                                            setFieldValue('financier_street', values.street);
+                                                                                            setFieldValue('financier_number', values.number);
+                                                                                            setFieldValue('financier_neighborhood', values.neighborhood);
+                                                                                            setFieldValue('financier_complement', values.complement);
+                                                                                            setFieldValue('financier_city', values.city);
+                                                                                            setFieldValue('financier_state', values.state);
+                                                                                        }
+                                                                                    }}
+                                                                                />
+                                                                            </Col>
                                                                         </Row>
 
                                                                         <Row className="mb-3">

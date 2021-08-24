@@ -15,8 +15,8 @@ import { can } from '../../components/Users';
 import { Estimate } from '../../components/Estimates';
 import EstimateItem from '../../components/EstimateListItem';
 import { PageWaiting, PageType } from '../../components/PageWaiting';
-import { AlertMessage, statusModal } from '../../components/faces/AlertMessage
-import { Paginations } from '../../components/faces/Pagination
+import { AlertMessage, statusModal } from '../../components/faces/AlertMessage';
+import { Paginations } from '../../components/faces/Pagination';
 
 const validationSchema = Yup.object().shape({
     name: Yup.string().required('Obrigatório!'),

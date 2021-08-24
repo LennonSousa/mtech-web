@@ -25,7 +25,7 @@ import { cpf, cnpj, cellphone } from '../../../components/InputMask/masks';
 import { statesCities } from '../../../components/StatesCities';
 import PageBack from '../../../components/PageBack';
 import { PageWaiting, PageType } from '../../../components/PageWaiting';
-import { AlertMessage, statusModal } from '../../../components/faces/AlertMessage
+import { AlertMessage, statusModal } from '../../../components/faces/AlertMessage';
 import { prettifyCurrency } from '../../../components/InputMask/masks';
 import { calculate, CalcProps } from '../../../utils/calcEstimate';
 

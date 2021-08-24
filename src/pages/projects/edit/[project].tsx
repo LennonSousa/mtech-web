@@ -20,9 +20,9 @@ import { Project } from '../../../components/Projects';
 import { ProjectStatus } from '../../../components/ProjectStatus';
 import { EventProject } from '../../../components/EventsProject';
 import { AttachmentRequired } from '../../../components/AttachmentsRequiredProject';
-import ProjectEvents from '../../../components/ProjectEvents';
-import ProjectAttachments from '../../../components/ProjectAttachments';
-import ProjectAttachmentsRequired from '../../../components/ProjectAttachmentsRequired';
+import ProjectEvents, { ProjectEvent } from '../../../components/ProjectEvents';
+import ProjectAttachments, { ProjectAttachment } from '../../../components/ProjectAttachments';
+import ProjectAttachmentsRequired, { ProjectAttachmentRequired } from '../../../components/ProjectAttachmentsRequired';
 
 import Members from '../../../components/ProjectMembers';
 import { statesCities } from '../../../components/StatesCities';
@@ -88,6 +88,9 @@ export default function NewCustomer() {
 
     const [projectData, setProjectData] = useState<Project>();
     const [projectStatus, setProjectStatus] = useState<ProjectStatus[]>([]);
+    const [projectEvents, setProjectEvents] = useState<ProjectEvent[]>([]);
+    const [projectAttachments, setProjectAttachments] = useState<ProjectAttachment[]>([]);
+    const [projectAttachmentsRequired, setProjectAttachmentsRequired] = useState<ProjectAttachmentRequired[]>([]);
 
     const [spinnerCep, setSpinnerCep] = useState(false);
     const [documentType, setDocumentType] = useState("CPF");
@@ -157,65 +160,26 @@ export default function NewCustomer() {
                             setHasErrors(true);
                         });
 
-                        api.get('events/project').then(res => {
-                            let eventsProject: EventProject[] = res.data;
-
-                            eventsProject = eventsProject.filter(eventProject => { return eventProject.active });
-
-                            projectRes = {
-                                ...projectRes, events: eventsProject.map(eventProject => {
-                                    const projectEvent = projectRes.events.find(projectEvent => { return projectEvent.event.id === eventProject.id });
-
-                                    if (projectEvent)
-                                        return projectEvent;
-
-                                    return {
-                                        id: '0',
-                                        notes: '',
-                                        done: false,
-                                        done_at: new Date(),
-                                        event: eventProject,
-                                        project: projectRes,
-                                    };
-                                })
-                            }
+                        handleEventsData(projectRes).then(eventsData => {
+                            if (eventsData) setProjectEvents(eventsData);
                         }).catch(err => {
-                            console.log('Error to get events project to edit, ', err);
+                            console.log('Error to get events to edit, ', err);
 
                             setTypeLoadingMessage("error");
                             setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
                             setHasErrors(true);
                         });
 
-                        api.get('attachments-required/project').then(res => {
-                            let attachmentsRequiredProject: AttachmentRequired[] = res.data;
+                        setProjectAttachments(projectRes.attachments);
 
-                            attachmentsRequiredProject = attachmentsRequiredProject.filter(attachmentRequired => { return attachmentRequired.active });
-
-                            projectRes = {
-                                ...projectRes, attachmentsRequired: attachmentsRequiredProject.map(attachmentRequired => {
-                                    const projectAttachmentRequired = projectRes.attachmentsRequired.find(projectAttachmentRequired => {
-                                        return projectAttachmentRequired.attachmentRequired.id === attachmentRequired.id
-                                    });
-
-                                    if (projectAttachmentRequired)
-                                        return projectAttachmentRequired;
-
-                                    return {
-                                        id: '0',
-                                        name: '',
-                                        path: '',
-                                        received_at: new Date(),
-                                        attachmentRequired: attachmentRequired,
-                                        project: projectRes,
-                                    };
-                                })
-                            }
+                        handleAttachmentsRequiredData(projectRes).then(attachmentsRequiredData => {
+                            if (attachmentsRequiredData) setProjectAttachmentsRequired(attachmentsRequiredData);
 
                             setProjectData(projectRes);
+
                             setLoadingData(false);
                         }).catch(err => {
-                            console.log('Error to get attachments-required project to edit, ', err);
+                            console.log('Error to get attachmentsRequired to edit, ', err);
 
                             setTypeLoadingMessage("error");
                             setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
@@ -233,37 +197,30 @@ export default function NewCustomer() {
         }
     }, [user, project]); // eslint-disable-line react-hooks/exhaustive-deps
 
+    async function handleListAttachments() {
+        try {
+            const res = await api.get(`projects/${project}`);
+
+            const updatedProject: Project = res.data;
+
+            setProjectAttachments(updatedProject.attachments);
+        }
+        catch (err) {
+            console.log('Error to get attachments to edit, ', err);
+
+            setTypeLoadingMessage("error");
+            setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
+            setHasErrors(true);
+        }
+    }
+
     async function handleListEvents() {
         try {
             const res = await api.get(`projects/${project}`);
 
-            let projectRes: Project = res.data;
+            const updatedEvents = await handleEventsData(res.data);
 
-            const eventsRes = await api.get('events/project');
-
-            let eventsProject: EventProject[] = eventsRes.data;
-
-            eventsProject = eventsProject.filter(eventProject => { return eventProject.active });
-
-            projectRes = {
-                ...projectRes, events: eventsProject.map(eventProject => {
-                    const projectEvent = projectRes.events.find(projectEvent => { return projectEvent.event.id === eventProject.id });
-
-                    if (projectEvent)
-                        return projectEvent;
-
-                    return {
-                        id: '0',
-                        notes: '',
-                        done: false,
-                        done_at: new Date(),
-                        event: eventProject,
-                        project: projectRes,
-                    };
-                })
-            }
-
-            setProjectData(projectRes);
+            if (updatedEvents) setProjectEvents(updatedEvents);
         }
         catch (err) {
             console.log('Error to get events to edit, ', err);
@@ -278,38 +235,12 @@ export default function NewCustomer() {
         try {
             const res = await api.get(`projects/${project}`);
 
-            let projectRes: Project = res.data;
+            const updatedAttachmentsRequired = await handleAttachmentsRequiredData(res.data);
 
-            const eventsRes = await api.get('attachments-required/project');
-
-            let attachmentsRequiredProject: AttachmentRequired[] = eventsRes.data;
-
-            attachmentsRequiredProject = attachmentsRequiredProject.filter(attachmentRequired => { return attachmentRequired.active });
-
-            projectRes = {
-                ...projectRes, attachmentsRequired: attachmentsRequiredProject.map(attachmentRequired => {
-                    const projectAttachmentRequired = projectRes.attachmentsRequired.find(projectAttachmentRequired => {
-                        return projectAttachmentRequired.attachmentRequired.id === attachmentRequired.id
-                    });
-
-                    if (projectAttachmentRequired)
-                        return projectAttachmentRequired;
-
-                    return {
-                        id: '0',
-                        name: '',
-                        path: '',
-                        received_at: new Date(),
-                        attachmentRequired: attachmentRequired,
-                        project: projectRes,
-                    };
-                })
-            }
-
-            setProjectData(projectRes);
+            if (updatedAttachmentsRequired) setProjectAttachmentsRequired(updatedAttachmentsRequired);
         }
         catch (err) {
-            console.log('Error to get events to edit, ', err);
+            console.log('Error to get attachments required to edit, ', err);
 
             setTypeLoadingMessage("error");
             setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
@@ -317,13 +248,69 @@ export default function NewCustomer() {
         }
     }
 
-    async function handleListAttachments() {
-        if (projectData) {
-            const res = await api.get(`projects/${project}`);
+    async function handleEventsData(projectResponse: Project) {
+        // Events.
+        try {
+            const eventsRes = await api.get('events/project');
 
-            const updatedCustomer: Project = res.data;
+            let eventsProject: EventProject[] = eventsRes.data;
 
-            setProjectData({ ...projectData, attachments: updatedCustomer.attachments });
+            eventsProject = eventsProject.filter(eventProject => { return eventProject.active });
+
+            const updatedEvents = eventsProject.map(eventProject => {
+                const projectEvent = projectResponse.events.find(projectEvent => { return projectEvent.event.id === eventProject.id });
+
+                if (projectEvent)
+                    return projectEvent;
+
+                return {
+                    id: '0',
+                    notes: '',
+                    done: false,
+                    done_at: new Date(),
+                    event: eventProject,
+                    project: projectResponse,
+                };
+            });
+
+            return updatedEvents;
+        }
+        catch {
+            return undefined;
+        }
+    }
+
+    async function handleAttachmentsRequiredData(projectResponse: Project) {
+        try {
+            // Required attachments.
+            const attachementsRequiredRes = await api.get('attachments-required/project');
+
+            let attachmentsRequiredProject: AttachmentRequired[] = attachementsRequiredRes.data;
+
+            attachmentsRequiredProject = attachmentsRequiredProject.filter(attachmentRequired => { return attachmentRequired.active });
+
+            const updatedAttachmentsRequired = attachmentsRequiredProject.map(attachmentRequired => {
+                const projectAttachmentRequired = projectResponse.attachmentsRequired.find(projectAttachmentRequired => {
+                    return projectAttachmentRequired.attachmentRequired.id === attachmentRequired.id
+                });
+
+                if (projectAttachmentRequired)
+                    return projectAttachmentRequired;
+
+                return {
+                    id: '0',
+                    name: '',
+                    path: null,
+                    received_at: new Date(),
+                    attachmentRequired: attachmentRequired,
+                    project: projectResponse,
+                };
+            });
+
+            return updatedAttachmentsRequired;
+        }
+        catch {
+            return undefined;
         }
     }
 
@@ -1209,7 +1196,7 @@ export default function NewCustomer() {
 
                                                                     <Row className="mt-2">
                                                                         {
-                                                                            !!projectData.events.length ? <Col>
+                                                                            !!projectEvents.length ? <Col>
                                                                                 <Row className="mb-2" style={{ padding: '0 1rem' }}>
                                                                                     <Col sm={4}>
                                                                                         <h6>Evento</h6>
@@ -1228,7 +1215,7 @@ export default function NewCustomer() {
                                                                                     <Col>
                                                                                         <ListGroup>
                                                                                             {
-                                                                                                projectData.events.map((event, index) => {
+                                                                                                projectEvents.map((event, index) => {
                                                                                                     return <ProjectEvents
                                                                                                         key={index}
                                                                                                         projectEvent={event}
@@ -1264,12 +1251,12 @@ export default function NewCustomer() {
 
                                                                     <Row className="mt-2">
                                                                         {
-                                                                            !!projectData.attachmentsRequired.length ? <Col>
+                                                                            !!projectAttachmentsRequired.length ? <Col>
                                                                                 <Row>
                                                                                     <Col>
                                                                                         <ListGroup>
                                                                                             {
-                                                                                                projectData.attachmentsRequired.map((attachment, index) => {
+                                                                                                projectAttachmentsRequired.map((attachment, index) => {
                                                                                                     return <ProjectAttachmentsRequired
                                                                                                         key={index}
                                                                                                         attachment={attachment}
@@ -1285,7 +1272,7 @@ export default function NewCustomer() {
                                                                                 <Col>
                                                                                     <AlertMessage
                                                                                         status="warning"
-                                                                                        message="Nenhum evento registrado para esse projeto."
+                                                                                        message="Nenhum anexo obrigatório registrado para esse projeto."
                                                                                     />
                                                                                 </Col>
                                                                         }
@@ -1305,7 +1292,7 @@ export default function NewCustomer() {
                                                                                 variant="outline-success"
                                                                                 size="sm"
                                                                                 onClick={handleShowModalNewAttachment}
-                                                                                title="Criar um novo anexo para esse cliente."
+                                                                                title="Criar um novo anexo para esse projeto."
                                                                             >
                                                                                 <FaPlus />
                                                                             </Button>
@@ -1314,10 +1301,10 @@ export default function NewCustomer() {
 
                                                                     <Row className="mt-2">
                                                                         {
-                                                                            !!projectData.attachments.length ? <Col>
+                                                                            !!projectAttachments.length ? <Col>
                                                                                 <ListGroup>
                                                                                     {
-                                                                                        projectData.attachments.map(attachment => {
+                                                                                        projectAttachments.map(attachment => {
                                                                                             return <ProjectAttachments
                                                                                                 key={attachment.id}
                                                                                                 attachment={attachment}

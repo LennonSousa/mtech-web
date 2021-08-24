@@ -34,12 +34,18 @@
 .menuCardHeader {
     width: 100%;
     justify-content: space-evenly;
+    padding: .75rem 1.25rem !important;
     align-items: center;
     display: flex;
     flex-direction: column;
     flex: 1;
+    color: var(--white) !important;
     background-color: var(--green-dark) !important;
     cursor: pointer;
+}
+
+.menuCardHeader::after{
+    display: none !important;
 }
 
 .menuCardHeader span {
@@ -47,12 +53,10 @@
 }
 
 .menuCardBody {
-    width: 9rem;
     justify-content: center;
     display: flex;
     flex-direction: column;
     flex: 1;
-    background-color: var(--green) !important;
 }
 
 .menuCardBodyItem {

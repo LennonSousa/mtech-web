@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Pagination } from 'react-bootstrap';
 
-interface WaitingModalProps {
+interface PaginationProps {
     pages: number,
     active?: number;
     handleActivePage: (page: number) => Promise<void>;
 }
 
-const Paginations: React.FC<WaitingModalProps> = ({ pages, active = 1, handleActivePage }) => {
+const Paginations: React.FC<PaginationProps> = ({ pages, active = 1, handleActivePage }) => {
     const [pageItems, setPageItems] = useState<JSX.Element[]>([]);
 
     useEffect(() => {

@@ -1,24 +1,24 @@
 import { useContext, useEffect, useState } from 'react';
-import { Button, Col, Form, InputGroup, ListGroup, Modal, Row } from 'react-bootstrap';
+import { Button, Col, Form, InputGroup, ListGroup, Modal, Row, Spinner } from 'react-bootstrap';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { FaHistory } from 'react-icons/fa';
+import { FaHistory, FaPlus } from 'react-icons/fa';
 
-import api from '../../api/api';
-import { can } from '../Users';
-import { AuthContext } from '../../contexts/AuthContext';
-import { Income } from '../Incomings';
-import IncomeItems from '../IncomeItems';
-import { PayType } from '../PayTypes';
-import Shimmer from './shimmer';
-import { prettifyCurrency } from '../InputMask/masks';
-import { PageWaiting } from '../PageWaiting';
-import { AlertMessage, statusModal } from '../Interfaces/AlertMessage'
+import api from '../../../api/api';
+import { can } from '../../Users';
+import { AuthContext } from '../../../contexts/AuthContext';
+import { Income } from '../../Incomings';
+import IncomeItems from '../../IncomeItems';
+import { PayType } from '../../PayTypes';
+import Shimmer from '../Shimmer';
+import { prettifyCurrency } from '../../InputMask/masks';
+import { PageWaiting } from '../../PageWaiting';
+import { AlertMessage, statusModal } from '../../Interfaces/AlertMessage'
 
-interface ProjectEventProps {
+interface IncomeModalProps {
     incomeId: string;
     show: boolean;
-    handleListIncomings?: () => Promise<void>;
+    handleIncome?: () => Promise<void>;
 }
 
 const validationSchema = Yup.object().shape({
@@ -28,21 +28,20 @@ const validationSchema = Yup.object().shape({
     payType: Yup.string().required('Obrigatório!'),
 });
 
-const ProjectEvent: React.FC<ProjectEventProps> = ({ incomeId, show = false, handleListIncomings }) => {
+const IncomeModal: React.FC<IncomeModalProps> = ({ incomeId, show = false, handleIncome }) => {
     const { user } = useContext(AuthContext);
     const [data, setData] = useState<Income>();
     const [payTypes, setPayTypes] = useState<PayType[]>([]);
 
-    const [showModalEditEvent, setShowModalEdit] = useState(show);
+    const [showModalEdit, setShowModalEdit] = useState(show);
 
     const handleCloseModalEdit = () => setShowModalEdit(false);
-
-    const handleShowModalEdit = () => setShowModalEdit(true);
 
     const [messageShow, setMessageShow] = useState(false);
     const [typeMessage, setTypeMessage] = useState<statusModal>("waiting");
 
     const [hasErrors, setHasErrors] = useState(false);
+    const [isCreatingItem, setIsCreatingItem] = useState(false);
 
     const [iconDelete, setIconDelete] = useState(true);
     const [iconDeleteConfirm, setIconDeleteConfirm] = useState(false);
@@ -87,7 +86,7 @@ const ProjectEvent: React.FC<ProjectEventProps> = ({ incomeId, show = false, han
 
                 handleCloseModalEdit();
 
-                if (handleListIncomings) handleListIncomings();
+                if (handleIncome) handleIncome();
             }
         }
         catch (err) {
@@ -108,12 +107,12 @@ const ProjectEvent: React.FC<ProjectEventProps> = ({ incomeId, show = false, han
 
     async function handleListItems() {
         try {
-            if (user && can(user, "finances", "update:any")) {
-                const res = await api.get(`incomings/${incomeId}`)
-                setData(res.data);
+            if (user && can(user, "finances", "update:any") && data) {
+                const res = await api.get(`incomings/${incomeId}`);
 
-                const typesRes = await api.get('payments/types')
-                setPayTypes(typesRes.data);
+                const updatedIncome: Income = res.data;
+
+                setData({ ...data, items: updatedIncome.items });
             }
         }
         catch (err) {
@@ -122,8 +121,36 @@ const ProjectEvent: React.FC<ProjectEventProps> = ({ incomeId, show = false, han
         }
     }
 
+    async function handleNewItem() {
+        try {
+            if (user && can(user, "finances", "update:any") && data) {
+                setIsCreatingItem(true);
+
+                await api.post('incomings', {
+                    description: 'Novo pagamento',
+                    value: 0,
+                    income: data.id,
+                });
+
+                const res = await api.get(`incomings/${incomeId}`);
+
+                const updatedIncome: Income = res.data;
+
+                setData({ ...data, items: updatedIncome.items });
+
+                setIsCreatingItem(false);
+            }
+        }
+        catch (err) {
+            console.log("Error to create income");
+            console.log(err);
+
+            setIsCreatingItem(false);
+        }
+    }
+
     return (
-        <Modal size="lg" show={showModalEditEvent} onHide={() => handleCloseModalEdit()}>
+        <Modal size="lg" show={showModalEdit} onHide={() => handleCloseModalEdit()}>
             <Modal.Header closeButton>
                 <Modal.Title>Edtiar receita</Modal.Title>
             </Modal.Header>
@@ -163,7 +190,7 @@ const ProjectEvent: React.FC<ProjectEventProps> = ({ incomeId, show = false, han
                                             });
                                         }
 
-                                        if (handleListIncomings) await handleListIncomings();
+                                        if (handleIncome) await handleIncome();
 
                                         setTypeMessage("success");
 
@@ -276,9 +303,29 @@ const ProjectEvent: React.FC<ProjectEventProps> = ({ incomeId, show = false, han
                             <Row className="mb-3">
                                 <Col>
                                     <Row>
-                                        <div className="member-container">
+                                        <Col className="col-row">
                                             <h6 className="text-success">Pagamentos <FaHistory /></h6>
-                                        </div>
+                                        </Col>
+
+                                        <Col sm={1}>
+                                            <Button
+                                                variant="outline-success"
+                                                size="sm"
+                                                onClick={handleNewItem}
+                                                title="Criar um novo pagamento para essa receita."
+                                            >
+                                                {
+                                                    isCreatingItem ? <Spinner
+                                                        as="span"
+                                                        animation="border"
+                                                        size="sm"
+                                                        role="status"
+                                                        aria-hidden="true"
+                                                    /> :
+                                                        <FaPlus />
+                                                }
+                                            </Button>
+                                        </Col>
                                     </Row>
 
                                     <Row className="mt-2">
@@ -317,4 +364,4 @@ const ProjectEvent: React.FC<ProjectEventProps> = ({ incomeId, show = false, han
     )
 }
 
-export default ProjectEvent;
+export default IncomeModal;

@@ -8,6 +8,7 @@ import { PayType } from '../PayTypes';
 import { Project } from '../Projects';
 import { IncomeItem } from '../IncomeItems';
 import { IncomeAttachment } from '../IncomeAttachments';
+import IncomingsModal from './Modal';
 import { prettifyCurrency } from '../InputMask/masks';
 
 export interface Income {
@@ -29,33 +30,45 @@ interface IncomingsProps {
 const Panels: React.FC<IncomingsProps> = ({ income, handleListIncomings }) => {
     const router = useRouter();
 
+    const [showModalEdit, setShowModalEdit] = useState(false);
+
+    const handleShowModalEdit = () => setShowModalEdit(true);
+
     function handleRoute(route: string) {
         router.push(route);
     }
 
+    async function handleIncome() {
+        await handleListIncomings();
+    }
+
     return (
-        <ListGroup.Item variant="light">
-            <Row className="align-items-center">
-                <Col sm={1}>
-                    <FaBars />
-                </Col>
+        <>
+            <ListGroup.Item variant="light">
+                <Row className="align-items-center">
+                    <Col sm={1}>
+                        <FaBars />
+                    </Col>
 
-                <Col><span>{income.description}</span></Col>
+                    <Col><span>{income.description}</span></Col>
 
-                <Col><span>{`R$ ${prettifyCurrency(String(income.value))}`}</span></Col>
+                    <Col><span>{`R$ ${prettifyCurrency(String(income.value))}`}</span></Col>
 
-                <Col className="col-row text-end">
-                    <Button
-                        variant="outline-success"
-                        className="button-link"
-                        onClick={() => handleRoute(`/project/panels/edit/${income.id}`)}
-                        title="Editar receita"
-                    >
-                        <FaPencilAlt /> Editar
-                    </Button>
-                </Col>
-            </Row>
-        </ListGroup.Item>
+                    <Col className="col-row text-end">
+                        <Button
+                            variant="outline-success"
+                            className="button-link"
+                            onClick={handleShowModalEdit}
+                            title="Editar receita"
+                        >
+                            <FaPencilAlt /> Editar
+                        </Button>
+                    </Col>
+                </Row>
+            </ListGroup.Item>
+
+            <IncomingsModal incomeId={income.id} show={showModalEdit} handleIncome={handleIncome} />
+        </>
     )
 }
 

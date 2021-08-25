@@ -15,7 +15,7 @@ export interface IncomeItem {
     value: number;
     is_paid: boolean;
     received_at: Date;
-    income: Income;
+    income?: Income;
 }
 
 interface IncomeItemsProps {

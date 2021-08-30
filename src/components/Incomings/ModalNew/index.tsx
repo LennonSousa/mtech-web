@@ -7,7 +7,7 @@ import { FaHistory, FaPlus } from 'react-icons/fa';
 import api from '../../../api/api';
 import { can } from '../../Users';
 import { AuthContext } from '../../../contexts/AuthContext';
-import { Income } from '..';
+import IncomingsModal from '../Modal';
 import IncomeItems, { IncomeItem } from '../../IncomeItems';
 import { PayType } from '../../PayTypes';
 import { Project } from '../../Projects';
@@ -19,7 +19,8 @@ import { AlertMessage, statusModal } from '../../Interfaces/AlertMessage'
 interface IncomeModalNewProps {
     project?: Project;
     show: boolean;
-    handleIncome?: () => Promise<void>;
+    handleListIncomings(): Promise<void>;
+    handleCloseModal: () => void;
 }
 
 const validationSchema = Yup.object().shape({
@@ -29,14 +30,10 @@ const validationSchema = Yup.object().shape({
     payType: Yup.string().required('Obrigatório!'),
 });
 
-const IncomeModalNew: React.FC<IncomeModalNewProps> = ({ project, show = false, handleIncome }) => {
+const IncomeModalNew: React.FC<IncomeModalNewProps> = ({ project, show = false, handleListIncomings, handleCloseModal }) => {
     const { user } = useContext(AuthContext);
     const [payTypes, setPayTypes] = useState<PayType[]>([]);
     const [incomeItems, setIncomeItems] = useState<IncomeItem[]>([]);
-
-    const [showModalEdit, setShowModalEdit] = useState(show);
-
-    const handleCloseModalEdit = () => setShowModalEdit(false);
 
     const [messageShow, setMessageShow] = useState(false);
     const [typeMessage, setTypeMessage] = useState<statusModal>("waiting");
@@ -49,7 +46,6 @@ const IncomeModalNew: React.FC<IncomeModalNewProps> = ({ project, show = false, 
 
     useEffect(() => {
         setHasErrors(false);
-
         if (user && can(user, "finances", "update:any")) {
             api.get('payments/types').then(res => {
                 setPayTypes(res.data);
@@ -80,14 +76,14 @@ const IncomeModalNew: React.FC<IncomeModalNewProps> = ({ project, show = false, 
     }
 
     return (
-        <Modal size="lg" show={showModalEdit} onHide={() => handleCloseModalEdit()}>
+        <Modal size="lg" show={show} onHide={handleCloseModal}>
             <Modal.Header closeButton>
-                <Modal.Title>Edtiar receita</Modal.Title>
+                <Modal.Title>Criar receita</Modal.Title>
             </Modal.Header>
             {
                 user && can(user, "finances", "create") ? <>
                     {
-                        hasErrors ? <>
+                        !hasErrors ? <>
                             <Formik
                                 initialValues={
                                     {
@@ -102,21 +98,23 @@ const IncomeModalNew: React.FC<IncomeModalNewProps> = ({ project, show = false, 
                                     setMessageShow(true);
 
                                     try {
-                                        await api.post('incomings', {
+                                        const res = await api.post('incomings', {
                                             description: values.description,
-                                            value: prettifyCurrency(String(values.value)),
+                                            value: Number(values.value.replaceAll(".", "").replaceAll(",", ".")),
                                             project: values.project,
                                             payType: values.payType,
                                             items: incomeItems,
                                         });
 
-                                        if (handleIncome) await handleIncome();
+
+
+                                        if (handleListIncomings) await handleListIncomings();
 
                                         setTypeMessage("success");
 
                                         setTimeout(() => {
                                             setMessageShow(false);
-                                            handleCloseModalEdit();
+                                            handleCloseModal();
                                         }, 1000);
                                     }
                                     catch (err) {
@@ -197,7 +195,7 @@ const IncomeModalNew: React.FC<IncomeModalNewProps> = ({ project, show = false, 
                                             {
                                                 messageShow ? <AlertMessage status={typeMessage} /> :
                                                     <>
-                                                        <Button variant="secondary" onClick={handleCloseModalEdit}>Cancelar</Button>
+                                                        <Button variant="secondary" onClick={handleCloseModal}>Cancelar</Button>
                                                         <Button
                                                             title="Excluir item"
                                                             variant={iconDelete ? "outline-danger" : "outline-warning"}
@@ -220,51 +218,53 @@ const IncomeModalNew: React.FC<IncomeModalNewProps> = ({ project, show = false, 
                                 )}
                             </Formik>
 
-                            <Row className="mb-3">
-                                <Col>
-                                    <Row>
-                                        <Col className="col-row">
-                                            <h6 className="text-success">Pagamentos <FaHistory /></h6>
-                                        </Col>
+                            <Modal.Body>
+                                <Row className="mb-3">
+                                    <Col>
+                                        <Row>
+                                            <Col className="col-row">
+                                                <h6 className="text-success">Pagamentos <FaHistory /></h6>
+                                            </Col>
 
-                                        <Col sm={1}>
-                                            <Button
-                                                variant="outline-success"
-                                                size="sm"
-                                                onClick={handleNewItem}
-                                                title="Criar um novo pagamento para essa receita."
-                                            >
-                                                {
-                                                    isCreatingItem ? <Spinner
-                                                        as="span"
-                                                        animation="border"
-                                                        size="sm"
-                                                        role="status"
-                                                        aria-hidden="true"
-                                                    /> :
-                                                        <FaPlus />
-                                                }
-                                            </Button>
-                                        </Col>
-                                    </Row>
+                                            <Col sm={1}>
+                                                <Button
+                                                    variant="outline-success"
+                                                    size="sm"
+                                                    onClick={handleNewItem}
+                                                    title="Criar um novo pagamento para essa receita."
+                                                >
+                                                    {
+                                                        isCreatingItem ? <Spinner
+                                                            as="span"
+                                                            animation="border"
+                                                            size="sm"
+                                                            role="status"
+                                                            aria-hidden="true"
+                                                        /> :
+                                                            <FaPlus />
+                                                    }
+                                                </Button>
+                                            </Col>
+                                        </Row>
 
-                                    <Row className="mt-2">
-                                        <Col>
-                                            <ListGroup className="mb-3">
-                                                {
-                                                    incomeItems.map(item => {
-                                                        return <IncomeItems
-                                                            key={item.id}
-                                                            item={item}
-                                                            handleListItems={handleListItems}
-                                                        />
-                                                    })
-                                                }
-                                            </ListGroup>
-                                        </Col>
-                                    </Row>
-                                </Col>
-                            </Row>
+                                        <Row className="mt-2">
+                                            <Col>
+                                                <ListGroup className="mb-3">
+                                                    {
+                                                        incomeItems.map(item => {
+                                                            return <IncomeItems
+                                                                key={item.id}
+                                                                item={item}
+                                                                handleListItems={handleListItems}
+                                                            />
+                                                        })
+                                                    }
+                                                </ListGroup>
+                                            </Col>
+                                        </Row>
+                                    </Col>
+                                </Row>
+                            </Modal.Body>
                         </> :
                             <PageWaiting
                                 status="error"

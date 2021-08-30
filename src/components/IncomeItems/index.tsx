@@ -26,11 +26,10 @@ interface IncomeItemsProps {
 type savingStatus = "saved" | "touched" | "saving";
 
 const validationSchema = Yup.object().shape({
-    description: Yup.string().required('Obrigatório'),
-    value: Yup.number().required('Obrigatório'),
+    description: Yup.string().required('Obrigatório!').max(15, 'Deve conter no máximo 15 caracteres!'),
+    value: Yup.string().required('Obrigatório'),
     is_paid: Yup.boolean().notRequired(),
     received_at: Yup.date().notRequired(),
-    income: Yup.string().required('Obrigatório'),
 });
 
 const IncomeItems: React.FC<IncomeItemsProps> = ({ item, handleListItems }) => {
@@ -56,61 +55,66 @@ const IncomeItems: React.FC<IncomeItemsProps> = ({ item, handleListItems }) => {
 
     return (
         <ListGroup.Item variant="light">
-            <Row className="align-items-center">
-                <Formik
-                    initialValues={{
-                        description: item.description,
-                        value: prettifyCurrency(String(item.value)),
-                        is_paid: item.is_paid,
-                        received_at: format(new Date(item.received_at), 'yyyy-MM-dd'),
-                    }}
+            <Formik
+                initialValues={{
+                    description: item.description,
+                    value: prettifyCurrency(String(item.value)),
+                    is_paid: item.is_paid,
+                    received_at: format(new Date(item.received_at), 'yyyy-MM-dd'),
+                }}
 
-                    onSubmit={async values => {
-                        setFieldsFormTouched(false);
+                onSubmit={async values => {
+                    setFieldsFormTouched(false);
 
-                        setSavingItemStatus("saving");
+                    setSavingItemStatus("saving");
 
-                        try {
-                            await api.put(`incomings/items/${item.id}`, {
-                                description: values.description,
-                                value: Number(values.value.replace(".", "").replace(",", ".")),
-                                is_paid: values.is_paid,
-                                received_at: `${values.received_at} 12:00:00`,
-                            });
+                    try {
+                        await api.put(`incomings/items/${item.id}`, {
+                            description: values.description,
+                            value: Number(values.value.replaceAll(".", "").replaceAll(",", ".")),
+                            is_paid: values.is_paid,
+                            received_at: `${values.received_at} 12:00:00`,
+                        });
 
-                            handleListItems();
-                        }
-                        catch (err) {
-                            console.log('error to update items day');
-                            console.log(err);
-                        }
+                        handleListItems();
+                    }
+                    catch (err) {
+                        console.log('error to update items day');
+                        console.log(err);
+                    }
 
-                        setSavingItemStatus("saved");
-                    }}
-                    validationSchema={validationSchema}
-                >
-                    {({ handleChange, handleBlur, handleSubmit, values, setFieldValue, touched, errors }) => (
-                        <Form onSubmit={handleSubmit}>
-                            <Form.Group as={Col} sm={3} controlId="incomeItemFormGridDescription">
+                    setSavingItemStatus("saved");
+                }}
+                validationSchema={validationSchema}
+            >
+                {({ handleBlur, handleSubmit, values, setFieldValue, touched, errors }) => (
+                    <Form onSubmit={handleSubmit}>
+                        <Row>
+                            <Form.Group as={Col} sm={4} controlId="incomeItemFormGridDescription">
                                 <Form.Control
                                     placeholder="Descrição da despesa"
-                                    onChange={handleChange}
-                                    onBlur={handleBlur}
+                                    onChange={(e) => {
+                                        setFieldValue('description', e.target.value, true);
+                                        setFieldsFormTouched(true);
+                                        setSavingItemStatus("touched");
+                                    }}
                                     value={values.description}
                                     name="description"
                                     isInvalid={!!errors.description && touched.description}
                                 />
                                 <Form.Control.Feedback type="invalid">{touched.description && errors.description}</Form.Control.Feedback>
-                                <Form.Text className="text-muted text-right">{`${values.description.length}/50 caracteres.`}</Form.Text>
+                                <Form.Text className="text-muted text-right">{`${values.description.length}/15 caracteres.`}</Form.Text>
                             </Form.Group>
 
-                            <Form.Group as={Col} sm={2} controlId="incomeItemFormGridValue">
+                            <Form.Group as={Col} sm={3} controlId="incomeItemFormGridValue">
                                 <InputGroup>
                                     <InputGroup.Text id="btnGroupValue">R$</InputGroup.Text>
                                     <Form.Control
                                         type="text"
                                         onChange={(e) => {
                                             setFieldValue('value', prettifyCurrency(e.target.value));
+                                            setFieldsFormTouched(true);
+                                            setSavingItemStatus("touched");
                                         }}
                                         onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
                                             setFieldValue('value', prettifyCurrency(e.target.value));
@@ -131,14 +135,22 @@ const IncomeItems: React.FC<IncomeItemsProps> = ({ item, handleListItems }) => {
                                     type="switch"
                                     label="Pago?"
                                     checked={values.is_paid}
-                                    onChange={handleChange}
+                                    onChange={() => {
+                                        setFieldValue('is_paid', !values.is_paid);
+                                        setFieldsFormTouched(true);
+                                        setSavingItemStatus("touched");
+                                    }}
                                 />
                             </Col>
 
                             <Form.Group as={Col} sm={3} controlId="incomeItemFormGridReceivedAt">
                                 <Form.Control
                                     type="date"
-                                    onChange={handleChange}
+                                    onChange={(e) => {
+                                        setFieldValue('received_at', e.target.value, true);
+                                        setFieldsFormTouched(true);
+                                        setSavingItemStatus("touched");
+                                    }}
                                     onBlur={handleBlur}
                                     value={values.received_at}
                                     name="received_at"
@@ -146,7 +158,9 @@ const IncomeItems: React.FC<IncomeItemsProps> = ({ item, handleListItems }) => {
                                 />
                                 <Form.Control.Feedback type="invalid">{touched.received_at && errors.received_at}</Form.Control.Feedback>
                             </Form.Group>
+                        </Row>
 
+                        <Row className="justify-content-end align-items-end">
                             <Col className="col-row">
                                 <Button variant="outline-danger" onClick={deleteItem}>
                                     {
@@ -176,10 +190,10 @@ const IncomeItems: React.FC<IncomeItemsProps> = ({ item, handleListItems }) => {
                                     }
                                 </Button>
                             </Col>
-                        </Form>
-                    )}
-                </Formik>
-            </Row>
+                        </Row>
+                    </Form>
+                )}
+            </Formik>
         </ListGroup.Item>
     )
 }

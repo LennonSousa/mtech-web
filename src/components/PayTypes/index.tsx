@@ -53,13 +53,13 @@ const PayTypes: React.FC<PayTypesProps> = ({ payType, listTypes, handleListTypes
         setMessageShow(true);
 
         try {
-            await api.delete(`pays/types/${payType.id}`);
+            await api.delete(`payments/types/${payType.id}`);
 
             const list = listTypes.filter(item => { return item.id !== payType.id });
 
             list.forEach(async (payType, index) => {
                 try {
-                    await api.put(`pays/types/${payType.id}`, {
+                    await api.put(`payments/types/${payType.id}`, {
                         name: payType.name,
                         order: index
                     });
@@ -93,7 +93,7 @@ const PayTypes: React.FC<PayTypesProps> = ({ payType, listTypes, handleListTypes
         setItemPausing(true);
 
         try {
-            await api.put(`payments/${payType.id}`, {
+            await api.put(`payments/types/${payType.id}`, {
                 name: payType.name,
                 active: !payType.active,
                 order: payType.order,
@@ -110,7 +110,7 @@ const PayTypes: React.FC<PayTypesProps> = ({ payType, listTypes, handleListTypes
     }
 
     return (
-        <ListGroup.Item variant={!payType.active ? "light" : "danger"}>
+        <ListGroup.Item variant={payType.active ? "light" : "danger"}>
             <Row className="align-items-center">
                 <Col sm={1}>
                     <FaBars />
@@ -132,7 +132,7 @@ const PayTypes: React.FC<PayTypesProps> = ({ payType, listTypes, handleListTypes
                                 size="sm"
                                 role="status"
                                 aria-hidden="true"
-                            /> : payType.active ? (<><FaPlay /> Pausado</>) : (<><FaPause /> Pausar</>)
+                            /> : payType.active ? (<><FaPause /> Pausar</>) : (<><FaPlay /> Pausado</>)
                         }
                     </Button>
                 </Col>
@@ -159,7 +159,7 @@ const PayTypes: React.FC<PayTypesProps> = ({ payType, listTypes, handleListTypes
 
                         try {
                             if (listTypes) {
-                                await api.put(`pays/types/${payType.id}`, {
+                                await api.put(`payments/types/${payType.id}`, {
                                     name: values.name,
                                     order: payType.order
                                 });

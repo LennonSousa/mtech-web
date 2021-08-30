@@ -1,9 +1,7 @@
-import { useState } from 'react';
-import { useRouter } from 'next/router';
-import { Row, Col, ListGroup, Button, Spinner } from 'react-bootstrap';
-import { FaPencilAlt, FaBars, FaUserTag, FaPlay, FaPause } from 'react-icons/fa';
+import { useEffect, useState } from 'react';
+import { Row, Col, ListGroup, Button } from 'react-bootstrap';
+import { FaDonate, FaPencilAlt } from 'react-icons/fa';
 
-import api from '../../api/api';
 import { PayType } from '../PayTypes';
 import { Project } from '../Projects';
 import { IncomeItem } from '../IncomeItems';
@@ -28,15 +26,22 @@ interface IncomingsProps {
 }
 
 const Panels: React.FC<IncomingsProps> = ({ income, handleListIncomings }) => {
-    const router = useRouter();
+    const [isPaid, setIsPaid] = useState(false);
 
     const [showModalEdit, setShowModalEdit] = useState(false);
 
+    const handleCloseModalEdit = () => setShowModalEdit(false);
     const handleShowModalEdit = () => setShowModalEdit(true);
 
-    function handleRoute(route: string) {
-        router.push(route);
-    }
+    useEffect(() => {
+        let isAllPaid = true;
+
+        income.items.forEach(item => {
+            if (!item.is_paid) isAllPaid = false;
+        });
+
+        if (isAllPaid) setIsPaid(true);
+    }, [income.items]);
 
     async function handleIncome() {
         await handleListIncomings();
@@ -46,13 +51,15 @@ const Panels: React.FC<IncomingsProps> = ({ income, handleListIncomings }) => {
         <>
             <ListGroup.Item variant="light">
                 <Row className="align-items-center">
-                    <Col sm={1}>
-                        <FaBars />
-                    </Col>
-
                     <Col><span>{income.description}</span></Col>
 
                     <Col><span>{`R$ ${prettifyCurrency(String(income.value))}`}</span></Col>
+
+                    <Col className="col-row"><span className={isPaid ? 'text-success' : 'text-secondary'}>
+                        {
+                            isPaid ? <FaDonate title="Receita paga!" /> : ''
+                        }
+                    </span></Col>
 
                     <Col className="col-row text-end">
                         <Button
@@ -67,7 +74,12 @@ const Panels: React.FC<IncomingsProps> = ({ income, handleListIncomings }) => {
                 </Row>
             </ListGroup.Item>
 
-            <IncomingsModal incomeId={income.id} show={showModalEdit} handleIncome={handleIncome} />
+            <IncomingsModal
+                incomeId={income.id}
+                show={showModalEdit}
+                handleIncome={handleIncome}
+                handleCloseModal={handleCloseModalEdit}
+            />
         </>
     )
 }

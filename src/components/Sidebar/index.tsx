@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { Accordion, AccordionButton, Card, Dropdown, Nav, NavDropdown, Row, Col } from 'react-bootstrap';
 import {
     FaColumns,
+    FaDonate,
+    FaMoneyCheckAlt,
     FaUserTie,
     FaFileAlt,
     FaList,
@@ -16,6 +18,7 @@ import {
     FaClipboardList,
     FaLayerGroup,
     FaSolarPanel,
+    FaUniversity,
     FaUsers,
     FaUsersCog
 } from 'react-icons/fa';
@@ -307,6 +310,67 @@ const Sidebar: React.FC = () => {
                                                     </Col>
                                                     <Col>
                                                         <span>Anexos</span>
+                                                    </Col>
+                                                </Row>
+                                            </a>
+                                        </Link>
+                                    </>
+                                }
+                            </Card.Body>
+                        </Accordion.Collapse>
+                    </Card>
+                }
+
+                {
+                    can(user, "finances", "read:any") && <Card className={styles.menuCard}>
+                        <AccordionButton
+                            as={Card.Header}
+                            className={styles.menuCardHeader}
+                            eventKey="finances"
+                            onClick={() => handleItemSideBar('finances')}
+                        >
+                            <div>
+                                <FaMoneyCheckAlt /> <span>Finanças</span>
+                            </div>
+                        </AccordionButton>
+
+                        <Accordion.Collapse eventKey="finances">
+                            <Card.Body className={styles.menuCardBody}>
+                                <Link href="/finances/incomings">
+                                    <a title="Listar todas as receitas." data-title="Listar todas as receitas.">
+                                        <Row
+                                            className={
+                                                selectedMenu === 'finances-incomings' ? styles.selectedMenuCardBodyItem :
+                                                    styles.menuCardBodyItem
+                                            }
+                                        >
+                                            <Col sm={1}>
+                                                <FaDonate size={14} />
+                                            </Col>
+                                            <Col>
+                                                <span>Receitas</span>
+                                            </Col>
+                                        </Row>
+                                    </a>
+                                </Link>
+
+                                {
+                                    can(user, "finances", "update:any") && <>
+                                        <Dropdown.Divider />
+
+                                        <Link href="/finances/types">
+                                            <a title="Listar as fases" data-title="Listar as fases">
+                                                <Row
+                                                    className={
+                                                        selectedMenu === 'finances-types' ? styles.selectedMenuCardBodyItem :
+                                                            styles.menuCardBodyItem
+                                                    }
+                                                >
+                                                    <Col sm={1}>
+                                                        <FaUniversity size={14} />
+                                                    </Col>
+                                                    <Col>
+                                                        <span>Tipos</span>
                                                     </Col>
                                                 </Row>
                                             </a>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Row, Col, ListGroup, Modal, Form, Button, Spinner } from 'react-bootstrap';
-import { FaPencilAlt, FaCloudDownloadAlt } from 'react-icons/fa';
+import { FaPencilAlt, FaCloudDownloadAlt, FaTimes } from 'react-icons/fa';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { format } from 'date-fns';
@@ -20,7 +20,6 @@ export interface IncomeAttachment {
 
 interface IncomeAttachmentsProps {
     attachment: IncomeAttachment;
-    canEdit?: boolean;
     handleListAttachments?: () => Promise<void>;
 }
 
@@ -29,18 +28,23 @@ const validationSchema = Yup.object().shape({
     received_at: Yup.date().required('Obrigatório!'),
 });
 
-const IncomeAttachments: React.FC<IncomeAttachmentsProps> = ({ attachment, canEdit = true, handleListAttachments }) => {
-    const [showModalEdit, setShowModalEdit] = useState(false);
+const attachmentValidationSchema = Yup.object().shape({
+    name: Yup.string().required('Obrigatório!').max(50, 'Deve conter no máximo 50 caracteres!'),
+    received_at: Yup.date().required('Obrigatório!'),
+});
 
-    const handleCloseModalEditDoc = () => { setShowModalEdit(false); setIconDeleteConfirm(false); setIconDelete(true); }
-    const handleShowModalEditDoc = () => setShowModalEdit(true);
-
+const IncomeAttachments: React.FC<IncomeAttachmentsProps> = ({ attachment, handleListAttachments }) => {
     const [messageShow, setMessageShow] = useState(false);
     const [typeMessage, setTypeMessage] = useState<statusModal>("waiting");
     const [downloadingAttachment, setDownloadingAttachment] = useState(false);
 
     const [iconDelete, setIconDelete] = useState(true);
     const [iconDeleteConfirm, setIconDeleteConfirm] = useState(false);
+
+    const [showEditAttachment, setShowEditAttachment] = useState(false);
+
+    const handleCloseEditAttachment = () => setShowEditAttachment(false);
+    const handleShowEditAttachment = () => setShowEditAttachment(true);
 
     async function handleDownloadAttachment() {
         setDownloadingAttachment(true);
@@ -50,7 +54,7 @@ const IncomeAttachments: React.FC<IncomeAttachmentsProps> = ({ attachment, canEd
                 { responseType: "blob" }
             );
 
-            const fileName = `${attachment.income.description.replace('.', '')} - ${attachment.name.replace('.', '')}`;
+            const fileName = `${attachment.income.description.replaceAll('.', '')} - ${attachment.name.replaceAll('.', '')}`;
 
             FileSaver.saveAs(res.data, fileName);
         }
@@ -76,7 +80,7 @@ const IncomeAttachments: React.FC<IncomeAttachmentsProps> = ({ attachment, canEd
         try {
             await api.delete(`incomings/attachments/${attachment.id}`);
 
-            handleCloseModalEditDoc();
+            handleCloseEditAttachment();
 
             if (handleListAttachments) handleListAttachments();
         }
@@ -99,43 +103,6 @@ const IncomeAttachments: React.FC<IncomeAttachmentsProps> = ({ attachment, canEd
     return (
         <>
             <ListGroup.Item variant="light">
-                <Row className="align-items-center">
-                    <Col><span>{attachment.name}</span></Col>
-
-                    <Col className="col-row"><span>{`Recebido em ${format(new Date(attachment.received_at), 'dd/MM/yyyy')}`}</span></Col>
-
-                    <Col className="col-row text-right">
-                        <Button
-                            variant="outline-success"
-                            className="button-link"
-                            onClick={handleDownloadAttachment}
-                            title="Baixar o anexo."
-                        >
-                            {
-                                downloadingAttachment ? <Spinner animation="border" variant="success" size="sm" /> : <FaCloudDownloadAlt />
-                            }
-                        </Button>
-                    </Col>
-
-                    {
-                        canEdit && <Col className="col-row text-right">
-                            <Button
-                                variant="outline-success"
-                                className="button-link"
-                                onClick={handleShowModalEditDoc}
-                                title="Editar o anexo."
-                            >
-                                <FaPencilAlt /> Editar
-                            </Button>
-                        </Col>
-                    }
-                </Row>
-            </ListGroup.Item>
-
-            <Modal show={showModalEdit} onHide={handleCloseModalEditDoc}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Edtiar anexo</Modal.Title>
-                </Modal.Header>
                 <Formik
                     initialValues={
                         {
@@ -159,7 +126,7 @@ const IncomeAttachments: React.FC<IncomeAttachmentsProps> = ({ attachment, canEd
 
                             setTimeout(() => {
                                 setMessageShow(false);
-                                handleCloseModalEditDoc();
+                                handleCloseEditAttachment();
                             }, 1000);
                         }
                         catch (err) {
@@ -173,14 +140,14 @@ const IncomeAttachments: React.FC<IncomeAttachmentsProps> = ({ attachment, canEd
                             }, 4000);
                         }
                     }}
-                    validationSchema={validationSchema}
+                    validationSchema={attachmentValidationSchema}
                 >
                     {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
                         <Form onSubmit={handleSubmit}>
-                            <Modal.Body>
-                                <Row className="align-items-end mb-3">
-                                    <Form.Group as={Col} sm={10} controlId="formGridName">
-                                        <Form.Label>Nome do anexo</Form.Label>
+                            <Row className={showEditAttachment ? 'align-items-start' : 'align-items-center'}>
+                                {
+                                    showEditAttachment ? <Form.Group as={Col} sm={5} controlId="attachmentFormGridName">
+                                        <Form.Label>Nome do documento</Form.Label>
                                         <Form.Control type="text"
                                             placeholder="Nome"
                                             onChange={handleChange}
@@ -190,26 +157,14 @@ const IncomeAttachments: React.FC<IncomeAttachmentsProps> = ({ attachment, canEd
                                             isInvalid={!!errors.name && touched.name}
                                         />
                                         <Form.Control.Feedback type="invalid">{touched.name && errors.name}</Form.Control.Feedback>
-                                    </Form.Group>
+                                        <Form.Text className="text-muted text-right">{`${values.name.length}/50 caracteres.`}</Form.Text>
+                                    </Form.Group> :
+                                        <Col sm={5}><span>{attachment.name}</span></Col>
+                                }
 
-                                    <Form.Group as={Col} sm={2} controlId="formGridReceivedAt">
-                                        <Button
-                                            variant="outline-success"
-                                            className="button-link"
-                                            onClick={handleDownloadAttachment}
-                                            title="Baixar o anexo."
-                                        >
-                                            {
-                                                downloadingAttachment ? <Spinner animation="border" variant="success" size="sm" /> :
-                                                    <FaCloudDownloadAlt />
-                                            }
-                                        </Button>
-                                    </Form.Group>
-                                </Row>
-
-                                <Form.Group as={Row} controlId="formGridReceivedAt">
-                                    <Form.Label column sm={7}>Data do recebimento</Form.Label>
-                                    <Col sm={5}>
+                                {
+                                    showEditAttachment ? <Form.Group as={Col} sm={4} controlId="formGridReceivedAt">
+                                        <Form.Label>Data do recebimento</Form.Label>
                                         <Form.Control
                                             type="date"
                                             onChange={handleChange}
@@ -219,37 +174,70 @@ const IncomeAttachments: React.FC<IncomeAttachmentsProps> = ({ attachment, canEd
                                             isInvalid={!!errors.received_at && touched.received_at}
                                         />
                                         <Form.Control.Feedback type="invalid">{touched.received_at && errors.received_at}</Form.Control.Feedback>
-                                    </Col>
-                                </Form.Group>
-
-                            </Modal.Body>
-                            <Modal.Footer>
-                                {
-                                    messageShow ? <AlertMessage status={typeMessage} /> :
-                                        <>
-                                            <Button variant="secondary" onClick={handleCloseModalEditDoc}>Cancelar</Button>
-                                            <Button
-                                                title="Delete product"
-                                                variant={iconDelete ? "outline-danger" : "outline-warning"}
-                                                onClick={deleteProduct}
-                                            >
-                                                {
-                                                    iconDelete && "Excluir"
-                                                }
-
-                                                {
-                                                    iconDeleteConfirm && "Confirmar"
-                                                }
-                                            </Button>
-                                            <Button variant="success" type="submit">Salvar</Button>
-                                        </>
-
+                                    </Form.Group> :
+                                        <Col sm={4} className="col-row">
+                                            <span>
+                                                {`Recebido em ${format(new Date(attachment.received_at), 'dd/MM/yyyy')}`}
+                                            </span>
+                                        </Col>
                                 }
-                            </Modal.Footer>
+
+                                <Col className="col-row text-right">
+                                    <Button
+                                        variant="outline-success"
+                                        className="button-link"
+                                        onClick={handleDownloadAttachment}
+                                        title="Baixar o anexo."
+                                    >
+                                        {
+                                            downloadingAttachment ? <Spinner animation="border" variant="success" size="sm" /> : <FaCloudDownloadAlt />
+                                        }
+                                    </Button>
+                                </Col>
+
+                                <Col className="col-row text-right">
+                                    <Button
+                                        variant={showEditAttachment ? "outline-danger" : "outline-success"}
+                                        className="button-link"
+                                        onClick={() => { showEditAttachment ? handleCloseEditAttachment() : handleShowEditAttachment(); }}
+                                        title={showEditAttachment ? "Fechar." : "Editar o anexo."}
+                                    >
+                                        {showEditAttachment ? <FaTimes /> : <FaPencilAlt />}
+                                    </Button>
+                                </Col>
+                            </Row>
+
+                            {
+                                showEditAttachment && <Row className="align-items-center">
+                                    <Modal.Footer>
+                                        {
+                                            messageShow ? <AlertMessage status={typeMessage} /> :
+                                                <>
+                                                    <Button variant="secondary" onClick={handleCloseEditAttachment}>Cancelar</Button>
+                                                    <Button
+                                                        title="Delete product"
+                                                        variant={iconDelete ? "outline-danger" : "outline-warning"}
+                                                        onClick={deleteProduct}
+                                                    >
+                                                        {
+                                                            iconDelete && "Excluir"
+                                                        }
+
+                                                        {
+                                                            iconDeleteConfirm && "Confirmar"
+                                                        }
+                                                    </Button>
+                                                    <Button variant="success" type="submit">Salvar</Button>
+                                                </>
+
+                                        }
+                                    </Modal.Footer>
+                                </Row>
+                            }
                         </Form>
                     )}
                 </Formik>
-            </Modal>
+            </ListGroup.Item>
         </>
     )
 }

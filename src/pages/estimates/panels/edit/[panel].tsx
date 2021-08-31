@@ -189,7 +189,7 @@ export default function UserEdit() {
                                                                     try {
                                                                         await api.put(`panels/${data.id}`, {
                                                                             name: values.name,
-                                                                            capacity: values.capacity.replace('.', '').replace(',', '.'),
+                                                                            capacity: values.capacity.replaceAll('.', '').replaceAll(',', '.'),
                                                                             order: values.order,
                                                                         });
 
@@ -389,8 +389,8 @@ export default function UserEdit() {
 
                                                                         try {
                                                                             await api.post('panels/prices', {
-                                                                                potency: values.potency.replace('.', '').replace(',', '.'),
-                                                                                price: values.price.replace('.', '').replace(',', '.'),
+                                                                                potency: values.potency.replaceAll('.', '').replaceAll(',', '.'),
+                                                                                price: values.price.replaceAll('.', '').replaceAll(',', '.'),
                                                                                 inversor: values.inversor,
                                                                                 panel: values.panel,
                                                                             });

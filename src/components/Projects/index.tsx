@@ -20,11 +20,17 @@ export interface Project {
     complement: string;
     city: string;
     state: string;
+    energy_company: string;
+    unity: string;
+    months_average: number;
+    average_increase: number;
     coordinates: string;
     capacity: number;
     inversor: string;
     roof_orientation: string;
     roof_type: string;
+    panel: string;
+    panel_amount: number;
     price: number;
     notes: string;
     financier_same: boolean;

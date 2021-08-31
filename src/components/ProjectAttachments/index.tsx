@@ -50,7 +50,7 @@ const ProjectAttachments: React.FC<ProjectAttachmentsProps> = ({ attachment, can
                 { responseType: "blob" }
             );
 
-            const fileName = `${attachment.project.customer.replace('.', '')} - ${attachment.name.replace('.', '')}`;
+            const fileName = `${attachment.project.customer.replaceAll('.', '')} - ${attachment.name.replaceAll('.', '')}`;
 
             FileSaver.saveAs(res.data, fileName);
         }

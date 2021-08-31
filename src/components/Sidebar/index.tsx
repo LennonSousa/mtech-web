@@ -220,7 +220,7 @@ const Sidebar: React.FC = () => {
                         <Accordion.Collapse eventKey="projects">
                             <Card.Body className={styles.menuCardBody}>
                                 <Link href="/projects">
-                                    <a title="Listar todos os imóveis" data-title="Listar todos os imóveis">
+                                    <a title="Listar todos os projetos." data-title="Listar todos os projetos.">
                                         <Row
                                             className={
                                                 selectedMenu === 'projects-index' ? styles.selectedMenuCardBodyItem :

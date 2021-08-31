@@ -66,7 +66,7 @@ const AttachmentsRequired: React.FC<ProjectAttachmentRequiredProps> = ({ attachm
                 { responseType: "blob" }
             );
 
-            const fileName = `${attachment.project.customer.replace('.', '')} - ${attachment.attachmentRequired.description.replace('.', '')}`;
+            const fileName = `${attachment.project.customer.replaceAll('.', '')} - ${attachment.attachmentRequired.description.replaceAll('.', '')}`;
 
             FileSaver.saveAs(res.data, fileName);
         }

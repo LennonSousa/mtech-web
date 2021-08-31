@@ -108,8 +108,8 @@ const PanelPrices: React.FC<PanelPricesProps> = ({ panelPrice, canEdit = true, h
 
                         try {
                             await api.put(`panels/prices/${panelPrice.id}`, {
-                                potency: values.potency.replace('.', '').replace(',', '.'),
-                                price: values.price.replace('.', '').replace(',', '.'),
+                                potency: values.potency.replaceAll('.', '').replaceAll(',', '.'),
+                                price: values.price.replaceAll('.', '').replaceAll(',', '.'),
                                 inversor: values.inversor,
                             });
 

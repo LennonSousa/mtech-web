@@ -20,7 +20,8 @@ export interface IncomeItem {
 
 interface IncomeItemsProps {
     item: IncomeItem;
-    handleListItems: () => Promise<void>;
+    isNewItem?: boolean;
+    handleListItems: (updatedNewItem?: IncomeItem, toDelete?: boolean) => Promise<void>;
 }
 
 type savingStatus = "saved" | "touched" | "saving";
@@ -32,7 +33,7 @@ const validationSchema = Yup.object().shape({
     received_at: Yup.date().notRequired(),
 });
 
-const IncomeItems: React.FC<IncomeItemsProps> = ({ item, handleListItems }) => {
+const IncomeItems: React.FC<IncomeItemsProps> = ({ item, isNewItem = false, handleListItems }) => {
     const [fieldsFormTouched, setFieldsFormTouched] = useState(false);
     const [savingItemStatus, setSavingItemStatus] = useState<savingStatus>("saved");
     const [waitingDelete, setWaitingDelete] = useState(false);
@@ -41,9 +42,14 @@ const IncomeItems: React.FC<IncomeItemsProps> = ({ item, handleListItems }) => {
         setWaitingDelete(true);
 
         try {
-            await api.delete(`incomings/items/${item.id}`);
+            if (isNewItem) {
+                handleListItems(item, true);
+            }
+            else {
+                await api.delete(`incomings/items/${item.id}`);
 
-            handleListItems();
+                handleListItems();
+            }
         }
         catch (err) {
             console.log("Error to delete income item");
@@ -69,14 +75,27 @@ const IncomeItems: React.FC<IncomeItemsProps> = ({ item, handleListItems }) => {
                     setSavingItemStatus("saving");
 
                     try {
-                        await api.put(`incomings/items/${item.id}`, {
-                            description: values.description,
-                            value: Number(values.value.replaceAll(".", "").replaceAll(",", ".")),
-                            is_paid: values.is_paid,
-                            received_at: `${values.received_at} 12:00:00`,
-                        });
+                        if (isNewItem) {
+                            const updatedNewItem: IncomeItem = {
+                                ...item,
+                                description: values.description,
+                                value: Number(values.value.replaceAll(".", "").replaceAll(",", ".")),
+                                is_paid: values.is_paid,
+                                received_at: new Date(`${values.received_at} 12:00:00`),
+                            }
 
-                        handleListItems();
+                            handleListItems(updatedNewItem);
+                        }
+                        else {
+                            await api.put(`incomings/items/${item.id}`, {
+                                description: values.description,
+                                value: Number(values.value.replaceAll(".", "").replaceAll(",", ".")),
+                                is_paid: values.is_paid,
+                                received_at: `${values.received_at} 12:00:00`,
+                            });
+
+                            handleListItems();
+                        }
                     }
                     catch (err) {
                         console.log('error to update items day');

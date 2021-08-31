@@ -5,7 +5,7 @@ import { NextSeo } from 'next-seo';
 import { Button, Col, Container, Form, InputGroup, ListGroup, Modal, Row, Spinner } from 'react-bootstrap';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { FaHistory, FaFileAlt, FaPlus, FaUserTie, FaUserTag } from 'react-icons/fa';
+import { FaHistory, FaFileAlt, FaPlus, FaUserTie, FaUserTag, FaDonate } from 'react-icons/fa';
 import { format } from 'date-fns';
 import cep, { CEP } from 'cep-promise';
 import { CircularProgressbar } from 'react-circular-progressbar';
@@ -20,6 +20,8 @@ import { Project } from '../../../components/Projects';
 import { ProjectStatus } from '../../../components/ProjectStatus';
 import { EventProject } from '../../../components/EventsProject';
 import { AttachmentRequired } from '../../../components/AttachmentsRequiredProject';
+import Incomings, { Income } from '../../../components/Incomings';
+import NewIncomeModal from '../../../components/Incomings/ModalNew';
 import ProjectEvents, { ProjectEvent } from '../../../components/ProjectEvents';
 import ProjectAttachments, { ProjectAttachment } from '../../../components/ProjectAttachments';
 import ProjectAttachmentsRequired, { ProjectAttachmentRequired } from '../../../components/ProjectAttachmentsRequired';
@@ -91,6 +93,7 @@ export default function NewCustomer() {
     const [projectEvents, setProjectEvents] = useState<ProjectEvent[]>([]);
     const [projectAttachments, setProjectAttachments] = useState<ProjectAttachment[]>([]);
     const [projectAttachmentsRequired, setProjectAttachmentsRequired] = useState<ProjectAttachmentRequired[]>([]);
+    const [incomings, setIncomings] = useState<Income[]>([]);
 
     const [spinnerCep, setSpinnerCep] = useState(false);
     const [documentType, setDocumentType] = useState("CPF");
@@ -119,6 +122,11 @@ export default function NewCustomer() {
 
     const [fileToSave, setFileToSave] = useState<File>();
     const [filePreview, setFilePreview] = useState('');
+
+    const [showModalNew, setShowModalNew] = useState(false);
+
+    const handleCloseModalNew = () => setShowModalNew(false);
+    const handleShowModalNew = () => setShowModalNew(true);
 
     useEffect(() => {
         handleItemSideBar('projects');
@@ -172,6 +180,8 @@ export default function NewCustomer() {
 
                         setProjectAttachments(projectRes.attachments);
 
+                        setIncomings(projectRes.incomings);
+
                         handleAttachmentsRequiredData(projectRes).then(attachmentsRequiredData => {
                             if (attachmentsRequiredData) setProjectAttachmentsRequired(attachmentsRequiredData);
 
@@ -204,6 +214,23 @@ export default function NewCustomer() {
             const updatedProject: Project = res.data;
 
             setProjectAttachments(updatedProject.attachments);
+        }
+        catch (err) {
+            console.log('Error to get attachments to edit, ', err);
+
+            setTypeLoadingMessage("error");
+            setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
+            setHasErrors(true);
+        }
+    }
+
+    async function handleListIncomings() {
+        try {
+            const res = await api.get(`projects/${project}`);
+
+            const updatedProject: Project = res.data;
+
+            setIncomings(updatedProject.incomings);
         }
         catch (err) {
             console.log('Error to get attachments to edit, ', err);
@@ -1189,7 +1216,54 @@ export default function NewCustomer() {
 
                                                             <Col className="border-top mt-3 mb-3"></Col>
 
-                                                            <Row className="mb-3">
+                                                            {
+                                                                can(user, "finances", "read:any") && <Row className="mb-5">
+                                                                    <Form.Group as={Col} controlId="formGridAttachments">
+                                                                        <Row>
+                                                                            <Col className="col-row">
+                                                                                <h6 className="text-success">Receitas <FaDonate /></h6>
+                                                                            </Col>
+
+                                                                            <Col sm={1}>
+                                                                                <Button
+                                                                                    variant="outline-success"
+                                                                                    size="sm"
+                                                                                    onClick={handleShowModalNew}
+                                                                                    title="Criar uma nova receita para esse projeto."
+                                                                                >
+                                                                                    <FaPlus />
+                                                                                </Button>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row className="mt-2">
+                                                                            {
+                                                                                !!incomings.length ? <Col>
+                                                                                    <ListGroup>
+                                                                                        {
+                                                                                            incomings.map(income => {
+                                                                                                return <Incomings
+                                                                                                    key={income.id}
+                                                                                                    income={income}
+                                                                                                    handleListIncomings={handleListIncomings}
+                                                                                                />
+                                                                                            })
+                                                                                        }
+                                                                                    </ListGroup>
+                                                                                </Col> :
+                                                                                    <Col>
+                                                                                        <AlertMessage
+                                                                                            status="warning"
+                                                                                            message="Nenhuma uma receita registrada para esse projeto."
+                                                                                        />
+                                                                                    </Col>
+                                                                            }
+                                                                        </Row>
+                                                                    </Form.Group>
+                                                                </Row>
+                                                            }
+
+                                                            <Row className="mb-5">
                                                                 <Col>
                                                                     <Row>
                                                                         <div className="member-container">
@@ -1244,7 +1318,7 @@ export default function NewCustomer() {
                                                                 </Col>
                                                             </Row>
 
-                                                            <Row className="mb-3">
+                                                            <Row className="mb-5">
                                                                 <Col>
                                                                     <Row>
                                                                         <div className="member-container">
@@ -1283,7 +1357,7 @@ export default function NewCustomer() {
                                                                 </Col>
                                                             </Row>
 
-                                                            <Row className="mb-3">
+                                                            <Row className="mb-5">
                                                                 <Form.Group as={Col} controlId="formGridAttachments">
                                                                     <Row>
                                                                         <Col className="col-row">
@@ -1327,6 +1401,13 @@ export default function NewCustomer() {
                                                                     </Row>
                                                                 </Form.Group>
                                                             </Row>
+
+                                                            <NewIncomeModal
+                                                                project={projectData}
+                                                                show={showModalNew}
+                                                                handleListIncomings={handleListIncomings}
+                                                                handleCloseModal={handleCloseModalNew}
+                                                            />
 
                                                             <Modal show={showModalNewAttachment} onHide={handleCloseModalNewAttachment}>
                                                                 <Modal.Header closeButton>

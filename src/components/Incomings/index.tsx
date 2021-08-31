@@ -22,10 +22,11 @@ export interface Income {
 
 interface IncomingsProps {
     income: Income;
-    handleListIncomings(): Promise<void>;
+    canEdit?: boolean;
+    handleListIncomings?(): Promise<void>;
 }
 
-const Panels: React.FC<IncomingsProps> = ({ income, handleListIncomings }) => {
+const Panels: React.FC<IncomingsProps> = ({ income, canEdit = true, handleListIncomings }) => {
     const [isPaid, setIsPaid] = useState(false);
 
     const [showModalEdit, setShowModalEdit] = useState(false);
@@ -36,15 +37,19 @@ const Panels: React.FC<IncomingsProps> = ({ income, handleListIncomings }) => {
     useEffect(() => {
         let isAllPaid = true;
 
-        income.items.forEach(item => {
-            if (!item.is_paid) isAllPaid = false;
-        });
+        if (!!!income.items.length) {
+            isAllPaid = false;
+        } else {
+            income.items.forEach(item => {
+                if (!item.is_paid) isAllPaid = false;
+            });
+        }
 
-        if (isAllPaid) setIsPaid(true);
+        setIsPaid(isAllPaid);
     }, [income.items]);
 
     async function handleIncome() {
-        await handleListIncomings();
+        if (handleListIncomings) await handleListIncomings();
     }
 
     return (
@@ -61,16 +66,18 @@ const Panels: React.FC<IncomingsProps> = ({ income, handleListIncomings }) => {
                         }
                     </span></Col>
 
-                    <Col className="col-row text-end">
-                        <Button
-                            variant="outline-success"
-                            className="button-link"
-                            onClick={handleShowModalEdit}
-                            title="Editar receita"
-                        >
-                            <FaPencilAlt /> Editar
-                        </Button>
-                    </Col>
+                    {
+                        canEdit && <Col className="col-row text-end">
+                            <Button
+                                variant="outline-success"
+                                className="button-link"
+                                onClick={handleShowModalEdit}
+                                title="Editar receita"
+                            >
+                                <FaPencilAlt /> Editar
+                            </Button>
+                        </Col>
+                    }
                 </Row>
             </ListGroup.Item>
 

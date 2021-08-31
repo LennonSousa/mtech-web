@@ -7,11 +7,10 @@ import { FaHistory, FaPlus } from 'react-icons/fa';
 import api from '../../../api/api';
 import { can } from '../../Users';
 import { AuthContext } from '../../../contexts/AuthContext';
-import IncomingsModal from '../Modal';
+import { Income } from '../../Incomings';
 import IncomeItems, { IncomeItem } from '../../IncomeItems';
 import { PayType } from '../../PayTypes';
 import { Project } from '../../Projects';
-import Shimmer from '../Shimmer';
 import { prettifyCurrency } from '../../InputMask/masks';
 import { PageWaiting } from '../../PageWaiting';
 import { AlertMessage, statusModal } from '../../Interfaces/AlertMessage'
@@ -32,6 +31,7 @@ const validationSchema = Yup.object().shape({
 
 const IncomeModalNew: React.FC<IncomeModalNewProps> = ({ project, show = false, handleListIncomings, handleCloseModal }) => {
     const { user } = useContext(AuthContext);
+
     const [payTypes, setPayTypes] = useState<PayType[]>([]);
     const [incomeItems, setIncomeItems] = useState<IncomeItem[]>([]);
 
@@ -39,14 +39,13 @@ const IncomeModalNew: React.FC<IncomeModalNewProps> = ({ project, show = false, 
     const [typeMessage, setTypeMessage] = useState<statusModal>("waiting");
 
     const [hasErrors, setHasErrors] = useState(false);
-    const [isCreatingItem, setIsCreatingItem] = useState(false);
-
-    const [iconDelete, setIconDelete] = useState(true);
-    const [iconDeleteConfirm, setIconDeleteConfirm] = useState(false);
 
     useEffect(() => {
         setHasErrors(false);
-        if (user && can(user, "finances", "update:any")) {
+
+        if (user && can(user, "finances", "update:any") && show) {
+            setIncomeItems([]);
+
             api.get('payments/types').then(res => {
                 setPayTypes(res.data);
             }).catch(err => {
@@ -56,23 +55,34 @@ const IncomeModalNew: React.FC<IncomeModalNewProps> = ({ project, show = false, 
             });
         }
 
-    }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
-
-    async function deleteItem() {
-    }
+    }, [user, show]); // eslint-disable-line react-hooks/exhaustive-deps
 
     async function handleNewItem() {
-        const newItem: IncomeItem = {
-            id: '0',
+        setIncomeItems([...incomeItems, {
+            id: String(incomeItems.length),
             description: 'Novo pagamento',
             value: 0,
             is_paid: false,
             received_at: new Date(),
-        }
+        }]);
     }
 
-    async function handleListItems() {
+    async function handleListItems(updatedNewItem?: IncomeItem, toDelete?: boolean) {
+        if (updatedNewItem) {
+            if (toDelete) {
+                setIncomeItems(incomeItems.filter(item => {
+                    return item.id !== updatedNewItem.id;
+                }));
 
+                return;
+            }
+
+            setIncomeItems(incomeItems.map(item => {
+                if (item.id === updatedNewItem.id) return updatedNewItem;
+
+                return item;
+            }));
+        }
     }
 
     return (
@@ -89,7 +99,7 @@ const IncomeModalNew: React.FC<IncomeModalNewProps> = ({ project, show = false, 
                                     {
                                         description: '',
                                         value: '0,00',
-                                        project: '',
+                                        project: project ? project.id : '',
                                         payType: '',
                                     }
                                 }
@@ -98,15 +108,13 @@ const IncomeModalNew: React.FC<IncomeModalNewProps> = ({ project, show = false, 
                                     setMessageShow(true);
 
                                     try {
-                                        const res = await api.post('incomings', {
+                                        await api.post('incomings', {
                                             description: values.description,
                                             value: Number(values.value.replaceAll(".", "").replaceAll(",", ".")),
                                             project: values.project,
                                             payType: values.payType,
                                             items: incomeItems,
                                         });
-
-
 
                                         if (handleListIncomings) await handleListIncomings();
 
@@ -196,19 +204,6 @@ const IncomeModalNew: React.FC<IncomeModalNewProps> = ({ project, show = false, 
                                                 messageShow ? <AlertMessage status={typeMessage} /> :
                                                     <>
                                                         <Button variant="secondary" onClick={handleCloseModal}>Cancelar</Button>
-                                                        <Button
-                                                            title="Excluir item"
-                                                            variant={iconDelete ? "outline-danger" : "outline-warning"}
-                                                            onClick={deleteItem}
-                                                        >
-                                                            {
-                                                                iconDelete && "Excluir"
-                                                            }
-
-                                                            {
-                                                                iconDeleteConfirm && "Confirmar"
-                                                            }
-                                                        </Button>
                                                         <Button variant="success" type="submit">Salvar</Button>
                                                     </>
 
@@ -233,34 +228,34 @@ const IncomeModalNew: React.FC<IncomeModalNewProps> = ({ project, show = false, 
                                                     onClick={handleNewItem}
                                                     title="Criar um novo pagamento para essa receita."
                                                 >
-                                                    {
-                                                        isCreatingItem ? <Spinner
-                                                            as="span"
-                                                            animation="border"
-                                                            size="sm"
-                                                            role="status"
-                                                            aria-hidden="true"
-                                                        /> :
-                                                            <FaPlus />
-                                                    }
+                                                    <FaPlus />
                                                 </Button>
                                             </Col>
                                         </Row>
 
                                         <Row className="mt-2">
-                                            <Col>
-                                                <ListGroup className="mb-3">
-                                                    {
-                                                        incomeItems.map(item => {
-                                                            return <IncomeItems
-                                                                key={item.id}
-                                                                item={item}
-                                                                handleListItems={handleListItems}
-                                                            />
-                                                        })
-                                                    }
-                                                </ListGroup>
-                                            </Col>
+                                            {
+                                                !!incomeItems.length ? <Col>
+                                                    <ListGroup className="mb-3">
+                                                        {
+                                                            incomeItems.map(item => {
+                                                                return <IncomeItems
+                                                                    key={item.id}
+                                                                    item={item}
+                                                                    isNewItem
+                                                                    handleListItems={handleListItems}
+                                                                />
+                                                            })
+                                                        }
+                                                    </ListGroup>
+                                                </Col> :
+                                                    <Col>
+                                                        <AlertMessage
+                                                            status="warning"
+                                                            message="Nenhum pagamento registrado para essa receita."
+                                                        />
+                                                    </Col>
+                                            }
                                         </Row>
                                     </Col>
                                 </Row>

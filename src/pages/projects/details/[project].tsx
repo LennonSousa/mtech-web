@@ -7,6 +7,7 @@ import { Col, Container, Button, ButtonGroup, ListGroup, Row } from 'react-boots
 import { format } from 'date-fns';
 import {
     FaCheck,
+    FaDonate,
     FaExclamationCircle,
     FaFileAlt,
     FaHistory,
@@ -26,6 +27,7 @@ import { AuthContext } from '../../../contexts/AuthContext';
 import { User, can } from '../../../components/Users';
 import { Project } from '../../../components/Projects';
 import { ProjectStatus } from '../../../components/ProjectStatus';
+import Incomings, { Income } from '../../../components/Incomings';
 import { EventProject } from '../../../components/EventsProject';
 import ProjectEvents from '../../../components/ProjectEvents';
 import ProjectAttachments from '../../../components/ProjectAttachments';
@@ -723,7 +725,43 @@ export default function PropertyDetails() {
                                                                     </Col>
                                                                 </Row>
 
-                                                                <Row className="mb-3">
+                                                                <Col className="border-top mt-3 mb-3"></Col>
+
+                                                                <Row className="mb-5">
+                                                                    <Col>
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-success">Receitas <FaDonate /></h6>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            {
+                                                                                !!data.incomings.length ? <Col>
+                                                                                    <ListGroup>
+                                                                                        {
+                                                                                            data.incomings.map((income, index) => {
+                                                                                                return <Incomings
+                                                                                                    key={index}
+                                                                                                    income={income}
+                                                                                                    canEdit={false}
+                                                                                                />
+                                                                                            })
+                                                                                        }
+                                                                                    </ListGroup>
+                                                                                </Col> :
+                                                                                    <Col>
+                                                                                        <AlertMessage
+                                                                                            status="warning"
+                                                                                            message="Nenhuma uma receita registrada para esse projeto."
+                                                                                        />
+                                                                                    </Col>
+                                                                            }
+                                                                        </Row>
+                                                                    </Col>
+                                                                </Row>
+
+                                                                <Row className="mb-5">
                                                                     <Col>
                                                                         <Row>
                                                                             <Col>
@@ -771,7 +809,8 @@ export default function PropertyDetails() {
                                                                         </Row>
                                                                     </Col>
                                                                 </Row>
-                                                                <Row className="mb-3">
+
+                                                                <Row className="mb-5">
                                                                     <Col>
                                                                         <Row>
                                                                             <Col>

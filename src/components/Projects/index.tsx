@@ -2,6 +2,7 @@ import { ProjectStatus } from '../ProjectStatus';
 import { ProjectEvent } from '../ProjectEvents';
 import { ProjectAttachmentRequired } from '../ProjectAttachmentsRequired';
 import { ProjectAttachment } from '../ProjectAttachments';
+import { Income } from '../Incomings';
 import { User } from '../Users';
 
 export interface Project {
@@ -48,4 +49,5 @@ export interface Project {
     events: ProjectEvent[];
     attachmentsRequired: ProjectAttachmentRequired[];
     attachments: ProjectAttachment[];
+    incomings: Income[];
 }

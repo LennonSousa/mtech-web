@@ -167,12 +167,6 @@ const IncomeModal: React.FC<IncomeModalProps> = ({ incomeId, show = false, handl
                     income: data.id,
                 });
 
-                const res = await api.get(`incomings/${incomeId}`);
-
-                const updatedIncome: Income = res.data;
-
-                setData({ ...data, items: updatedIncome.items });
-
                 setIsCreatingItem(false);
 
                 handleListItems();
@@ -229,7 +223,7 @@ const IncomeModal: React.FC<IncomeModalProps> = ({ incomeId, show = false, handl
                                         value: prettifyCurrency(String(data.value)),
                                         done: false,
                                         created_at: data.created_at,
-                                        project: data.project,
+                                        project: data.project ? data.project.id : '',
                                         payType: data.payType.id,
                                     }
                                 }
@@ -385,19 +379,27 @@ const IncomeModal: React.FC<IncomeModalProps> = ({ incomeId, show = false, handl
                                         </Row>
 
                                         <Row className="mt-2">
-                                            <Col>
-                                                <ListGroup className="mb-3">
-                                                    {
-                                                        data.items.map(item => {
-                                                            return <IncomeItems
-                                                                key={item.id}
-                                                                item={item}
-                                                                handleListItems={handleListItems}
-                                                            />
-                                                        })
-                                                    }
-                                                </ListGroup>
-                                            </Col>
+                                            {
+                                                !!data.items.length ? <Col>
+                                                    <ListGroup className="mb-3">
+                                                        {
+                                                            data.items.map(item => {
+                                                                return <IncomeItems
+                                                                    key={item.id}
+                                                                    item={item}
+                                                                    handleListItems={handleListItems}
+                                                                />
+                                                            })
+                                                        }
+                                                    </ListGroup>
+                                                </Col> :
+                                                    <Col>
+                                                        <AlertMessage
+                                                            status="warning"
+                                                            message="Nenhum pagamento registrado para essa receita."
+                                                        />
+                                                    </Col>
+                                            }
                                         </Row>
                                     </Col>
                                 </Row>

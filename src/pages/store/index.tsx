@@ -1,5 +1,6 @@
 import { useContext, useEffect, useState } from 'react';
 import { GetServerSideProps } from 'next';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { NextSeo } from 'next-seo';
 import { Button, Col, Container, Form, Row, Spinner } from 'react-bootstrap';
@@ -14,7 +15,13 @@ import { SideBarContext } from '../../contexts/SideBarContext';
 import { AuthContext } from '../../contexts/AuthContext';
 import { can } from '../../components/Users';
 import { Store } from '../../components/Store';
-import { TextEditor } from '../../components/Store/TextEditor';
+
+const TextEditor = dynamic(
+    () => {
+        return import("../../components/Store/TextEditor");
+    },
+    { ssr: false }
+);
 
 import { cpf, cnpj } from '../../components/InputMask/masks';
 import { statesCities } from '../../components/StatesCities';

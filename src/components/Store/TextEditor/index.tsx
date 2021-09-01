@@ -16,7 +16,7 @@ interface WaitingModalProps {
     data: Store;
 }
 
-const TextEditor: React.FC<WaitingModalProps> = ({ type, data }) => {
+export default function TextEditor({ type, data }: WaitingModalProps) {
     const [title, setTitle] = useState("");
 
     const [editorState, setEditorState] = useState(() =>
@@ -130,5 +130,3 @@ const TextEditor: React.FC<WaitingModalProps> = ({ type, data }) => {
         </Row>
     )
 }
-
-export { TextEditor };

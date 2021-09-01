@@ -101,3 +101,9 @@ a:hover {
     color: var(--green);
     background-color: var(--white);
 }
+
+@media print {
+    .content-page {
+        box-shadow: none;
+    }
+ }

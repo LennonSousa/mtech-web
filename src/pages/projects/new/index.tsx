@@ -18,6 +18,7 @@ import { ProjectStatus } from '../../../components/ProjectStatus';
 import { EventProject } from '../../../components/EventsProject';
 import ProjectEvents, { ProjectEvent } from '../../../components/ProjectEvents';
 import { Estimate } from '../../../components/Estimates';
+import { EstimateItem } from '../../../components/EstimateItems';
 
 import Members from '../../../components/ProjectMembers';
 import { statesCities } from '../../../components/StatesCities';
@@ -26,6 +27,7 @@ import PageBack from '../../../components/PageBack';
 import { PageWaiting, PageType } from '../../../components/PageWaiting';
 import { AlertMessage, statusModal } from '../../../components/Interfaces/AlertMessage';
 import { prettifyCurrency } from '../../../components/InputMask/masks';
+import { calculate, CalcProps } from '../../../utils/calcEstimate';
 
 const validationSchema = Yup.object().shape({
     customer: Yup.string().required('Obrigatório!'),
@@ -81,6 +83,13 @@ export default function NewProject() {
     const [projectStatus, setProjectStatus] = useState<ProjectStatus[]>([]);
     const [estimateFrom, setEstimateFrom] = useState<Estimate>();
 
+    const [monthsAverage, setMonthsAverage] = useState(0);
+    const [capacity, setCapacity] = useState(0);
+    const [estimateItemsList, setEstimateItemsList] = useState<EstimateItem[]>([]);
+    const [panelsAmount, setPanelsAmount] = useState(0);
+    const [inversor, setInversor] = useState('');
+    const [price, setPrice] = useState(0);
+
     const [spinnerCep, setSpinnerCep] = useState(false);
     const [documentType, setDocumentType] = useState("CPF");
     const [cities, setCities] = useState<string[]>([]);
@@ -127,7 +136,20 @@ export default function NewProject() {
 
                     if (from) {
                         api.get(`estimates/${from}`).then(res => {
-                            setEstimateFrom(res.data);
+                            let estimateRes: Estimate = res.data;
+
+                            if (estimateRes.document.length > 14)
+                                setDocumentType("CNPJ");
+
+                            try {
+                                const stateCities = statesCities.estados.find(item => { return item.sigla === res.data.state })
+
+                                if (stateCities)
+                                    setCities(stateCities.cidades);
+                            }
+                            catch { }
+
+                            setEstimateFrom(estimateRes);
 
                             setLoadingData(false);
                         }).catch(err => {
@@ -148,6 +170,51 @@ export default function NewProject() {
             }
         }
     }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    useEffect(() => {
+        if (estimateFrom) {
+            const values: CalcProps = {
+                kwh: estimateFrom.kwh,
+                irradiation: estimateFrom.irradiation,
+                panel: estimateFrom.panel,
+                month_01: estimateFrom.month_01,
+                month_02: estimateFrom.month_02,
+                month_03: estimateFrom.month_03,
+                month_04: estimateFrom.month_04,
+                month_05: estimateFrom.month_05,
+                month_06: estimateFrom.month_06,
+                month_07: estimateFrom.month_07,
+                month_08: estimateFrom.month_08,
+                month_09: estimateFrom.month_09,
+                month_10: estimateFrom.month_10,
+                month_11: estimateFrom.month_11,
+                month_12: estimateFrom.month_12,
+                month_13: estimateFrom.month_13,
+                averageIncrease: estimateFrom.average_increase,
+                roofOrientation: estimateFrom.roof_orientation,
+                discount: estimateFrom.discount,
+                increase: estimateFrom.increase,
+                percent: estimateFrom.percent,
+                estimateItems: estimateFrom.items,
+            }
+
+            const calcResults = calculate(values, false);
+
+            if (calcResults) {
+                setMonthsAverage(calcResults.monthsAverageKwh);
+                setCapacity(calcResults.finalSystemCapacityKwp);
+
+                calcResults.estimateItems.forEach(item => {
+                    if (item.order === 0) setInversor(item.name);
+                    if (item.order === 1) setPanelsAmount(item.amount);
+                });
+
+                setPrice(calcResults.finalSystemPrice);
+
+                setEstimateItemsList(calcResults.estimateItems);
+            }
+        }
+    }, [estimateFrom]);
 
     async function handleListEvents(listEvents?: ProjectEvent[]) {
         if (!listEvents) {
@@ -227,16 +294,16 @@ export default function NewProject() {
                                                     state: estimateFrom ? estimateFrom.state : '',
                                                     energy_company: estimateFrom ? estimateFrom.energy_company : '',
                                                     unity: estimateFrom ? estimateFrom.unity : '',
-                                                    months_average: '0,00',
-                                                    average_increase: '0,00',
+                                                    months_average: prettifyCurrency(String(monthsAverage.toFixed(2))),
+                                                    average_increase: estimateFrom ? prettifyCurrency(String(estimateFrom.average_increase)) : '0,00',
                                                     coordinates: '',
-                                                    capacity: '0,00',
-                                                    inversor: '',
+                                                    capacity: prettifyCurrency(String(capacity.toFixed(2))),
+                                                    inversor,
                                                     roof_orientation: estimateFrom ? estimateFrom.roof_orientation.name : '',
                                                     roof_type: estimateFrom ? estimateFrom.roof_type.name : '',
                                                     panel: estimateFrom ? `${estimateFrom.panel.name} - ${prettifyCurrency(String(estimateFrom.panel.capacity))} W` : '',
-                                                    panel_amount: 0,
-                                                    price: '0,00',
+                                                    panel_amount: panelsAmount,
+                                                    price: prettifyCurrency(String(price.toFixed(2))),
                                                     notes: estimateFrom ? estimateFrom.notes : '',
                                                     financier_same: false,
                                                     financier: '',
@@ -814,7 +881,7 @@ export default function NewProject() {
 
                                                         <Col className="border-top mb-3"></Col>
 
-                                                        <Row className="mb-3">
+                                                        <Row className="mt-5 mb-3">
                                                             <Col>
                                                                 <Row>
                                                                     <Col>
@@ -844,8 +911,19 @@ export default function NewProject() {
                                                                             setFieldValue('financier_number', values.number);
                                                                             setFieldValue('financier_neighborhood', values.neighborhood);
                                                                             setFieldValue('financier_complement', values.complement);
-                                                                            setFieldValue('financier_city', values.city);
                                                                             setFieldValue('financier_state', values.state);
+
+                                                                            try {
+                                                                                const stateCities = statesCities.estados.find(item => { return item.sigla === values.state })
+
+                                                                                if (stateCities)
+                                                                                    setFinancierCities(stateCities.cidades);
+                                                                            }
+                                                                            catch {
+
+                                                                            }
+
+                                                                            setFieldValue('financier_city', values.city);
                                                                         }
                                                                     }}
                                                                 />
@@ -962,8 +1040,9 @@ export default function NewProject() {
 
                                                                                     setFieldValue('financier_street', street);
                                                                                     setFieldValue('financier_neighborhood', neighborhood);
-                                                                                    setFieldValue('financier_city', city);
                                                                                     setFieldValue('financier_state', state);
+
+                                                                                    setFieldValue('financier_city', city);
 
                                                                                     setSpinnerCep(false);
                                                                                 })

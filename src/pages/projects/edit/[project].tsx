@@ -1005,7 +1005,7 @@ export default function NewCustomer() {
                                                                             </Form.Group>
                                                                         </Row>
 
-                                                                        <Row className="mb-3">
+                                                                        <Row className="mt-5 mb-3">
                                                                             <Col>
                                                                                 <Row>
                                                                                     <Col>

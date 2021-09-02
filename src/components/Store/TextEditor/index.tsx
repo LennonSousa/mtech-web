@@ -36,7 +36,7 @@ export default function TextEditor({ type, data }: WaitingModalProps) {
                 if (type === "services_in") {
                     setTitle("Serviçoes inclusos");
 
-                    setEditorState(EditorState.createWithContent(convertFromRaw(JSON.parse(data[type]))));
+                    setEditorState(EditorState.createWithContent(convertFromRaw(JSON.parse(data.services_in))));
                 }
                 else if (type === "warranty") {
                     setTitle("Garantias");

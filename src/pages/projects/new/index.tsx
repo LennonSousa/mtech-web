@@ -5,7 +5,7 @@ import { NextSeo } from 'next-seo';
 import { Button, Col, Container, Form, InputGroup, ListGroup, Row, Spinner } from 'react-bootstrap';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { FaHistory, FaUserTie, FaUserTag } from 'react-icons/fa';
+import { FaHistory, FaSolarPanel, FaUserTie, FaUserTag } from 'react-icons/fa';
 import { format } from 'date-fns';
 import cep, { CEP } from 'cep-promise';
 
@@ -17,6 +17,8 @@ import { can } from '../../../components/Users';
 import { ProjectStatus } from '../../../components/ProjectStatus';
 import { EventProject } from '../../../components/EventsProject';
 import ProjectEvents, { ProjectEvent } from '../../../components/ProjectEvents';
+import { Estimate } from '../../../components/Estimates';
+import { EstimateItem } from '../../../components/EstimateItems';
 
 import Members from '../../../components/ProjectMembers';
 import { statesCities } from '../../../components/StatesCities';
@@ -25,6 +27,7 @@ import PageBack from '../../../components/PageBack';
 import { PageWaiting, PageType } from '../../../components/PageWaiting';
 import { AlertMessage, statusModal } from '../../../components/Interfaces/AlertMessage';
 import { prettifyCurrency } from '../../../components/InputMask/masks';
+import { calculate, CalcProps } from '../../../utils/calcEstimate';
 
 const validationSchema = Yup.object().shape({
     customer: Yup.string().required('Obrigatório!'),
@@ -40,11 +43,17 @@ const validationSchema = Yup.object().shape({
     complement: Yup.string().notRequired().nullable(),
     city: Yup.string().required('Obrigatório!'),
     state: Yup.string().required('Obrigatório!'),
+    energy_company: Yup.string().notRequired(),
+    unity: Yup.string().notRequired(),
+    months_average: Yup.string().required('Obrigatório!'),
+    average_increase: Yup.string().required('Obrigatório!'),
     coordinates: Yup.string().notRequired(),
     capacity: Yup.string().notRequired(),
     inversor: Yup.string().required('Obrigatório!'),
     roof_orientation: Yup.string().required('Obrigatório!'),
     roof_type: Yup.string().required('Obrigatório!'),
+    panel: Yup.string().required('Obrigatório!'),
+    panel_amount: Yup.number().required('Obrigatório!'),
     price: Yup.string().required('Obrigatório!'),
     notes: Yup.string().notRequired().nullable(),
     financier_same: Yup.boolean().notRequired(),
@@ -65,12 +74,21 @@ const validationSchema = Yup.object().shape({
 
 export default function NewProject() {
     const router = useRouter();
+    const { from } = router.query;
 
     const { handleItemSideBar, handleSelectedMenu } = useContext(SideBarContext);
     const { loading, user } = useContext(AuthContext);
 
     const [projectEvents, setProjectEvents] = useState<ProjectEvent[]>([]);
     const [projectStatus, setProjectStatus] = useState<ProjectStatus[]>([]);
+    const [estimateFrom, setEstimateFrom] = useState<Estimate>();
+
+    const [monthsAverage, setMonthsAverage] = useState(0);
+    const [capacity, setCapacity] = useState(0);
+    const [estimateItemsList, setEstimateItemsList] = useState<EstimateItem[]>([]);
+    const [panelsAmount, setPanelsAmount] = useState(0);
+    const [inversor, setInversor] = useState('');
+    const [price, setPrice] = useState(0);
 
     const [spinnerCep, setSpinnerCep] = useState(false);
     const [documentType, setDocumentType] = useState("CPF");
@@ -115,7 +133,33 @@ export default function NewProject() {
                             event: eventProject,
                         }
                     }));
-                    setLoadingData(false);
+
+                    if (from) {
+                        api.get(`estimates/${from}`).then(res => {
+                            let estimateRes: Estimate = res.data;
+
+                            if (estimateRes.document.length > 14)
+                                setDocumentType("CNPJ");
+
+                            try {
+                                const stateCities = statesCities.estados.find(item => { return item.sigla === res.data.state })
+
+                                if (stateCities)
+                                    setCities(stateCities.cidades);
+                            }
+                            catch { }
+
+                            setEstimateFrom(estimateRes);
+
+                            setLoadingData(false);
+                        }).catch(err => {
+                            console.log('Error to get from estimate, ', err);
+
+                            setTypeLoadingMessage("error");
+                            setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
+                            setHasErrors(true);
+                        });
+                    } else setLoadingData(false);
                 }).catch(err => {
                     console.log('Error to get docs project, ', err);
 
@@ -126,6 +170,51 @@ export default function NewProject() {
             }
         }
     }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    useEffect(() => {
+        if (estimateFrom) {
+            const values: CalcProps = {
+                kwh: estimateFrom.kwh,
+                irradiation: estimateFrom.irradiation,
+                panel: estimateFrom.panel,
+                month_01: estimateFrom.month_01,
+                month_02: estimateFrom.month_02,
+                month_03: estimateFrom.month_03,
+                month_04: estimateFrom.month_04,
+                month_05: estimateFrom.month_05,
+                month_06: estimateFrom.month_06,
+                month_07: estimateFrom.month_07,
+                month_08: estimateFrom.month_08,
+                month_09: estimateFrom.month_09,
+                month_10: estimateFrom.month_10,
+                month_11: estimateFrom.month_11,
+                month_12: estimateFrom.month_12,
+                month_13: estimateFrom.month_13,
+                averageIncrease: estimateFrom.average_increase,
+                roofOrientation: estimateFrom.roof_orientation,
+                discount: estimateFrom.discount,
+                increase: estimateFrom.increase,
+                percent: estimateFrom.percent,
+                estimateItems: estimateFrom.items,
+            }
+
+            const calcResults = calculate(values, false);
+
+            if (calcResults) {
+                setMonthsAverage(calcResults.monthsAverageKwh);
+                setCapacity(calcResults.finalSystemCapacityKwp);
+
+                calcResults.estimateItems.forEach(item => {
+                    if (item.order === 0) setInversor(item.name);
+                    if (item.order === 1) setPanelsAmount(item.amount);
+                });
+
+                setPrice(calcResults.finalSystemPrice);
+
+                setEstimateItemsList(calcResults.estimateItems);
+            }
+        }
+    }, [estimateFrom]);
 
     async function handleListEvents(listEvents?: ProjectEvent[]) {
         if (!listEvents) {
@@ -190,26 +279,32 @@ export default function NewProject() {
 
                                             <Formik
                                                 initialValues={{
-                                                    customer: '',
-                                                    document: '',
-                                                    phone: '',
-                                                    cellphone: '',
-                                                    contacts: '',
-                                                    email: '',
-                                                    zip_code: '',
-                                                    street: '',
-                                                    number: '',
-                                                    neighborhood: '',
-                                                    complement: '',
-                                                    city: '',
-                                                    state: '',
+                                                    customer: estimateFrom ? estimateFrom.customer : '',
+                                                    document: estimateFrom ? estimateFrom.document : '',
+                                                    phone: estimateFrom ? estimateFrom.phone : '',
+                                                    cellphone: estimateFrom ? estimateFrom.cellphone : '',
+                                                    contacts: estimateFrom ? estimateFrom.contacts : '',
+                                                    email: estimateFrom ? estimateFrom.email : '',
+                                                    zip_code: estimateFrom ? estimateFrom.zip_code : '',
+                                                    street: estimateFrom ? estimateFrom.street : '',
+                                                    number: estimateFrom ? estimateFrom.number : '',
+                                                    neighborhood: estimateFrom ? estimateFrom.neighborhood : '',
+                                                    complement: estimateFrom ? estimateFrom.complement : '',
+                                                    city: estimateFrom ? estimateFrom.city : '',
+                                                    state: estimateFrom ? estimateFrom.state : '',
+                                                    energy_company: estimateFrom ? estimateFrom.energy_company : '',
+                                                    unity: estimateFrom ? estimateFrom.unity : '',
+                                                    months_average: prettifyCurrency(String(monthsAverage.toFixed(2))),
+                                                    average_increase: estimateFrom ? prettifyCurrency(String(estimateFrom.average_increase)) : '0,00',
                                                     coordinates: '',
-                                                    capacity: '0,00',
-                                                    inversor: '',
-                                                    roof_orientation: '',
-                                                    roof_type: '',
-                                                    price: '0,00',
-                                                    notes: '',
+                                                    capacity: prettifyCurrency(String(capacity.toFixed(2))),
+                                                    inversor,
+                                                    roof_orientation: estimateFrom ? estimateFrom.roof_orientation.name : '',
+                                                    roof_type: estimateFrom ? estimateFrom.roof_type.name : '',
+                                                    panel: estimateFrom ? `${estimateFrom.panel.name} - ${prettifyCurrency(String(estimateFrom.panel.capacity))} W` : '',
+                                                    panel_amount: panelsAmount,
+                                                    price: prettifyCurrency(String(price.toFixed(2))),
+                                                    notes: estimateFrom ? estimateFrom.notes : '',
                                                     financier_same: false,
                                                     financier: '',
                                                     financier_document: '',
@@ -253,12 +348,18 @@ export default function NewProject() {
                                                             complement: values.complement,
                                                             city: values.city,
                                                             state: values.state,
+                                                            energy_company: values.energy_company,
+                                                            unity: values.unity,
+                                                            months_average: Number(values.months_average.replaceAll(".", "").replaceAll(",", ".")),
+                                                            average_increase: Number(values.average_increase.replaceAll(".", "").replaceAll(",", ".")),
                                                             coordinates: values.coordinates,
-                                                            capacity: Number(values.capacity.replace(".", "").replace(",", ".")),
+                                                            capacity: Number(values.capacity.replaceAll(".", "").replaceAll(",", ".")),
                                                             inversor: values.inversor,
                                                             roof_orientation: values.roof_orientation,
                                                             roof_type: values.roof_type,
-                                                            price: Number(values.price.replace(".", "").replace(",", ".")),
+                                                            panel: values.panel,
+                                                            panel_amount: values.panel_amount,
+                                                            price: Number(values.price.replaceAll(".", "").replaceAll(",", ".")),
                                                             notes: values.notes,
                                                             financier_same: values.financier_same,
                                                             financier: values.financier,
@@ -573,6 +674,88 @@ export default function NewProject() {
 
                                                         <Col className="border-top mt-3 mb-3"></Col>
 
+                                                        <Row className="mt-5 mb-3">
+                                                            <Col>
+                                                                <Row>
+                                                                    <Col>
+                                                                        <h6 className="text-success">Projeto <FaSolarPanel /></h6>
+                                                                    </Col>
+                                                                </Row>
+                                                            </Col>
+                                                        </Row>
+
+                                                        <Row className="mb-2">
+                                                            <Form.Group as={Col} sm={4} controlId="formGridEnergyCompany">
+                                                                <Form.Label>Concessionária de energia</Form.Label>
+                                                                <Form.Control
+                                                                    type="text"
+                                                                    onChange={handleChange}
+                                                                    onBlur={handleBlur}
+                                                                    value={values.energy_company}
+                                                                    name="energy_company"
+                                                                    isInvalid={!!errors.energy_company && touched.energy_company}
+                                                                />
+                                                                <Form.Control.Feedback type="invalid">{touched.energy_company && errors.energy_company}</Form.Control.Feedback>
+                                                            </Form.Group>
+
+                                                            <Form.Group as={Col} sm={4} controlId="formGridUnity">
+                                                                <Form.Label>Unidade consumidora (UC)</Form.Label>
+                                                                <Form.Control
+                                                                    type="text"
+                                                                    onChange={handleChange}
+                                                                    onBlur={handleBlur}
+                                                                    value={values.unity}
+                                                                    name="unity"
+                                                                    isInvalid={!!errors.unity && touched.unity}
+                                                                />
+                                                                <Form.Control.Feedback type="invalid">{touched.unity && errors.unity}</Form.Control.Feedback>
+                                                            </Form.Group>
+
+                                                            <Form.Group as={Col} sm={2} controlId="formGridMonthsAverage">
+                                                                <Form.Label>Média mensal</Form.Label>
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Text id="btnGroupMonthsAverage">kWh</InputGroup.Text>
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        onChange={(e) => {
+                                                                            setFieldValue('months_average', prettifyCurrency(e.target.value));
+                                                                        }}
+                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                            setFieldValue('months_average', prettifyCurrency(e.target.value));
+                                                                        }}
+                                                                        value={values.months_average}
+                                                                        name="months_average"
+                                                                        isInvalid={!!errors.months_average && touched.months_average}
+                                                                        aria-label="Média mensal"
+                                                                        aria-describedby="btnGroupMonthsAverage"
+                                                                    />
+                                                                </InputGroup>
+                                                                <Form.Control.Feedback type="invalid">{touched.months_average && errors.months_average}</Form.Control.Feedback>
+                                                            </Form.Group>
+
+                                                            <Form.Group as={Col} sm={2} controlId="formGridAverageIncrease">
+                                                                <Form.Label>Previsão de aumento</Form.Label>
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Text id="btnGroupAverageIncrease">kWh</InputGroup.Text>
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        onChange={(e) => {
+                                                                            setFieldValue('average_increase', prettifyCurrency(e.target.value));
+                                                                        }}
+                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                            setFieldValue('average_increase', prettifyCurrency(e.target.value));
+                                                                        }}
+                                                                        value={values.average_increase}
+                                                                        name="average_increase"
+                                                                        isInvalid={!!errors.average_increase && touched.average_increase}
+                                                                        aria-label="Média mensal"
+                                                                        aria-describedby="btnGroupAverageIncrease"
+                                                                    />
+                                                                </InputGroup>
+                                                                <Form.Control.Feedback type="invalid">{touched.average_increase && errors.average_increase}</Form.Control.Feedback>
+                                                            </Form.Group>
+                                                        </Row>
+
                                                         <Row className="mb-2">
                                                             <Form.Group as={Col} sm={4} controlId="formGridCoordinates">
                                                                 <Form.Label>Coordenadas</Form.Label>
@@ -624,7 +807,7 @@ export default function NewProject() {
                                                         </Row>
 
                                                         <Row className="mb-2">
-                                                            <Form.Group as={Col} sm={10} controlId="formGridRoofOrientation">
+                                                            <Form.Group as={Col} sm={3} controlId="formGridRoofOrientation">
                                                                 <Form.Label>Orientação do telhado</Form.Label>
                                                                 <Form.Control
                                                                     type="text"
@@ -637,7 +820,7 @@ export default function NewProject() {
                                                                 <Form.Control.Feedback type="invalid">{touched.roof_orientation && errors.roof_orientation}</Form.Control.Feedback>
                                                             </Form.Group>
 
-                                                            <Form.Group as={Col} sm={2} controlId="formGridRoofType">
+                                                            <Form.Group as={Col} sm={3} controlId="formGridRoofType">
                                                                 <Form.Label>Tipo do telhado</Form.Label>
                                                                 <Form.Control
                                                                     type="text"
@@ -650,8 +833,41 @@ export default function NewProject() {
                                                                 <Form.Control.Feedback type="invalid">{touched.roof_type && errors.roof_type}</Form.Control.Feedback>
                                                             </Form.Group>
 
+                                                            <Form.Group as={Col} sm={4} controlId="formGridPanel">
+                                                                <Form.Label>Painel</Form.Label>
+                                                                <Form.Control
+                                                                    type="text"
+                                                                    onChange={handleChange}
+                                                                    onBlur={handleBlur}
+                                                                    value={values.panel}
+                                                                    name="panel"
+                                                                    isInvalid={!!errors.panel && touched.panel}
+                                                                />
+                                                                <Form.Control.Feedback type="invalid">{touched.panel && errors.panel}</Form.Control.Feedback>
+                                                            </Form.Group>
+
+                                                            <Form.Group as={Col} sm={2} controlId="formGridPanelAmount">
+                                                                <Form.Label>Quantidade</Form.Label>
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Text id="btnGroupPanelAmount">Un</InputGroup.Text>
+                                                                    <Form.Control
+                                                                        type="number"
+                                                                        onChange={handleChange}
+                                                                        onBlur={handleBlur}
+                                                                        value={values.panel_amount}
+                                                                        name="panel_amount"
+                                                                        isInvalid={!!errors.panel_amount && touched.panel_amount}
+                                                                        aria-label="Média mensal"
+                                                                        aria-describedby="btnGroupPanelAmount"
+                                                                    />
+                                                                </InputGroup>
+                                                                <Form.Control.Feedback type="invalid">{touched.panel_amount && errors.panel_amount}</Form.Control.Feedback>
+                                                            </Form.Group>
+                                                        </Row>
+
+                                                        <Row className="mb-2">
                                                             <Form.Group as={Col} sm={3} controlId="formGridPrice">
-                                                                <Form.Label>Valor</Form.Label>
+                                                                <Form.Label>Valor do sistema</Form.Label>
                                                                 <InputGroup className="mb-2">
                                                                     <InputGroup.Text id="btnGroupPrice">R$</InputGroup.Text>
                                                                     <Form.Control
@@ -675,7 +891,7 @@ export default function NewProject() {
 
                                                         <Col className="border-top mb-3"></Col>
 
-                                                        <Row className="mb-3">
+                                                        <Row className="mt-5 mb-3">
                                                             <Col>
                                                                 <Row>
                                                                     <Col>
@@ -686,29 +902,42 @@ export default function NewProject() {
                                                         </Row>
 
                                                         <Row className="mb-2">
-                                                            <Form.Check
-                                                                type="switch"
-                                                                id="financier_same"
-                                                                label="Repetir informações do cliente"
-                                                                checked={values.financier_same}
-                                                                onChange={() => {
-                                                                    setFieldValue('financier_same', !values.financier_same);
+                                                            <Col>
+                                                                <Form.Check
+                                                                    type="switch"
+                                                                    id="financier_same"
+                                                                    label="Repetir informações do cliente"
+                                                                    checked={values.financier_same}
+                                                                    onChange={() => {
+                                                                        setFieldValue('financier_same', !values.financier_same);
 
-                                                                    if (!values.financier_same) {
-                                                                        setFieldValue('financier', values.customer);
-                                                                        setFieldValue('financier_document', values.document);
-                                                                        setFieldValue('financier_cellphone', values.cellphone);
-                                                                        setFieldValue('financier_email', values.email);
-                                                                        setFieldValue('financier_zip_code', values.zip_code);
-                                                                        setFieldValue('financier_street', values.street);
-                                                                        setFieldValue('financier_number', values.number);
-                                                                        setFieldValue('financier_neighborhood', values.neighborhood);
-                                                                        setFieldValue('financier_complement', values.complement);
-                                                                        setFieldValue('financier_city', values.city);
-                                                                        setFieldValue('financier_state', values.state);
-                                                                    }
-                                                                }}
-                                                            />
+                                                                        if (!values.financier_same) {
+                                                                            setFieldValue('financier', values.customer);
+                                                                            setFieldValue('financier_document', values.document);
+                                                                            setFieldValue('financier_cellphone', values.cellphone);
+                                                                            setFieldValue('financier_email', values.email);
+                                                                            setFieldValue('financier_zip_code', values.zip_code);
+                                                                            setFieldValue('financier_street', values.street);
+                                                                            setFieldValue('financier_number', values.number);
+                                                                            setFieldValue('financier_neighborhood', values.neighborhood);
+                                                                            setFieldValue('financier_complement', values.complement);
+                                                                            setFieldValue('financier_state', values.state);
+
+                                                                            try {
+                                                                                const stateCities = statesCities.estados.find(item => { return item.sigla === values.state })
+
+                                                                                if (stateCities)
+                                                                                    setFinancierCities(stateCities.cidades);
+                                                                            }
+                                                                            catch {
+
+                                                                            }
+
+                                                                            setFieldValue('financier_city', values.city);
+                                                                        }
+                                                                    }}
+                                                                />
+                                                            </Col>
                                                         </Row>
 
                                                         <Row className="mb-3">
@@ -821,8 +1050,9 @@ export default function NewProject() {
 
                                                                                     setFieldValue('financier_street', street);
                                                                                     setFieldValue('financier_neighborhood', neighborhood);
-                                                                                    setFieldValue('financier_city', city);
                                                                                     setFieldValue('financier_state', state);
+
+                                                                                    setFieldValue('financier_city', city);
 
                                                                                     setSpinnerCep(false);
                                                                                 })

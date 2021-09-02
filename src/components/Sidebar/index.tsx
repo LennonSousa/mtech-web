@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { Accordion, AccordionButton, Card, Dropdown, Nav, NavDropdown, Row, Col } from 'react-bootstrap';
 import {
     FaColumns,
+    FaDonate,
+    FaMoneyCheckAlt,
     FaUserTie,
     FaFileAlt,
     FaList,
@@ -11,11 +13,14 @@ import {
     FaPlus,
     FaIdCard,
     FaCompass,
+    FaPencilAlt,
     FaProjectDiagram,
     FaWarehouse,
     FaClipboardList,
     FaLayerGroup,
     FaSolarPanel,
+    FaStore,
+    FaUniversity,
     FaUsers,
     FaUsersCog
 } from 'react-icons/fa';
@@ -50,7 +55,7 @@ const Sidebar: React.FC = () => {
     }
 
     return (
-        showPageHeader && user ? <div className={styles.sideBarContainer}>
+        showPageHeader && user ? <div className={`${styles.sideBarContainer} d-print-none`}>
             <Accordion activeKey={itemSideBar} className={styles.accordionContainer}>
                 <Card className={styles.menuCard}>
                     <AccordionButton
@@ -217,7 +222,7 @@ const Sidebar: React.FC = () => {
                         <Accordion.Collapse eventKey="projects">
                             <Card.Body className={styles.menuCardBody}>
                                 <Link href="/projects">
-                                    <a title="Listar todos os imóveis" data-title="Listar todos os imóveis">
+                                    <a title="Listar todos os projetos." data-title="Listar todos os projetos.">
                                         <Row
                                             className={
                                                 selectedMenu === 'projects-index' ? styles.selectedMenuCardBodyItem :
@@ -319,6 +324,67 @@ const Sidebar: React.FC = () => {
                 }
 
                 {
+                    can(user, "finances", "read:any") && <Card className={styles.menuCard}>
+                        <AccordionButton
+                            as={Card.Header}
+                            className={styles.menuCardHeader}
+                            eventKey="finances"
+                            onClick={() => handleItemSideBar('finances')}
+                        >
+                            <div>
+                                <FaMoneyCheckAlt /> <span>Finanças</span>
+                            </div>
+                        </AccordionButton>
+
+                        <Accordion.Collapse eventKey="finances">
+                            <Card.Body className={styles.menuCardBody}>
+                                <Link href="/finances/incomings">
+                                    <a title="Listar todas as receitas." data-title="Listar todas as receitas.">
+                                        <Row
+                                            className={
+                                                selectedMenu === 'finances-incomings' ? styles.selectedMenuCardBodyItem :
+                                                    styles.menuCardBodyItem
+                                            }
+                                        >
+                                            <Col sm={1}>
+                                                <FaDonate size={14} />
+                                            </Col>
+                                            <Col>
+                                                <span>Receitas</span>
+                                            </Col>
+                                        </Row>
+                                    </a>
+                                </Link>
+
+                                {
+                                    can(user, "finances", "update:any") && <>
+                                        <Dropdown.Divider />
+
+                                        <Link href="/finances/types">
+                                            <a title="Listar as fases" data-title="Listar as fases">
+                                                <Row
+                                                    className={
+                                                        selectedMenu === 'finances-types' ? styles.selectedMenuCardBodyItem :
+                                                            styles.menuCardBodyItem
+                                                    }
+                                                >
+                                                    <Col sm={1}>
+                                                        <FaUniversity size={14} />
+                                                    </Col>
+                                                    <Col>
+                                                        <span>Tipos</span>
+                                                    </Col>
+                                                </Row>
+                                            </a>
+                                        </Link>
+                                    </>
+                                }
+                            </Card.Body>
+                        </Accordion.Collapse>
+                    </Card>
+                }
+
+                {
                     can(user, "users", "read:any") && <Card className={styles.menuCard}>
                         <AccordionButton
                             as={Card.Header}
@@ -364,6 +430,45 @@ const Sidebar: React.FC = () => {
                                                 </Col>
                                                 <Col>
                                                     <span>Novo</span>
+                                                </Col>
+                                            </Row>
+                                        </a>
+                                    </Link>
+                                }
+                            </Card.Body>
+                        </Accordion.Collapse>
+                    </Card>
+                }
+
+                {
+                    can(user, "store", "read:any") && <Card className={styles.menuCard}>
+                        <AccordionButton
+                            as={Card.Header}
+                            className={styles.menuCardHeader}
+                            eventKey="store"
+                            onClick={() => handleItemSideBar('store')}
+                        >
+                            <div>
+                                <FaStore /> <span>Loja</span>
+                            </div>
+                        </AccordionButton>
+
+                        <Accordion.Collapse eventKey="store">
+                            <Card.Body className={styles.menuCardBody}>
+                                {
+                                    can(user, "store", "update:any") && <Link href="/store">
+                                        <a title="Editar as informações da loja." data-title="Editar as informações da loja.">
+                                            <Row
+                                                className={
+                                                    selectedMenu === 'store-edit' ? styles.selectedMenuCardBodyItem :
+                                                        styles.menuCardBodyItem
+                                                }
+                                            >
+                                                <Col sm={1}>
+                                                    <FaPencilAlt size={14} />
+                                                </Col>
+                                                <Col>
+                                                    <span>Configurar</span>
                                                 </Col>
                                             </Row>
                                         </a>

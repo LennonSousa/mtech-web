@@ -2,19 +2,14 @@ import { useContext, useEffect, useState } from 'react';
 import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { NextSeo } from 'next-seo';
-import Link from 'next/link';
 import { Col, Container, Button, ButtonGroup, ListGroup, Row } from 'react-bootstrap';
 import { format } from 'date-fns';
 import {
-    FaCheck,
-    FaExclamationCircle,
+    FaDonate,
     FaFileAlt,
     FaHistory,
-    FaIdCard,
     FaPencilAlt,
-    FaPlus,
-    FaRegFile,
-    FaUserTie,
+    FaSolarPanel,
     FaStickyNote,
     FaUserTag,
 } from 'react-icons/fa';
@@ -23,19 +18,19 @@ import api from '../../../api/api';
 import { TokenVerify } from '../../../utils/tokenVerify';
 import { SideBarContext } from '../../../contexts/SideBarContext';
 import { AuthContext } from '../../../contexts/AuthContext';
-import { User, can } from '../../../components/Users';
+import { can } from '../../../components/Users';
 import { Project } from '../../../components/Projects';
-import { ProjectStatus } from '../../../components/ProjectStatus';
+import Incomings from '../../../components/Incomings';
 import { EventProject } from '../../../components/EventsProject';
 import ProjectEvents from '../../../components/ProjectEvents';
+import { AttachmentRequired } from '../../../components/AttachmentsRequiredProject';
+import ProjectAttachmentsRequired from '../../../components/ProjectAttachmentsRequired';
 import ProjectAttachments from '../../../components/ProjectAttachments';
 
 import Members from '../../../components/ProjectMembers';
-import { statesCities } from '../../../components/StatesCities';
-import { cpf, cnpj, cellphone } from '../../../components/InputMask/masks';
 import PageBack from '../../../components/PageBack';
 import { PageWaiting, PageType } from '../../../components/PageWaiting';
-import { AlertMessage, statusModal } from '../../../components/Interfaces/AlertMessage';
+import { AlertMessage } from '../../../components/Interfaces/AlertMessage';
 import { prettifyCurrency } from '../../../components/InputMask/masks';
 
 export default function PropertyDetails() {
@@ -63,6 +58,9 @@ export default function PropertyDetails() {
                     api.get(`projects/${project}`).then(res => {
                         let projectRes: Project = res.data;
 
+                        if (projectRes.document.length > 14)
+                            setDocumentType("CNPJ");
+
                         api.get('events/project').then(res => {
                             let eventsProject: EventProject[] = res.data;
 
@@ -85,11 +83,42 @@ export default function PropertyDetails() {
                                     };
                                 })
                             }
+                        }).catch(err => {
+                            console.log('Error to get events project to edit, ', err);
+
+                            setTypeLoadingMessage("error");
+                            setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
+                            setHasErrors(true);
+                        });
+
+                        api.get('attachments-required/project').then(res => {
+                            let attachmentsRequiredProject: AttachmentRequired[] = res.data;
+
+                            attachmentsRequiredProject = attachmentsRequiredProject.filter(attachmentRequired => { return attachmentRequired.active });
+
+                            projectRes = {
+                                ...projectRes, attachmentsRequired: attachmentsRequiredProject.map(attachmentRequired => {
+                                    const projectAttachmentRequired = projectRes.attachmentsRequired.find(projectAttachmentRequired => {
+                                        return projectAttachmentRequired.attachmentRequired.id === attachmentRequired.id
+                                    });
+
+                                    if (projectAttachmentRequired)
+                                        return { ...projectAttachmentRequired, project: projectRes };
+
+                                    return {
+                                        id: '0',
+                                        path: null,
+                                        received_at: new Date(),
+                                        attachmentRequired: attachmentRequired,
+                                        project: projectRes,
+                                    };
+                                })
+                            }
 
                             setData(projectRes);
                             setLoadingData(false);
                         }).catch(err => {
-                            console.log('Error to get events project to edit, ', err);
+                            console.log('Error to get attachments required project to edit, ', err);
 
                             setTypeLoadingMessage("error");
                             setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
@@ -361,6 +390,76 @@ export default function PropertyDetails() {
                                                                     </Col>
                                                                 </Row>
 
+                                                                <Col className="border-top mt-3 mb-3"></Col>
+
+                                                                <Row className="mt-5 mb-3">
+                                                                    <Col>
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-success">Projeto <FaSolarPanel /></h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+                                                                </Row>
+
+                                                                <Row className="mb-3">
+                                                                    <Col sm={4} >
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Concessionária de energia</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.energy_company}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+
+                                                                    <Col sm={4} >
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Unidade consumidora (UC)</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.unity}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+
+                                                                    <Col sm={2}>
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Média mensal</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{`${prettifyCurrency(Number(data.months_average).toFixed(2))} kWh`} </h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+
+                                                                    <Col sm={2}>
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Previsão de aumento</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{`${prettifyCurrency(Number(data.average_increase).toFixed(2))} kWh`} </h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+                                                                </Row>
+
                                                                 <Row className="mb-3">
                                                                     <Col sm={4} >
                                                                         <Row>
@@ -406,7 +505,7 @@ export default function PropertyDetails() {
                                                                 </Row>
 
                                                                 <Row className="mb-3">
-                                                                    <Col sm={4} >
+                                                                    <Col sm={3} >
                                                                         <Row>
                                                                             <Col>
                                                                                 <span className="text-success">Orientação do telhado</span>
@@ -420,7 +519,7 @@ export default function PropertyDetails() {
                                                                         </Row>
                                                                     </Col>
 
-                                                                    <Col sm={5} >
+                                                                    <Col sm={3} >
                                                                         <Row>
                                                                             <Col>
                                                                                 <span className="text-success">Tipo do telhado</span>
@@ -434,6 +533,36 @@ export default function PropertyDetails() {
                                                                         </Row>
                                                                     </Col>
 
+                                                                    <Col sm={4} >
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Painel</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.panel}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+
+                                                                    <Col sm={2} >
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Quantidade</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.panel_amount}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+                                                                </Row>
+
+                                                                <Row className="mb-3">
                                                                     <Col sm={3}>
                                                                         <Row>
                                                                             <Col>
@@ -723,7 +852,45 @@ export default function PropertyDetails() {
                                                                     </Col>
                                                                 </Row>
 
-                                                                <Row className="mb-3">
+                                                                <Col className="border-top mt-3 mb-3"></Col>
+
+                                                                {
+                                                                    can(user, "finances", "read:any") && <Row className="mt-5 mb-3">
+                                                                        <Col>
+                                                                            <Row>
+                                                                                <Col>
+                                                                                    <h6 className="text-success">Receitas <FaDonate /></h6>
+                                                                                </Col>
+                                                                            </Row>
+
+                                                                            <Row>
+                                                                                {
+                                                                                    !!data.incomings.length ? <Col>
+                                                                                        <ListGroup>
+                                                                                            {
+                                                                                                data.incomings.map((income, index) => {
+                                                                                                    return <Incomings
+                                                                                                        key={index}
+                                                                                                        income={income}
+                                                                                                        canEdit={false}
+                                                                                                    />
+                                                                                                })
+                                                                                            }
+                                                                                        </ListGroup>
+                                                                                    </Col> :
+                                                                                        <Col>
+                                                                                            <AlertMessage
+                                                                                                status="warning"
+                                                                                                message="Nenhuma uma receita registrada para esse projeto."
+                                                                                            />
+                                                                                        </Col>
+                                                                                }
+                                                                            </Row>
+                                                                        </Col>
+                                                                    </Row>
+                                                                }
+
+                                                                <Row className="mb-5">
                                                                     <Col>
                                                                         <Row>
                                                                             <Col>
@@ -771,11 +938,46 @@ export default function PropertyDetails() {
                                                                         </Row>
                                                                     </Col>
                                                                 </Row>
-                                                                <Row className="mb-3">
+
+                                                                <Row className="mb-5">
                                                                     <Col>
                                                                         <Row>
                                                                             <Col>
-                                                                                <h6 className="text-success">Anexos <FaFileAlt /></h6>
+                                                                                <h6 className="text-success">Anexos obrigatórios <FaFileAlt /></h6>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            {
+                                                                                !!data.attachmentsRequired.length ? <Col>
+                                                                                    <ListGroup>
+                                                                                        {
+                                                                                            data.attachmentsRequired.map((attachmentRequired, index) => {
+                                                                                                return <ProjectAttachmentsRequired
+                                                                                                    key={index}
+                                                                                                    attachment={attachmentRequired}
+                                                                                                    canEdit={false}
+                                                                                                />
+                                                                                            })
+                                                                                        }
+                                                                                    </ListGroup>
+                                                                                </Col> :
+                                                                                    <Col>
+                                                                                        <AlertMessage
+                                                                                            status="warning"
+                                                                                            message="Nenhum anexo enviado para esse projeto."
+                                                                                        />
+                                                                                    </Col>
+                                                                            }
+                                                                        </Row>
+                                                                    </Col>
+                                                                </Row>
+
+                                                                <Row className="mb-5">
+                                                                    <Col>
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-success">Outros anexos <FaFileAlt /></h6>
                                                                             </Col>
                                                                         </Row>
 

@@ -11,7 +11,7 @@ import { CircularProgressbar } from 'react-circular-progressbar';
 import api from '../../api/api';
 import { AttachmentRequired } from '../AttachmentsRequiredProject';
 import { Project } from '../Projects';
-import { AlertMessage, statusModal } from '../Interfaces/AlertMessage';
+import { AlertMessage, statusModal } from '../Interfaces/AlertMessage'
 
 import "react-circular-progressbar/dist/styles.css";
 import styles from './styles.module.css';
@@ -66,7 +66,7 @@ const AttachmentsRequired: React.FC<ProjectAttachmentRequiredProps> = ({ attachm
                 { responseType: "blob" }
             );
 
-            const fileName = `${attachment.project.customer.replace('.', '')} - ${attachment.attachmentRequired.description.replace('.', '')}`;
+            const fileName = `${attachment.project.customer.replaceAll('.', '')} - ${attachment.attachmentRequired.description.replaceAll('.', '')}`;
 
             FileSaver.saveAs(res.data, fileName);
         }

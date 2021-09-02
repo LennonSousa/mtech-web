@@ -8,7 +8,7 @@ import FileSaver from 'file-saver';
 
 import api from '../../api/api';
 import { Project } from '../Projects';
-import { AlertMessage, statusModal } from '../Interfaces/AlertMessage';
+import { AlertMessage, statusModal } from '../Interfaces/AlertMessage'
 
 export interface ProjectAttachment {
     id: string;
@@ -50,7 +50,7 @@ const ProjectAttachments: React.FC<ProjectAttachmentsProps> = ({ attachment, can
                 { responseType: "blob" }
             );
 
-            const fileName = `${attachment.project.customer.replace('.', '')} - ${attachment.name.replace('.', '')}`;
+            const fileName = `${attachment.project.customer.replaceAll('.', '')} - ${attachment.name.replaceAll('.', '')}`;
 
             FileSaver.saveAs(res.data, fileName);
         }
@@ -197,7 +197,10 @@ const ProjectAttachments: React.FC<ProjectAttachmentsProps> = ({ attachment, can
                                             onClick={handleDownloadAttachment}
                                             title="Baixar o anexo."
                                         >
-                                            <FaCloudDownloadAlt />
+                                            {
+                                                downloadingAttachment ? <Spinner animation="border" variant="success" size="sm" /> :
+                                                    <FaCloudDownloadAlt />
+                                            }
                                         </Button>
                                     </Form.Group>
                                 </Row>

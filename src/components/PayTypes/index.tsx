@@ -1,24 +1,25 @@
 import { useState } from 'react';
-import { Row, Col, ListGroup, Modal, Form, Button } from 'react-bootstrap';
-import { FaPencilAlt, FaBars } from 'react-icons/fa';
+import { Row, Col, ListGroup, Modal, Form, Button, Spinner } from 'react-bootstrap';
+import { FaPencilAlt, FaBars, FaPause, FaPlay } from 'react-icons/fa';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 
 import api from '../../api/api';
-import { Estimate } from '../Estimates';
+import { Project } from '../Projects';
 import { AlertMessage, statusModal } from '../Interfaces/AlertMessage'
 
-export interface EstimateStatus {
+export interface PayType {
     id: string;
     name: string;
     order: number;
-    estimates: Estimate[];
+    active: boolean;
+    projects: Project[];
 }
 
-interface EstimateStatusProps {
-    status: EstimateStatus;
-    listStatus: EstimateStatus[];
-    handleListStatus(): Promise<void>;
+interface PayTypesProps {
+    payType: PayType;
+    listTypes: PayType[];
+    handleListTypes(): Promise<void>;
 }
 
 const validationSchema = Yup.object().shape({
@@ -26,7 +27,7 @@ const validationSchema = Yup.object().shape({
     order: Yup.number().required(),
 });
 
-const EstimateStatusItem: React.FC<EstimateStatusProps> = ({ status, listStatus, handleListStatus }) => {
+const PayTypes: React.FC<PayTypesProps> = ({ payType, listTypes, handleListTypes }) => {
     const [showModalEditType, setShowModalEditType] = useState(false);
 
     const handleCloseModalEditType = () => { setShowModalEditType(false); setIconDeleteConfirm(false); setIconDelete(true); }
@@ -35,10 +36,12 @@ const EstimateStatusItem: React.FC<EstimateStatusProps> = ({ status, listStatus,
     const [messageShow, setMessageShow] = useState(false);
     const [statusMessage, setTypeMessage] = useState<statusModal>("waiting");
 
+    const [itemPausing, setItemPausing] = useState(false);
+
     const [iconDelete, setIconDelete] = useState(true);
     const [iconDeleteConfirm, setIconDeleteConfirm] = useState(false);
 
-    async function deleteLine() {
+    async function deleteItem() {
         if (iconDelete) {
             setIconDelete(false);
             setIconDeleteConfirm(true);
@@ -50,26 +53,26 @@ const EstimateStatusItem: React.FC<EstimateStatusProps> = ({ status, listStatus,
         setMessageShow(true);
 
         try {
-            await api.delete(`estimates/statuss/${status.id}`);
+            await api.delete(`payments/types/${payType.id}`);
 
-            const list = listStatus.filter(item => { return item.id !== status.id });
+            const list = listTypes.filter(item => { return item.id !== payType.id });
 
-            list.forEach(async (statusItem, index) => {
+            list.forEach(async (payType, index) => {
                 try {
-                    await api.put(`estimates/statusItems/${statusItem.id}`, {
-                        name: statusItem.name,
+                    await api.put(`payments/types/${payType.id}`, {
+                        name: payType.name,
                         order: index
                     });
                 }
                 catch (err) {
-                    console.log('error to save status order after deleting.');
+                    console.log('error to save pay type order after deleting.');
                     console.log(err)
                 }
             });
 
             handleCloseModalEditType();
 
-            handleListStatus();
+            handleListTypes();
         }
         catch (err) {
             setIconDeleteConfirm(false);
@@ -81,19 +84,58 @@ const EstimateStatusItem: React.FC<EstimateStatusProps> = ({ status, listStatus,
                 setMessageShow(false);
             }, 4000);
 
-            console.log("Error to delete status");
+            console.log("Error to delete pay type");
             console.log(err);
         }
     }
 
+    const togglePauseItem = async () => {
+        setItemPausing(true);
+
+        try {
+            await api.put(`payments/types/${payType.id}`, {
+                name: payType.name,
+                active: !payType.active,
+                order: payType.order,
+            });
+
+            await handleListTypes();
+        }
+        catch (err) {
+            console.log("Error to pause payType");
+            console.log(err);
+        }
+
+        setItemPausing(false);
+    }
+
     return (
-        <ListGroup.Item variant="light">
+        <ListGroup.Item variant={payType.active ? "light" : "danger"}>
             <Row className="align-items-center">
                 <Col sm={1}>
                     <FaBars />
                 </Col>
 
-                <Col><span>{status.name}</span></Col>
+                <Col><span>{payType.name}</span></Col>
+
+                <Col className="col-row text-end">
+                    <Button
+                        variant="outline-success"
+                        className="button-link"
+                        onClick={togglePauseItem}
+                        title="Pausar painel"
+                    >
+                        {
+                            itemPausing ? <Spinner
+                                as="span"
+                                animation="border"
+                                size="sm"
+                                role="status"
+                                aria-hidden="true"
+                            /> : payType.active ? (<><FaPause /> Pausar</>) : (<><FaPlay /> Pausado</>)
+                        }
+                    </Button>
+                </Col>
 
                 <Col className="text-end">
                     <Button variant="outline-success" className="button-link" onClick={handleShowModalEditType}><FaPencilAlt /> Editar</Button>
@@ -107,8 +149,8 @@ const EstimateStatusItem: React.FC<EstimateStatusProps> = ({ status, listStatus,
                 <Formik
                     initialValues={
                         {
-                            name: status.name,
-                            order: status.order,
+                            name: payType.name,
+                            order: payType.order,
                         }
                     }
                     onSubmit={async values => {
@@ -116,13 +158,13 @@ const EstimateStatusItem: React.FC<EstimateStatusProps> = ({ status, listStatus,
                         setMessageShow(true);
 
                         try {
-                            if (listStatus) {
-                                await api.put(`estimates/status/${status.id}`, {
+                            if (listTypes) {
+                                await api.put(`payments/types/${payType.id}`, {
                                     name: values.name,
-                                    order: status.order
+                                    order: payType.order
                                 });
 
-                                await handleListStatus();
+                                await handleListTypes();
 
                                 setTypeMessage("success");
 
@@ -133,7 +175,7 @@ const EstimateStatusItem: React.FC<EstimateStatusProps> = ({ status, listStatus,
                             }
                         }
                         catch (err) {
-                            console.log('error edit status.');
+                            console.log('error edit payType.');
                             console.log(err);
 
                             setTypeMessage("error");
@@ -171,7 +213,7 @@ const EstimateStatusItem: React.FC<EstimateStatusProps> = ({ status, listStatus,
                                             <Button
                                                 title="Excluir item"
                                                 variant={iconDelete ? "outline-danger" : "outline-warning"}
-                                                onClick={deleteLine}
+                                                onClick={deleteItem}
                                             >
                                                 {
                                                     iconDelete && "Excluir"
@@ -194,4 +236,4 @@ const EstimateStatusItem: React.FC<EstimateStatusProps> = ({ status, listStatus,
     )
 }
 
-export default EstimateStatusItem;
+export default PayTypes;

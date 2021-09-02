@@ -5,7 +5,7 @@ import { NextSeo } from 'next-seo';
 import { Button, Col, Container, Form, InputGroup, ListGroup, Modal, Row, Spinner } from 'react-bootstrap';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { FaHistory, FaFileAlt, FaPlus, FaUserTie, FaUserTag } from 'react-icons/fa';
+import { FaHistory, FaFileAlt, FaPlus, FaUserTie, FaUserTag, FaDonate, FaSolarPanel } from 'react-icons/fa';
 import { format } from 'date-fns';
 import cep, { CEP } from 'cep-promise';
 import { CircularProgressbar } from 'react-circular-progressbar';
@@ -20,6 +20,8 @@ import { Project } from '../../../components/Projects';
 import { ProjectStatus } from '../../../components/ProjectStatus';
 import { EventProject } from '../../../components/EventsProject';
 import { AttachmentRequired } from '../../../components/AttachmentsRequiredProject';
+import Incomings, { Income } from '../../../components/Incomings';
+import NewIncomeModal from '../../../components/Incomings/ModalNew';
 import ProjectEvents, { ProjectEvent } from '../../../components/ProjectEvents';
 import ProjectAttachments, { ProjectAttachment } from '../../../components/ProjectAttachments';
 import ProjectAttachmentsRequired, { ProjectAttachmentRequired } from '../../../components/ProjectAttachmentsRequired';
@@ -49,11 +51,17 @@ const validationSchema = Yup.object().shape({
     complement: Yup.string().notRequired().nullable(),
     city: Yup.string().required('Obrigatório!'),
     state: Yup.string().required('Obrigatório!'),
+    energy_company: Yup.string().notRequired().nullable(),
+    unity: Yup.string().notRequired().nullable(),
+    months_average: Yup.string().required('Obrigatório!'),
+    average_increase: Yup.string().required('Obrigatório!'),
     coordinates: Yup.string().notRequired(),
     capacity: Yup.string().notRequired(),
     inversor: Yup.string().required('Obrigatório!'),
     roof_orientation: Yup.string().required('Obrigatório!'),
     roof_type: Yup.string().required('Obrigatório!'),
+    panel: Yup.string().required('Obrigatório!'),
+    panel_amount: Yup.number().required('Obrigatório!'),
     price: Yup.string().required('Obrigatório!'),
     notes: Yup.string().notRequired().nullable(),
     financier_same: Yup.boolean().notRequired(),
@@ -91,6 +99,7 @@ export default function NewCustomer() {
     const [projectEvents, setProjectEvents] = useState<ProjectEvent[]>([]);
     const [projectAttachments, setProjectAttachments] = useState<ProjectAttachment[]>([]);
     const [projectAttachmentsRequired, setProjectAttachmentsRequired] = useState<ProjectAttachmentRequired[]>([]);
+    const [incomings, setIncomings] = useState<Income[]>([]);
 
     const [spinnerCep, setSpinnerCep] = useState(false);
     const [documentType, setDocumentType] = useState("CPF");
@@ -119,6 +128,11 @@ export default function NewCustomer() {
 
     const [fileToSave, setFileToSave] = useState<File>();
     const [filePreview, setFilePreview] = useState('');
+
+    const [showModalNew, setShowModalNew] = useState(false);
+
+    const handleCloseModalNew = () => setShowModalNew(false);
+    const handleShowModalNew = () => setShowModalNew(true);
 
     useEffect(() => {
         handleItemSideBar('projects');
@@ -172,6 +186,8 @@ export default function NewCustomer() {
 
                         setProjectAttachments(projectRes.attachments);
 
+                        setIncomings(projectRes.incomings);
+
                         handleAttachmentsRequiredData(projectRes).then(attachmentsRequiredData => {
                             if (attachmentsRequiredData) setProjectAttachmentsRequired(attachmentsRequiredData);
 
@@ -204,6 +220,23 @@ export default function NewCustomer() {
             const updatedProject: Project = res.data;
 
             setProjectAttachments(updatedProject.attachments);
+        }
+        catch (err) {
+            console.log('Error to get attachments to edit, ', err);
+
+            setTypeLoadingMessage("error");
+            setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
+            setHasErrors(true);
+        }
+    }
+
+    async function handleListIncomings() {
+        try {
+            const res = await api.get(`projects/${project}`);
+
+            const updatedProject: Project = res.data;
+
+            setIncomings(updatedProject.incomings);
         }
         catch (err) {
             console.log('Error to get attachments to edit, ', err);
@@ -394,11 +427,17 @@ export default function NewCustomer() {
                                                                     complement: projectData.complement,
                                                                     city: projectData.city,
                                                                     state: projectData.state,
+                                                                    energy_company: projectData.energy_company,
+                                                                    unity: projectData.unity,
+                                                                    months_average: prettifyCurrency(String(projectData.months_average)),
+                                                                    average_increase: prettifyCurrency(String(projectData.average_increase)),
                                                                     coordinates: projectData.coordinates,
                                                                     capacity: prettifyCurrency(String(projectData.capacity)),
                                                                     inversor: projectData.inversor,
                                                                     roof_orientation: projectData.roof_orientation,
                                                                     roof_type: projectData.roof_type,
+                                                                    panel: projectData.panel,
+                                                                    panel_amount: projectData.panel_amount,
                                                                     price: prettifyCurrency(String(projectData.price)),
                                                                     notes: projectData.notes,
                                                                     financier_same: projectData.financier_same,
@@ -435,12 +474,18 @@ export default function NewCustomer() {
                                                                             complement: values.complement,
                                                                             city: values.city,
                                                                             state: values.state,
+                                                                            energy_company: values.energy_company,
+                                                                            unity: values.unity,
+                                                                            months_average: Number(values.months_average.replaceAll(".", "").replaceAll(",", ".")),
+                                                                            average_increase: Number(values.average_increase.replaceAll(".", "").replaceAll(",", ".")),
                                                                             coordinates: values.coordinates,
-                                                                            capacity: Number(values.capacity.replace(".", "").replace(",", ".")),
+                                                                            capacity: Number(values.capacity.replaceAll(".", "").replaceAll(",", ".")),
                                                                             inversor: values.inversor,
                                                                             roof_orientation: values.roof_orientation,
                                                                             roof_type: values.roof_type,
-                                                                            price: Number(values.price.replace(".", "").replace(",", ".")),
+                                                                            panel: values.panel,
+                                                                            panel_amount: values.panel_amount,
+                                                                            price: Number(values.price.replaceAll(".", "").replaceAll(",", ".")),
                                                                             seller: '',
                                                                             notes: values.notes,
                                                                             financier_same: values.financier_same,
@@ -755,6 +800,88 @@ export default function NewCustomer() {
 
                                                                         <Col className="border-top mt-3 mb-3"></Col>
 
+                                                                        <Row className="mt-5 mb-3">
+                                                                            <Col>
+                                                                                <Row>
+                                                                                    <Col>
+                                                                                        <h6 className="text-success">Projeto <FaSolarPanel /></h6>
+                                                                                    </Col>
+                                                                                </Row>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row className="mb-2">
+                                                                            <Form.Group as={Col} sm={4} controlId="formGridEnergyCompany">
+                                                                                <Form.Label>Concessionária de energia</Form.Label>
+                                                                                <Form.Control
+                                                                                    type="text"
+                                                                                    onChange={handleChange}
+                                                                                    onBlur={handleBlur}
+                                                                                    value={values.energy_company}
+                                                                                    name="energy_company"
+                                                                                    isInvalid={!!errors.energy_company && touched.energy_company}
+                                                                                />
+                                                                                <Form.Control.Feedback type="invalid">{touched.energy_company && errors.energy_company}</Form.Control.Feedback>
+                                                                            </Form.Group>
+
+                                                                            <Form.Group as={Col} sm={4} controlId="formGridUnity">
+                                                                                <Form.Label>Unidade consumidora (UC)</Form.Label>
+                                                                                <Form.Control
+                                                                                    type="text"
+                                                                                    onChange={handleChange}
+                                                                                    onBlur={handleBlur}
+                                                                                    value={values.unity}
+                                                                                    name="unity"
+                                                                                    isInvalid={!!errors.unity && touched.unity}
+                                                                                />
+                                                                                <Form.Control.Feedback type="invalid">{touched.unity && errors.unity}</Form.Control.Feedback>
+                                                                            </Form.Group>
+
+                                                                            <Form.Group as={Col} sm={2} controlId="formGridMonthsAverage">
+                                                                                <Form.Label>Média mensal</Form.Label>
+                                                                                <InputGroup className="mb-2">
+                                                                                    <InputGroup.Text id="btnGroupMonthsAverage">kWh</InputGroup.Text>
+                                                                                    <Form.Control
+                                                                                        type="text"
+                                                                                        onChange={(e) => {
+                                                                                            setFieldValue('months_average', prettifyCurrency(e.target.value));
+                                                                                        }}
+                                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                                            setFieldValue('months_average', prettifyCurrency(e.target.value));
+                                                                                        }}
+                                                                                        value={values.months_average}
+                                                                                        name="months_average"
+                                                                                        isInvalid={!!errors.months_average && touched.months_average}
+                                                                                        aria-label="Média mensal"
+                                                                                        aria-describedby="btnGroupMonthsAverage"
+                                                                                    />
+                                                                                </InputGroup>
+                                                                                <Form.Control.Feedback type="invalid">{touched.months_average && errors.months_average}</Form.Control.Feedback>
+                                                                            </Form.Group>
+
+                                                                            <Form.Group as={Col} sm={2} controlId="formGridAverageIncrease">
+                                                                                <Form.Label>Previsão de aumento</Form.Label>
+                                                                                <InputGroup className="mb-2">
+                                                                                    <InputGroup.Text id="btnGroupAverageIncrease">kWh</InputGroup.Text>
+                                                                                    <Form.Control
+                                                                                        type="text"
+                                                                                        onChange={(e) => {
+                                                                                            setFieldValue('average_increase', prettifyCurrency(e.target.value));
+                                                                                        }}
+                                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                                            setFieldValue('average_increase', prettifyCurrency(e.target.value));
+                                                                                        }}
+                                                                                        value={values.average_increase}
+                                                                                        name="average_increase"
+                                                                                        isInvalid={!!errors.average_increase && touched.average_increase}
+                                                                                        aria-label="Média mensal"
+                                                                                        aria-describedby="btnGroupAverageIncrease"
+                                                                                    />
+                                                                                </InputGroup>
+                                                                                <Form.Control.Feedback type="invalid">{touched.average_increase && errors.average_increase}</Form.Control.Feedback>
+                                                                            </Form.Group>
+                                                                        </Row>
+
                                                                         <Row className="mb-2">
                                                                             <Form.Group as={Col} sm={4} controlId="formGridCoordinates">
                                                                                 <Form.Label>Coordenadas</Form.Label>
@@ -806,7 +933,7 @@ export default function NewCustomer() {
                                                                         </Row>
 
                                                                         <Row className="mb-2">
-                                                                            <Form.Group as={Col} sm={4} controlId="formGridRoofOrientation">
+                                                                            <Form.Group as={Col} sm={3} controlId="formGridRoofOrientation">
                                                                                 <Form.Label>Orientação do telhado</Form.Label>
                                                                                 <Form.Control
                                                                                     type="text"
@@ -819,7 +946,7 @@ export default function NewCustomer() {
                                                                                 <Form.Control.Feedback type="invalid">{touched.roof_orientation && errors.roof_orientation}</Form.Control.Feedback>
                                                                             </Form.Group>
 
-                                                                            <Form.Group as={Col} sm={5} controlId="formGridRoofType">
+                                                                            <Form.Group as={Col} sm={3} controlId="formGridRoofType">
                                                                                 <Form.Label>Tipo do telhado</Form.Label>
                                                                                 <Form.Control
                                                                                     type="text"
@@ -832,8 +959,41 @@ export default function NewCustomer() {
                                                                                 <Form.Control.Feedback type="invalid">{touched.roof_type && errors.roof_type}</Form.Control.Feedback>
                                                                             </Form.Group>
 
+                                                                            <Form.Group as={Col} sm={4} controlId="formGridPanel">
+                                                                                <Form.Label>Painel</Form.Label>
+                                                                                <Form.Control
+                                                                                    type="text"
+                                                                                    onChange={handleChange}
+                                                                                    onBlur={handleBlur}
+                                                                                    value={values.panel}
+                                                                                    name="panel"
+                                                                                    isInvalid={!!errors.panel && touched.panel}
+                                                                                />
+                                                                                <Form.Control.Feedback type="invalid">{touched.panel && errors.panel}</Form.Control.Feedback>
+                                                                            </Form.Group>
+
+                                                                            <Form.Group as={Col} sm={2} controlId="formGridPanelAmount">
+                                                                                <Form.Label>Quantidade</Form.Label>
+                                                                                <InputGroup className="mb-2">
+                                                                                    <InputGroup.Text id="btnGroupPanelAmount">Un</InputGroup.Text>
+                                                                                    <Form.Control
+                                                                                        type="number"
+                                                                                        onChange={handleChange}
+                                                                                        onBlur={handleBlur}
+                                                                                        value={values.panel_amount}
+                                                                                        name="panel_amount"
+                                                                                        isInvalid={!!errors.panel_amount && touched.panel_amount}
+                                                                                        aria-label="Média mensal"
+                                                                                        aria-describedby="btnGroupPanelAmount"
+                                                                                    />
+                                                                                </InputGroup>
+                                                                                <Form.Control.Feedback type="invalid">{touched.panel_amount && errors.panel_amount}</Form.Control.Feedback>
+                                                                            </Form.Group>
+                                                                        </Row>
+
+                                                                        <Row className="mb-2">
                                                                             <Form.Group as={Col} sm={3} controlId="formGridPrice">
-                                                                                <Form.Label>Valor</Form.Label>
+                                                                                <Form.Label>Valor do sistema</Form.Label>
                                                                                 <InputGroup className="mb-2">
                                                                                     <InputGroup.Text id="btnGroupPrice">R$</InputGroup.Text>
                                                                                     <Form.Control
@@ -855,7 +1015,7 @@ export default function NewCustomer() {
                                                                             </Form.Group>
                                                                         </Row>
 
-                                                                        <Row className="mb-3">
+                                                                        <Row className="mt-5 mb-3">
                                                                             <Col>
                                                                                 <Row>
                                                                                     <Col>
@@ -1189,7 +1349,54 @@ export default function NewCustomer() {
 
                                                             <Col className="border-top mt-3 mb-3"></Col>
 
-                                                            <Row className="mb-3">
+                                                            {
+                                                                can(user, "finances", "read:any") && <Row className="mb-5">
+                                                                    <Form.Group as={Col} controlId="formGridAttachments">
+                                                                        <Row>
+                                                                            <Col className="col-row">
+                                                                                <h6 className="text-success">Receitas <FaDonate /></h6>
+                                                                            </Col>
+
+                                                                            <Col sm={1}>
+                                                                                <Button
+                                                                                    variant="outline-success"
+                                                                                    size="sm"
+                                                                                    onClick={handleShowModalNew}
+                                                                                    title="Criar uma nova receita para esse projeto."
+                                                                                >
+                                                                                    <FaPlus />
+                                                                                </Button>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row className="mt-2">
+                                                                            {
+                                                                                !!incomings.length ? <Col>
+                                                                                    <ListGroup>
+                                                                                        {
+                                                                                            incomings.map(income => {
+                                                                                                return <Incomings
+                                                                                                    key={income.id}
+                                                                                                    income={income}
+                                                                                                    handleListIncomings={handleListIncomings}
+                                                                                                />
+                                                                                            })
+                                                                                        }
+                                                                                    </ListGroup>
+                                                                                </Col> :
+                                                                                    <Col>
+                                                                                        <AlertMessage
+                                                                                            status="warning"
+                                                                                            message="Nenhuma uma receita registrada para esse projeto."
+                                                                                        />
+                                                                                    </Col>
+                                                                            }
+                                                                        </Row>
+                                                                    </Form.Group>
+                                                                </Row>
+                                                            }
+
+                                                            <Row className="mb-5">
                                                                 <Col>
                                                                     <Row>
                                                                         <div className="member-container">
@@ -1244,7 +1451,7 @@ export default function NewCustomer() {
                                                                 </Col>
                                                             </Row>
 
-                                                            <Row className="mb-3">
+                                                            <Row className="mb-5">
                                                                 <Col>
                                                                     <Row>
                                                                         <div className="member-container">
@@ -1283,7 +1490,7 @@ export default function NewCustomer() {
                                                                 </Col>
                                                             </Row>
 
-                                                            <Row className="mb-3">
+                                                            <Row className="mb-5">
                                                                 <Form.Group as={Col} controlId="formGridAttachments">
                                                                     <Row>
                                                                         <Col className="col-row">
@@ -1327,6 +1534,13 @@ export default function NewCustomer() {
                                                                     </Row>
                                                                 </Form.Group>
                                                             </Row>
+
+                                                            <NewIncomeModal
+                                                                project={projectData}
+                                                                show={showModalNew}
+                                                                handleListIncomings={handleListIncomings}
+                                                                handleCloseModal={handleCloseModalNew}
+                                                            />
 
                                                             <Modal show={showModalNewAttachment} onHide={handleCloseModalNewAttachment}>
                                                                 <Modal.Header closeButton>

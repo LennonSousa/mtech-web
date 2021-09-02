@@ -65,7 +65,7 @@ const EstimateItems: React.FC<EstimateItemsProps> = ({ estimateItem, estimateIte
 
                             setAmount(newAmount);
 
-                            handleEstimateItem(name, newAmount, Number(price.replace('.', '').replace(',', '.')));
+                            handleEstimateItem(name, newAmount, Number(price.replaceAll('.', '').replaceAll(',', '.')));
                         }
                         catch {
                             setAmount(1);
@@ -78,7 +78,7 @@ const EstimateItems: React.FC<EstimateItemsProps> = ({ estimateItem, estimateIte
 
                             setAmount(newAmount);
 
-                            handleEstimateItem(name, newAmount, Number(price.replace('.', '').replace(',', '.')));
+                            handleEstimateItem(name, newAmount, Number(price.replaceAll('.', '').replaceAll(',', '.')));
                         }
                         catch {
                             setAmount(1);
@@ -117,7 +117,7 @@ const EstimateItems: React.FC<EstimateItemsProps> = ({ estimateItem, estimateIte
                         type="text"
                         onChange={e => {
                             try {
-                                const newTotalPrice = amount * Number(prettifyCurrency(e.target.value).replace('.', '').replace(',', '.'));
+                                const newTotalPrice = amount * Number(prettifyCurrency(e.target.value).replaceAll('.', '').replaceAll(',', '.'));
 
                                 setTotalPrice(newTotalPrice);
 
@@ -132,7 +132,7 @@ const EstimateItems: React.FC<EstimateItemsProps> = ({ estimateItem, estimateIte
                         }}
                         onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
                             try {
-                                const newTotalPrice = amount * Number(prettifyCurrency(e.target.value).replace('.', '').replace(',', '.'));
+                                const newTotalPrice = amount * Number(prettifyCurrency(e.target.value).replaceAll('.', '').replaceAll(',', '.'));
 
                                 setTotalPrice(newTotalPrice);
 
@@ -174,7 +174,7 @@ const EstimateItems: React.FC<EstimateItemsProps> = ({ estimateItem, estimateIte
                     variant="outline-success"
                     className="button-link"
                     onClick={() => {
-                        handleEstimateItem(name, amount, Number(price.replace('.', '').replace(',', '.')));
+                        handleEstimateItem(name, amount, Number(price.replaceAll('.', '').replaceAll(',', '.')));
                     }}
                     disabled={!fieldsFormTouched}
                 >

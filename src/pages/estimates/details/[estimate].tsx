@@ -5,6 +5,7 @@ import { NextSeo } from 'next-seo';
 import { Col, Container, Button, ButtonGroup, Table, Row } from 'react-bootstrap';
 import { format } from 'date-fns';
 import {
+    FaFileExport,
     FaPencilAlt,
     FaPlug,
     FaStickyNote,
@@ -168,6 +169,17 @@ export default function PropertyDetails() {
                                                                             >
                                                                                 <FaPencilAlt />
                                                                             </Button>
+
+                                                                            {
+                                                                                can(user, "projects", "create") && <Button
+                                                                                    title="Criar projeto."
+                                                                                    variant="success"
+                                                                                    onClick={() => handleRoute(`/projects/new?from=${data.id}`)}
+                                                                                >
+                                                                                    <FaFileExport />
+                                                                                </Button>
+                                                                            }
+
                                                                             <Button
                                                                                 title="Imprimir orçamento."
                                                                                 variant="success"

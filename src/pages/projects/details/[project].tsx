@@ -9,6 +9,7 @@ import {
     FaFileAlt,
     FaHistory,
     FaPencilAlt,
+    FaSolarPanel,
     FaStickyNote,
     FaUserTag,
 } from 'react-icons/fa';
@@ -27,11 +28,9 @@ import ProjectAttachmentsRequired from '../../../components/ProjectAttachmentsRe
 import ProjectAttachments from '../../../components/ProjectAttachments';
 
 import Members from '../../../components/ProjectMembers';
-import { statesCities } from '../../../components/StatesCities';
-import { cpf, cnpj, cellphone } from '../../../components/InputMask/masks';
 import PageBack from '../../../components/PageBack';
 import { PageWaiting, PageType } from '../../../components/PageWaiting';
-import { AlertMessage, statusModal } from '../../../components/Interfaces/AlertMessage';
+import { AlertMessage } from '../../../components/Interfaces/AlertMessage';
 import { prettifyCurrency } from '../../../components/InputMask/masks';
 
 export default function PropertyDetails() {
@@ -392,6 +391,16 @@ export default function PropertyDetails() {
                                                                 </Row>
 
                                                                 <Col className="border-top mt-3 mb-3"></Col>
+
+                                                                <Row className="mt-5 mb-3">
+                                                                    <Col>
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-success">Projeto <FaSolarPanel /></h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+                                                                </Row>
 
                                                                 <Row className="mb-3">
                                                                     <Col sm={4} >
@@ -845,39 +854,41 @@ export default function PropertyDetails() {
 
                                                                 <Col className="border-top mt-3 mb-3"></Col>
 
-                                                                <Row className="mb-5">
-                                                                    <Col>
-                                                                        <Row>
-                                                                            <Col>
-                                                                                <h6 className="text-success">Receitas <FaDonate /></h6>
-                                                                            </Col>
-                                                                        </Row>
+                                                                {
+                                                                    can(user, "finances", "read:any") && <Row className="mt-5 mb-3">
+                                                                        <Col>
+                                                                            <Row>
+                                                                                <Col>
+                                                                                    <h6 className="text-success">Receitas <FaDonate /></h6>
+                                                                                </Col>
+                                                                            </Row>
 
-                                                                        <Row>
-                                                                            {
-                                                                                !!data.incomings.length ? <Col>
-                                                                                    <ListGroup>
-                                                                                        {
-                                                                                            data.incomings.map((income, index) => {
-                                                                                                return <Incomings
-                                                                                                    key={index}
-                                                                                                    income={income}
-                                                                                                    canEdit={false}
-                                                                                                />
-                                                                                            })
-                                                                                        }
-                                                                                    </ListGroup>
-                                                                                </Col> :
-                                                                                    <Col>
-                                                                                        <AlertMessage
-                                                                                            status="warning"
-                                                                                            message="Nenhuma uma receita registrada para esse projeto."
-                                                                                        />
-                                                                                    </Col>
-                                                                            }
-                                                                        </Row>
-                                                                    </Col>
-                                                                </Row>
+                                                                            <Row>
+                                                                                {
+                                                                                    !!data.incomings.length ? <Col>
+                                                                                        <ListGroup>
+                                                                                            {
+                                                                                                data.incomings.map((income, index) => {
+                                                                                                    return <Incomings
+                                                                                                        key={index}
+                                                                                                        income={income}
+                                                                                                        canEdit={false}
+                                                                                                    />
+                                                                                                })
+                                                                                            }
+                                                                                        </ListGroup>
+                                                                                    </Col> :
+                                                                                        <Col>
+                                                                                            <AlertMessage
+                                                                                                status="warning"
+                                                                                                message="Nenhuma uma receita registrada para esse projeto."
+                                                                                            />
+                                                                                        </Col>
+                                                                                }
+                                                                            </Row>
+                                                                        </Col>
+                                                                    </Row>
+                                                                }
 
                                                                 <Row className="mb-5">
                                                                     <Col>

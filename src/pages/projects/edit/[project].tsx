@@ -5,7 +5,7 @@ import { NextSeo } from 'next-seo';
 import { Button, Col, Container, Form, InputGroup, ListGroup, Modal, Row, Spinner } from 'react-bootstrap';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { FaHistory, FaFileAlt, FaPlus, FaUserTie, FaUserTag, FaDonate } from 'react-icons/fa';
+import { FaHistory, FaFileAlt, FaPlus, FaUserTie, FaUserTag, FaDonate, FaSolarPanel } from 'react-icons/fa';
 import { format } from 'date-fns';
 import cep, { CEP } from 'cep-promise';
 import { CircularProgressbar } from 'react-circular-progressbar';
@@ -799,6 +799,16 @@ export default function NewCustomer() {
                                                                         </Row>
 
                                                                         <Col className="border-top mt-3 mb-3"></Col>
+
+                                                                        <Row className="mt-5 mb-3">
+                                                                            <Col>
+                                                                                <Row>
+                                                                                    <Col>
+                                                                                        <h6 className="text-success">Projeto <FaSolarPanel /></h6>
+                                                                                    </Col>
+                                                                                </Row>
+                                                                            </Col>
+                                                                        </Row>
 
                                                                         <Row className="mb-2">
                                                                             <Form.Group as={Col} sm={4} controlId="formGridEnergyCompany">

@@ -53,7 +53,7 @@ export default function TextEditor({ type, data }: WaitingModalProps) {
 
             }
         }
-    }, [data]);
+    }, [data, type]);
 
     const handleSaveText = async (state: EditorState) => {
         if (data) {

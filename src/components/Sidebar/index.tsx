@@ -456,7 +456,7 @@ const Sidebar: React.FC = () => {
                         <Accordion.Collapse eventKey="store">
                             <Card.Body className={styles.menuCardBody}>
                                 {
-                                    can(user, "finances", "update:any") && <Link href="/store">
+                                    can(user, "store", "update:any") && <Link href="/store">
                                         <a title="Editar as informações da loja." data-title="Editar as informações da loja.">
                                             <Row
                                                 className={

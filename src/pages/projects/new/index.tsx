@@ -5,7 +5,7 @@ import { NextSeo } from 'next-seo';
 import { Button, Col, Container, Form, InputGroup, ListGroup, Row, Spinner } from 'react-bootstrap';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { FaHistory, FaUserTie, FaUserTag } from 'react-icons/fa';
+import { FaHistory, FaSolarPanel, FaUserTie, FaUserTag } from 'react-icons/fa';
 import { format } from 'date-fns';
 import cep, { CEP } from 'cep-promise';
 
@@ -673,6 +673,16 @@ export default function NewProject() {
                                                         </Row>
 
                                                         <Col className="border-top mt-3 mb-3"></Col>
+
+                                                        <Row className="mt-5 mb-3">
+                                                            <Col>
+                                                                <Row>
+                                                                    <Col>
+                                                                        <h6 className="text-success">Projeto <FaSolarPanel /></h6>
+                                                                    </Col>
+                                                                </Row>
+                                                            </Col>
+                                                        </Row>
 
                                                         <Row className="mb-2">
                                                             <Form.Group as={Col} sm={4} controlId="formGridEnergyCompany">

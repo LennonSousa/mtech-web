@@ -2,6 +2,7 @@ import { ProjectStatus } from '../ProjectStatus';
 import { ProjectEvent } from '../ProjectEvents';
 import { ProjectAttachmentRequired } from '../ProjectAttachmentsRequired';
 import { ProjectAttachment } from '../ProjectAttachments';
+import { Income } from '../Incomings';
 import { User } from '../Users';
 
 export interface Project {
@@ -19,13 +20,18 @@ export interface Project {
     complement: string;
     city: string;
     state: string;
+    energy_company: string;
+    unity: string;
+    months_average: number;
+    average_increase: number;
     coordinates: string;
-    capacity: string;
+    capacity: number;
     inversor: string;
     roof_orientation: string;
     roof_type: string;
+    panel: string;
+    panel_amount: number;
     price: number;
-    seler: string;
     notes: string;
     financier_same: boolean;
     financier: string;
@@ -44,9 +50,10 @@ export interface Project {
     created_at: Date;
     updated_by: string;
     updated_at: Date;
-    seller_id: User;
     status: ProjectStatus;
+    seller: User | null;
     events: ProjectEvent[];
     attachmentsRequired: ProjectAttachmentRequired[];
     attachments: ProjectAttachment[];
+    incomings: Income[];
 }

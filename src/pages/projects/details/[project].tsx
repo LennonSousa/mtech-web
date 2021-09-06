@@ -2,20 +2,16 @@ import { useContext, useEffect, useState } from 'react';
 import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { NextSeo } from 'next-seo';
-import Link from 'next/link';
 import { Col, Container, Button, ButtonGroup, ListGroup, Row } from 'react-bootstrap';
 import { format } from 'date-fns';
 import {
-    FaCheck,
-    FaExclamationCircle,
+    FaDonate,
     FaFileAlt,
     FaHistory,
-    FaIdCard,
     FaPencilAlt,
-    FaPlus,
-    FaRegFile,
-    FaUserTie,
+    FaSolarPanel,
     FaStickyNote,
+    FaUserTag,
 } from 'react-icons/fa';
 
 import api from '../../../api/api';
@@ -24,13 +20,18 @@ import { SideBarContext } from '../../../contexts/SideBarContext';
 import { AuthContext } from '../../../contexts/AuthContext';
 import { can } from '../../../components/Users';
 import { Project } from '../../../components/Projects';
-import Members from '../../../components/ProjectMembers';
-import { DocsProject } from '../../../components/DocsProject';
-import EventsProject from '../../../components/EventsProject';
+import Incomings from '../../../components/Incomings';
+import { EventProject } from '../../../components/EventsProject';
+import ProjectEvents from '../../../components/ProjectEvents';
+import { AttachmentRequired } from '../../../components/AttachmentsRequiredProject';
+import ProjectAttachmentsRequired from '../../../components/ProjectAttachmentsRequired';
 import ProjectAttachments from '../../../components/ProjectAttachments';
+
+import Members from '../../../components/ProjectMembers';
 import PageBack from '../../../components/PageBack';
-import { AlertMessage } from '../../../components/Interfaces/AlertMessage';
 import { PageWaiting, PageType } from '../../../components/PageWaiting';
+import { AlertMessage } from '../../../components/Interfaces/AlertMessage';
+import { prettifyCurrency } from '../../../components/InputMask/masks';
 
 export default function PropertyDetails() {
     const router = useRouter();
@@ -39,7 +40,8 @@ export default function PropertyDetails() {
     const { handleItemSideBar, handleSelectedMenu } = useContext(SideBarContext);
     const { loading, user } = useContext(AuthContext);
 
-    const [projectData, setProjectData] = useState<Project>();
+    const [data, setData] = useState<Project>();
+    const [documentType, setDocumentType] = useState("CPF");
 
     const [loadingData, setLoadingData] = useState(true);
     const [hasErrors, setHasErrors] = useState(false);
@@ -53,37 +55,70 @@ export default function PropertyDetails() {
 
             if (can(user, "projects", "read:any")) {
                 if (project) {
-
                     api.get(`projects/${project}`).then(res => {
-                        let projecRes: Project = res.data;
+                        let projectRes: Project = res.data;
 
-                        api.get('docs/project').then(res => {
-                            let docsProject: DocsProject[] = res.data;
+                        if (projectRes.document.length > 14)
+                            setDocumentType("CNPJ");
 
-                            docsProject = docsProject.filter(docProject => { return docProject.active });
+                        api.get('events/project').then(res => {
+                            let eventsProject: EventProject[] = res.data;
 
-                            projecRes = {
-                                ...projecRes, docs: docsProject.map(docProject => {
-                                    const projectDoc = projecRes.docs.find(projectDoc => { return projectDoc.doc.id === docProject.id });
+                            eventsProject = eventsProject.filter(eventProject => { return eventProject.active });
 
-                                    if (projectDoc)
-                                        return { ...projectDoc, project: projecRes };
+                            projectRes = {
+                                ...projectRes, events: eventsProject.map(eventProject => {
+                                    const projectEvent = projectRes.events.find(projectEvent => { return projectEvent.event.id === eventProject.id });
+
+                                    if (projectEvent)
+                                        return { ...projectEvent, project: projectRes };
 
                                     return {
                                         id: '0',
-                                        path: '',
+                                        notes: '',
+                                        done: false,
+                                        done_at: new Date(),
+                                        event: eventProject,
+                                        project: projectRes,
+                                    };
+                                })
+                            }
+                        }).catch(err => {
+                            console.log('Error to get events project to edit, ', err);
+
+                            setTypeLoadingMessage("error");
+                            setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
+                            setHasErrors(true);
+                        });
+
+                        api.get('attachments-required/project').then(res => {
+                            let attachmentsRequiredProject: AttachmentRequired[] = res.data;
+
+                            attachmentsRequiredProject = attachmentsRequiredProject.filter(attachmentRequired => { return attachmentRequired.active });
+
+                            projectRes = {
+                                ...projectRes, attachmentsRequired: attachmentsRequiredProject.map(attachmentRequired => {
+                                    const projectAttachmentRequired = projectRes.attachmentsRequired.find(projectAttachmentRequired => {
+                                        return projectAttachmentRequired.attachmentRequired.id === attachmentRequired.id
+                                    });
+
+                                    if (projectAttachmentRequired)
+                                        return { ...projectAttachmentRequired, project: projectRes };
+
+                                    return {
+                                        id: '0',
+                                        path: null,
                                         received_at: new Date(),
-                                        checked: false,
-                                        project: projecRes,
-                                        doc: docProject,
+                                        attachmentRequired: attachmentRequired,
+                                        project: projectRes,
                                     };
                                 })
                             }
 
-                            setProjectData(projecRes);
+                            setData(projectRes);
                             setLoadingData(false);
                         }).catch(err => {
-                            console.log('Error to get docs project to edit, ', err);
+                            console.log('Error to get attachments required project to edit, ', err);
 
                             setTypeLoadingMessage("error");
                             setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
@@ -108,18 +143,18 @@ export default function PropertyDetails() {
     return (
         <>
             <NextSeo
-                title="Detalhes do projeto"
-                description="Detalhes do projeto da plataforma de gerenciamento da Bioma consultoria."
+                title="Editar projeto"
+                description="Editar projeto da plataforma de gerenciamento da Mtech Solar."
                 openGraph={{
-                    url: 'https://app.biomaconsultoria.com',
-                    title: 'Detalhes do projeto',
-                    description: 'Detalhes do projeto da plataforma de gerenciamento da Bioma consultoria.',
+                    url: 'https://app.mtechsolar.com.br',
+                    title: 'Editar projeto',
+                    description: 'Editar projeto da plataforma de gerenciamento da Mtech Solar.',
                     images: [
                         {
-                            url: 'https://app.biomaconsultoria.com/assets/images/logo-bioma.jpg',
-                            alt: 'Detalhes do projeto | Plataforma Bioma',
+                            url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
+                            alt: 'Editar projeto | Plataforma Mtech',
                         },
-                        { url: 'https://app.biomaconsultoria.com/assets/images/logo-bioma.jpg' },
+                        { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
                     ],
                 }}
             />
@@ -136,7 +171,7 @@ export default function PropertyDetails() {
                                     /> :
                                         <>
                                             {
-                                                !projectData ? <PageWaiting status="waiting" /> :
+                                                !data ? <PageWaiting status="waiting" /> :
                                                     <Container className="content-page">
                                                         <Row>
                                                             <Col>
@@ -150,7 +185,7 @@ export default function PropertyDetails() {
                                                                             <Button
                                                                                 title="Editar projeto."
                                                                                 variant="success"
-                                                                                onClick={() => handleRoute(`/projects/edit/${projectData.id}`)}
+                                                                                onClick={() => handleRoute(`/projects/edit/${data.id}`)}
                                                                             >
                                                                                 <FaPencilAlt />
                                                                             </Button>
@@ -162,44 +197,30 @@ export default function PropertyDetails() {
                                                                     <Col>
                                                                         <Row>
                                                                             <Col>
-                                                                                <h6 className="text-success">Membros</h6>
+                                                                                <h6 className="text-success">Vendedor</h6>
                                                                             </Col>
                                                                         </Row>
                                                                         <Row>
-                                                                            {
-                                                                                projectData.members.map(member => {
-                                                                                    return <Members
-                                                                                        key={member.id}
-                                                                                        member={member}
-                                                                                        canRemove={false}
-                                                                                    />
-                                                                                })
-                                                                            }
+                                                                            <Members name={data.seller ? data.seller.name : data.created_by} />
                                                                         </Row>
                                                                     </Col>
                                                                 </Row>
 
                                                                 <Row className="mb-3">
                                                                     <Col sm={6}>
-                                                                        <Row className="align-items-center">
-                                                                            <Col className="col-row">
-                                                                                <Link href={`/customers/details/${projectData.customer.id}`}>
-                                                                                    <a title="Ir para detalhes do cliente." data-title="Ir para detalhes do cliente.">
-                                                                                        <h3 className="form-control-plaintext text-success">{projectData.customer.name}</h3>
-                                                                                    </a>
-                                                                                </Link>
-                                                                            </Col>
+                                                                        <h3 className="form-control-plaintext text-success">{data.customer}</h3>
+                                                                    </Col>
 
-                                                                            <Col className="col-row">
-                                                                                <ButtonGroup size="sm" className="col-12">
-                                                                                    <Button
-                                                                                        variant="success"
-                                                                                        title="Criar um novo projeto para este cliente."
-                                                                                        onClick={() => handleRoute(`/projects/new?customer=${projectData.customer.id}`)}
-                                                                                    >
-                                                                                        <FaPlus /><FaFileAlt />
-                                                                                    </Button>
-                                                                                </ButtonGroup>
+                                                                    <Col sm={4} >
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">{documentType}</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.document}</h6>
                                                                             </Col>
                                                                         </Row>
                                                                     </Col>
@@ -209,27 +230,13 @@ export default function PropertyDetails() {
                                                                     <Col sm={4}>
                                                                         <Row>
                                                                             <Col>
-                                                                                <span className="text-success">Tipo de projeto</span>
+                                                                                <span className="text-success">Celular</span>
                                                                             </Col>
                                                                         </Row>
 
                                                                         <Row>
                                                                             <Col>
-                                                                                <h6 className="text-secondary">{projectData.type.name}</h6>
-                                                                            </Col>
-                                                                        </Row>
-                                                                    </Col>
-
-                                                                    <Col sm={4} >
-                                                                        <Row>
-                                                                            <Col>
-                                                                                <span className="text-success">Linha de crédito</span>
-                                                                            </Col>
-                                                                        </Row>
-
-                                                                        <Row>
-                                                                            <Col>
-                                                                                <h6 className="text-secondary">{projectData.line.name}</h6>
+                                                                                <h6 className="text-secondary">{data.phone}</h6>
                                                                             </Col>
                                                                         </Row>
                                                                     </Col>
@@ -237,17 +244,27 @@ export default function PropertyDetails() {
                                                                     <Col sm={4} >
                                                                         <Row>
                                                                             <Col>
-                                                                                <span className="text-success">Fazenda/imóvel</span>
+                                                                                <span className="text-success">Celular secundário</span>
                                                                             </Col>
                                                                         </Row>
 
                                                                         <Row>
                                                                             <Col>
-                                                                                <Link href={`/properties/details/${projectData.property.id}`}>
-                                                                                    <a title="Ir para detalhes do imóvel." data-title="Ir para detalhes do imóvel.">
-                                                                                        <h6 className="text-secondary">{projectData.property.name}</h6>
-                                                                                    </a>
-                                                                                </Link>
+                                                                                <h6 className="text-secondary">{data.cellphone}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+
+                                                                    <Col sm={4} >
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">E-mail</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.email}</h6>
                                                                             </Col>
                                                                         </Row>
                                                                     </Col>
@@ -257,45 +274,57 @@ export default function PropertyDetails() {
                                                                     <Col sm={4}>
                                                                         <Row>
                                                                             <Col>
-                                                                                <span className="text-success">Banco</span>
+                                                                                <span className="text-success">Outros contatos</span>
                                                                             </Col>
                                                                         </Row>
 
                                                                         <Row>
                                                                             <Col>
-                                                                                <Link href={`/banks/details/${projectData.bank.id}`}>
-                                                                                    <a title="Ir para detalhes do banco." data-title="Ir para detalhes do banco.">
-                                                                                        <h6 className="text-secondary">{`${projectData.bank.institution.name} - ${projectData.bank.sector}`}</h6>
-                                                                                    </a>
-                                                                                </Link>
+                                                                                <h6 className="text-secondary">{data.contacts}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+                                                                </Row>
+
+                                                                <Row className="mb-3">
+                                                                    <Col sm={2}>
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">CEP</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.zip_code}</h6>
                                                                             </Col>
                                                                         </Row>
                                                                     </Col>
 
-                                                                    <Col sm={4} >
+                                                                    <Col sm={8}>
                                                                         <Row>
                                                                             <Col>
-                                                                                <span className="text-success">Analista no banco</span>
+                                                                                <span className="text-success">Rua</span>
                                                                             </Col>
                                                                         </Row>
 
                                                                         <Row>
                                                                             <Col>
-                                                                                <h6 className="text-secondary">{projectData.analyst}</h6>
+                                                                                <h6 className="text-secondary">{data.street}</h6>
                                                                             </Col>
                                                                         </Row>
                                                                     </Col>
 
-                                                                    <Col sm={4} >
+                                                                    <Col sm={2} >
                                                                         <Row>
                                                                             <Col>
-                                                                                <span className="text-success">Contatos do analista</span>
+                                                                                <span className="text-success">Número</span>
                                                                             </Col>
                                                                         </Row>
 
                                                                         <Row>
                                                                             <Col>
-                                                                                <h6 className="text-secondary text-wrap">{projectData.analyst_contact}</h6>
+                                                                                <h6 className="text-secondary">{data.number}</h6>
                                                                             </Col>
                                                                         </Row>
                                                                     </Col>
@@ -303,6 +332,238 @@ export default function PropertyDetails() {
 
                                                                 <Row className="mb-3">
                                                                     <Col sm={4}>
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Complemento</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.complement}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+                                                                </Row>
+
+                                                                <Row className="mb-3">
+                                                                    <Col sm={6}>
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Bairro</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.neighborhood}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+
+                                                                    <Col sm={2}>
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Cidade</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.city}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+
+                                                                    <Col sm={4} >
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Estado</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.state}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+                                                                </Row>
+
+                                                                <Col className="border-top mt-3 mb-3"></Col>
+
+                                                                <Row className="mt-5 mb-3">
+                                                                    <Col>
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-success">Projeto <FaSolarPanel /></h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+                                                                </Row>
+
+                                                                <Row className="mb-3">
+                                                                    <Col sm={4} >
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Concessionária de energia</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.energy_company}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+
+                                                                    <Col sm={4} >
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Unidade consumidora (UC)</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.unity}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+
+                                                                    <Col sm={2}>
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Média mensal</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{`${prettifyCurrency(Number(data.months_average).toFixed(2))} kWh`} </h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+
+                                                                    <Col sm={2}>
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Previsão de aumento</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{`${prettifyCurrency(Number(data.average_increase).toFixed(2))} kWh`} </h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+                                                                </Row>
+
+                                                                <Row className="mb-3">
+                                                                    <Col sm={4} >
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Coordenadas</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.coordinates}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+
+                                                                    <Col sm={3}>
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Capacidade Total do Sistema Fotovoltaico</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{`${prettifyCurrency(Number(data.capacity).toFixed(2))} kWp`} </h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+
+                                                                    <Col sm={5} >
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Inversor</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.inversor}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+                                                                </Row>
+
+                                                                <Row className="mb-3">
+                                                                    <Col sm={3} >
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Orientação do telhado</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.roof_orientation}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+
+                                                                    <Col sm={3} >
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Tipo do telhado</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.roof_type}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+
+                                                                    <Col sm={4} >
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Painel</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.panel}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+
+                                                                    <Col sm={2} >
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Quantidade</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.panel_amount}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+                                                                </Row>
+
+                                                                <Row className="mb-3">
+                                                                    <Col sm={3}>
                                                                         <Row>
                                                                             <Col>
                                                                                 <span className="text-success">Valor</span>
@@ -314,68 +575,52 @@ export default function PropertyDetails() {
                                                                                 <h6
                                                                                     className="text-secondary"
                                                                                 >
-                                                                                    {`R$ ${Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(projectData.value)}`}
+                                                                                    {`R$ ${Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(data.price)}`}
                                                                                 </h6>
                                                                             </Col>
                                                                         </Row>
                                                                     </Col>
+                                                                </Row>
 
-                                                                    <Col sm={3} >
-                                                                        <Row>
-                                                                            <Col>
-                                                                                <span className="text-success">Acordo %</span>
-                                                                            </Col>
-                                                                        </Row>
+                                                                <Col className="border-top mt-3 mb-3"></Col>
 
-                                                                        <Row>
-                                                                            <Col>
-                                                                                <h6 className="text-secondary">{String(projectData.deal).replace(".", ",")}</h6>
-                                                                            </Col>
-                                                                        </Row>
+                                                                <Row>
+                                                                    <Col>
+                                                                        <h6 className="text-success">Financiador <FaUserTag /></h6>
                                                                     </Col>
-
-                                                                    <Col sm={2} >
-                                                                        <Row>
-                                                                            <Col>
-                                                                                <span className="text-success">Pago?</span>
-                                                                            </Col>
-                                                                        </Row>
-
-                                                                        <Row>
-                                                                            <Col>
-                                                                                <h6 className="text-secondary">{projectData.paid ? "Sim" : "Não"}</h6>
-                                                                            </Col>
-                                                                        </Row>
-                                                                    </Col>
-
-                                                                    {
-                                                                        projectData.paid && <Col sm={3} >
-                                                                            <Row>
-                                                                                <Col>
-                                                                                    <span className="text-success">Data do pagemento</span>
-                                                                                </Col>
-                                                                            </Row>
-
-                                                                            <Row>
-                                                                                <Col>
-                                                                                    <h6 className="text-secondary">{format(new Date(projectData.paid_date), 'dd/MM/yyyy')}</h6>
-                                                                                </Col>
-                                                                            </Row>
-                                                                        </Col>
-                                                                    }
                                                                 </Row>
 
                                                                 <Row className="mb-3">
-                                                                    <Col sm={2}>
+                                                                    <Col sm={6}>
+                                                                        <h6 className="form-control-plaintext text-success">{data.financier}</h6>
+                                                                    </Col>
+
+                                                                    <Col sm={4} >
                                                                         <Row>
                                                                             <Col>
-                                                                                <span className="text-success">Contrato</span>
+                                                                                <span className="text-success">{documentType}</span>
                                                                             </Col>
                                                                         </Row>
 
                                                                         <Row>
                                                                             <Col>
-                                                                                <h6 className="text-secondary">{projectData.contract}</h6>
+                                                                                <h6 className="text-secondary">{data.financier_document}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+                                                                </Row>
+
+                                                                <Row className="mb-3">
+                                                                    <Col sm={4}>
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">RG</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.financier_rg}</h6>
                                                                             </Col>
                                                                         </Row>
                                                                     </Col>
@@ -383,13 +628,131 @@ export default function PropertyDetails() {
                                                                     <Col sm={4} >
                                                                         <Row>
                                                                             <Col>
-                                                                                <span className="text-success">Situação do projeto</span>
+                                                                                <span className="text-success">Celular</span>
                                                                             </Col>
                                                                         </Row>
 
                                                                         <Row>
                                                                             <Col>
-                                                                                <h6 className="text-secondary">{projectData.status.name}</h6>
+                                                                                <h6 className="text-secondary">{data.financier_cellphone}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+
+                                                                    <Col sm={4} >
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">E-mail</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.financier_email}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+                                                                </Row>
+
+                                                                <Row className="mb-3">
+                                                                    <Col sm={2}>
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">CEP</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.financier_zip_code}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+
+                                                                    <Col sm={8}>
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Rua</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.financier_street}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+
+                                                                    <Col sm={2} >
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Número</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.financier_number}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+                                                                </Row>
+
+                                                                <Row className="mb-3">
+                                                                    <Col sm={4}>
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Complemento</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.financier_complement}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+                                                                </Row>
+
+                                                                <Row className="mb-3">
+                                                                    <Col sm={6}>
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Bairro</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.financier_neighborhood}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+
+                                                                    <Col sm={2}>
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Cidade</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.financier_city}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+
+                                                                    <Col sm={4} >
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Estado</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.financier_state}</h6>
                                                                             </Col>
                                                                         </Row>
                                                                     </Col>
@@ -399,35 +762,33 @@ export default function PropertyDetails() {
                                                                     <Col >
                                                                         <Row>
                                                                             <Col>
-                                                                                <h6 className="text-success">Observação {projectData.warnings && <FaStickyNote />}</h6>
+                                                                                <h6 className="text-success">Observação <FaStickyNote /></h6>
                                                                             </Col>
                                                                         </Row>
 
                                                                         <Row>
                                                                             <Col>
-                                                                                <span className="text-secondary text-wrap">{projectData.notes}</span>
+                                                                                <span className="text-secondary text-wrap">{data.notes}</span>
                                                                             </Col>
                                                                         </Row>
                                                                     </Col>
                                                                 </Row>
 
-                                                                {
-                                                                    projectData.warnings && <Row className="mb-3">
-                                                                        <Col >
-                                                                            <Row>
-                                                                                <Col>
-                                                                                    <h6 className="text-success">Pendências {projectData.warnings && <FaExclamationCircle />}</h6>
-                                                                                </Col>
-                                                                            </Row>
+                                                                <Row className="mb-3">
+                                                                    <Col sm={4} >
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Situação do projeto</span>
+                                                                            </Col>
+                                                                        </Row>
 
-                                                                            <Row>
-                                                                                <Col>
-                                                                                    <span className="text-secondary text-wrap">{projectData.warnings_text}</span>
-                                                                                </Col>
-                                                                            </Row>
-                                                                        </Col>
-                                                                    </Row>
-                                                                }
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{data.status.name}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+                                                                </Row>
 
                                                                 <Col className="border-top mt-3 mb-3"></Col>
 
@@ -441,7 +802,7 @@ export default function PropertyDetails() {
 
                                                                         <Row>
                                                                             <Col>
-                                                                                <h6 className="text-secondary">{format(new Date(projectData.created_at), 'dd/MM/yyyy')}</h6>
+                                                                                <h6 className="text-secondary">{format(new Date(data.created_at), 'dd/MM/yyyy')}</h6>
                                                                             </Col>
                                                                         </Row>
                                                                     </Col>
@@ -455,7 +816,7 @@ export default function PropertyDetails() {
 
                                                                         <Row>
                                                                             <Col>
-                                                                                <h6 className="text-secondary">{projectData.created_by}</h6>
+                                                                                <h6 className="text-secondary">{data.created_by}</h6>
                                                                             </Col>
                                                                         </Row>
                                                                     </Col>
@@ -471,7 +832,7 @@ export default function PropertyDetails() {
 
                                                                         <Row>
                                                                             <Col>
-                                                                                <h6 className="text-secondary">{format(new Date(projectData.updated_at), 'dd/MM/yyyy')}</h6>
+                                                                                <h6 className="text-secondary">{format(new Date(data.updated_at), 'dd/MM/yyyy')}</h6>
                                                                             </Col>
                                                                         </Row>
                                                                     </Col>
@@ -485,69 +846,116 @@ export default function PropertyDetails() {
 
                                                                         <Row>
                                                                             <Col>
-                                                                                <h6 className="text-secondary">{projectData.updated_by}</h6>
+                                                                                <h6 className="text-secondary">{data.updated_by}</h6>
                                                                             </Col>
                                                                         </Row>
                                                                     </Col>
                                                                 </Row>
 
-                                                                <Row className="mb-3">
+                                                                <Col className="border-top mt-3 mb-3"></Col>
+
+                                                                {
+                                                                    can(user, "finances", "read:any") && <Row className="mt-5 mb-3">
+                                                                        <Col>
+                                                                            <Row>
+                                                                                <Col>
+                                                                                    <h6 className="text-success">Receitas <FaDonate /></h6>
+                                                                                </Col>
+                                                                            </Row>
+
+                                                                            <Row>
+                                                                                {
+                                                                                    !!data.incomings.length ? <Col>
+                                                                                        <ListGroup>
+                                                                                            {
+                                                                                                data.incomings.map((income, index) => {
+                                                                                                    return <Incomings
+                                                                                                        key={index}
+                                                                                                        income={income}
+                                                                                                        canEdit={false}
+                                                                                                    />
+                                                                                                })
+                                                                                            }
+                                                                                        </ListGroup>
+                                                                                    </Col> :
+                                                                                        <Col>
+                                                                                            <AlertMessage
+                                                                                                status="warning"
+                                                                                                message="Nenhuma uma receita registrada para esse projeto."
+                                                                                            />
+                                                                                        </Col>
+                                                                                }
+                                                                            </Row>
+                                                                        </Col>
+                                                                    </Row>
+                                                                }
+
+                                                                <Row className="mb-5">
                                                                     <Col>
                                                                         <Row>
                                                                             <Col>
-                                                                                <h6 className="text-success">Documentação <FaIdCard /></h6>
+                                                                                <h6 className="text-success">Histórico <FaHistory /></h6>
                                                                             </Col>
                                                                         </Row>
 
-                                                                        <Row>
-                                                                            <Col>
-                                                                                <ListGroup className="mb-3">
-                                                                                    {
-                                                                                        projectData.docs.map((doc, index) => {
-                                                                                            return <ListGroup.Item key={index} action as="div" variant="light">
-                                                                                                <Row>
-                                                                                                    <Col className={`${doc.checked ? 'text-success' : ''}`} sm={8}>
-                                                                                                        {
-                                                                                                            doc.checked ? <FaCheck /> :
-                                                                                                                <FaRegFile />} <label>{doc.doc.name} </label>
-                                                                                                    </Col>
+                                                                        <Row className="mt-2">
+                                                                            {
+                                                                                !!data.events.length ? <Col>
+                                                                                    <Row className="mb-2" style={{ padding: '0 1rem' }}>
+                                                                                        <Col sm={10}>
+                                                                                            <h6>Descrição</h6>
+                                                                                        </Col>
 
-                                                                                                    {
-                                                                                                        doc.checked && <>
-                                                                                                            <Col sm={2}>Data do recebimento</Col>
+                                                                                        <Col className="text-center">
+                                                                                            <h6>Data de registro</h6>
+                                                                                        </Col>
+                                                                                    </Row>
 
-                                                                                                            <Col sm={2}>
-                                                                                                                {format(new Date(doc.received_at), 'dd/MM/yyyy')}
-                                                                                                            </Col>
-                                                                                                        </>
-                                                                                                    }
-                                                                                                </Row>
-                                                                                            </ListGroup.Item>
-                                                                                        })
-                                                                                    }
-                                                                                </ListGroup>
-                                                                            </Col>
+                                                                                    <Row>
+                                                                                        <Col>
+                                                                                            <ListGroup>
+                                                                                                {
+                                                                                                    data.events.map((event, index) => {
+                                                                                                        return <ProjectEvents
+                                                                                                            key={index}
+                                                                                                            projectEvent={event}
+                                                                                                            listEvents={data.events}
+                                                                                                            canEdit={false}
+                                                                                                        />
+                                                                                                    })
+                                                                                                }
+                                                                                            </ListGroup>
+                                                                                        </Col>
+                                                                                    </Row>
+                                                                                </Col> :
+                                                                                    <Col>
+                                                                                        <AlertMessage
+                                                                                            status="warning"
+                                                                                            message="Nenhum evento registrado para esse projeto."
+                                                                                        />
+                                                                                    </Col>
+                                                                            }
                                                                         </Row>
                                                                     </Col>
                                                                 </Row>
 
-                                                                <Row className="mb-3">
+                                                                <Row className="mb-5">
                                                                     <Col>
                                                                         <Row>
                                                                             <Col>
-                                                                                <h6 className="text-success">Anexos <FaFileAlt /></h6>
+                                                                                <h6 className="text-success">Anexos obrigatórios <FaFileAlt /></h6>
                                                                             </Col>
                                                                         </Row>
 
                                                                         <Row>
                                                                             {
-                                                                                !!projectData.attachments.length ? <Col>
+                                                                                !!data.attachmentsRequired.length ? <Col>
                                                                                     <ListGroup>
                                                                                         {
-                                                                                            projectData.attachments.map((attachment, index) => {
-                                                                                                return <ProjectAttachments
+                                                                                            data.attachmentsRequired.map((attachmentRequired, index) => {
+                                                                                                return <ProjectAttachmentsRequired
                                                                                                     key={index}
-                                                                                                    attachment={attachment}
+                                                                                                    attachment={attachmentRequired}
                                                                                                     canEdit={false}
                                                                                                 />
                                                                                             })
@@ -565,47 +973,33 @@ export default function PropertyDetails() {
                                                                     </Col>
                                                                 </Row>
 
-                                                                <Row className="mb-3">
+                                                                <Row className="mb-5">
                                                                     <Col>
                                                                         <Row>
                                                                             <Col>
-                                                                                <h6 className="text-success">Histórico <FaHistory /></h6>
+                                                                                <h6 className="text-success">Outros anexos <FaFileAlt /></h6>
                                                                             </Col>
                                                                         </Row>
 
-                                                                        <Row className="mt-2">
+                                                                        <Row>
                                                                             {
-                                                                                !!projectData.events.length ? <Col>
-                                                                                    <Row className="mb-2" style={{ padding: '0 1rem' }}>
-                                                                                        <Col sm={10}>
-                                                                                            <h6>Descrição</h6>
-                                                                                        </Col>
-
-                                                                                        <Col className="text-center">
-                                                                                            <h6>Data de registro</h6>
-                                                                                        </Col>
-                                                                                    </Row>
-
-                                                                                    <Row>
-                                                                                        <Col>
-                                                                                            <ListGroup>
-                                                                                                {
-                                                                                                    projectData.events.map((event, index) => {
-                                                                                                        return <EventsProject
-                                                                                                            key={index}
-                                                                                                            event={event}
-                                                                                                            canEdit={false}
-                                                                                                        />
-                                                                                                    })
-                                                                                                }
-                                                                                            </ListGroup>
-                                                                                        </Col>
-                                                                                    </Row>
+                                                                                !!data.attachments.length ? <Col>
+                                                                                    <ListGroup>
+                                                                                        {
+                                                                                            data.attachments.map((attachment, index) => {
+                                                                                                return <ProjectAttachments
+                                                                                                    key={index}
+                                                                                                    attachment={attachment}
+                                                                                                    canEdit={false}
+                                                                                                />
+                                                                                            })
+                                                                                        }
+                                                                                    </ListGroup>
                                                                                 </Col> :
                                                                                     <Col>
                                                                                         <AlertMessage
                                                                                             status="warning"
-                                                                                            message="Nenhum evento registrado para esse projeto."
+                                                                                            message="Nenhum anexo enviado para esse projeto."
                                                                                         />
                                                                                     </Col>
                                                                             }

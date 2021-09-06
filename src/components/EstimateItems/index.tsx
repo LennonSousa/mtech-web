@@ -65,7 +65,7 @@ const EstimateItems: React.FC<EstimateItemsProps> = ({ estimateItem, estimateIte
 
                             setAmount(newAmount);
 
-                            handleEstimateItem(name, newAmount, Number(price.replace('.', '').replace(',', '.')));
+                            handleEstimateItem(name, newAmount, Number(price.replaceAll('.', '').replaceAll(',', '.')));
                         }
                         catch {
                             setAmount(1);
@@ -78,7 +78,7 @@ const EstimateItems: React.FC<EstimateItemsProps> = ({ estimateItem, estimateIte
 
                             setAmount(newAmount);
 
-                            handleEstimateItem(name, newAmount, Number(price.replace('.', '').replace(',', '.')));
+                            handleEstimateItem(name, newAmount, Number(price.replaceAll('.', '').replaceAll(',', '.')));
                         }
                         catch {
                             setAmount(1);
@@ -112,14 +112,12 @@ const EstimateItems: React.FC<EstimateItemsProps> = ({ estimateItem, estimateIte
 
             <Form.Group as={Col} sm={2} controlId="formGridPrice">
                 <InputGroup className="mb-2">
-                    <InputGroup.Prepend>
-                        <InputGroup.Text id="btnGroupPrice">R$</InputGroup.Text>
-                    </InputGroup.Prepend>
+                    <InputGroup.Text id="btnGroupPrice">R$</InputGroup.Text>
                     <Form.Control
                         type="text"
                         onChange={e => {
                             try {
-                                const newTotalPrice = amount * Number(prettifyCurrency(e.target.value).replace('.', '').replace(',', '.'));
+                                const newTotalPrice = amount * Number(prettifyCurrency(e.target.value).replaceAll('.', '').replaceAll(',', '.'));
 
                                 setTotalPrice(newTotalPrice);
 
@@ -134,7 +132,7 @@ const EstimateItems: React.FC<EstimateItemsProps> = ({ estimateItem, estimateIte
                         }}
                         onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
                             try {
-                                const newTotalPrice = amount * Number(prettifyCurrency(e.target.value).replace('.', '').replace(',', '.'));
+                                const newTotalPrice = amount * Number(prettifyCurrency(e.target.value).replaceAll('.', '').replaceAll(',', '.'));
 
                                 setTotalPrice(newTotalPrice);
 
@@ -158,9 +156,7 @@ const EstimateItems: React.FC<EstimateItemsProps> = ({ estimateItem, estimateIte
 
             <Form.Group as={Col} sm={2} controlId="formGridTotalPrice">
                 <InputGroup className="mb-2">
-                    <InputGroup.Prepend>
-                        <InputGroup.Text id="btnGroupTotalPrice">R$</InputGroup.Text>
-                    </InputGroup.Prepend>
+                    <InputGroup.Text id="btnGroupTotalPrice">R$</InputGroup.Text>
                     <Form.Control
                         type="text"
                         value={prettifyCurrency(totalPrice.toFixed(2))}
@@ -178,7 +174,7 @@ const EstimateItems: React.FC<EstimateItemsProps> = ({ estimateItem, estimateIte
                     variant="outline-success"
                     className="button-link"
                     onClick={() => {
-                        handleEstimateItem(name, amount, Number(price.replace('.', '').replace(',', '.')));
+                        handleEstimateItem(name, amount, Number(price.replaceAll('.', '').replaceAll(',', '.')));
                     }}
                     disabled={!fieldsFormTouched}
                 >

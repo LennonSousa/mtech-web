@@ -42,7 +42,7 @@ const ProjectListItem: React.FC<ProjectListItemProps> = ({ project }) => {
 
                 <Row>
                     <Col>
-                        <span>
+                        <span className={`form-control-plaintext text-secondary ${styles.itemText}`}>
                             {format(new Date(project.updated_at), 'dd/MM/yyyy')}
                         </span>
                     </Col>

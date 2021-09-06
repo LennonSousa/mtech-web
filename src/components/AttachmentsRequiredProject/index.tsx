@@ -17,7 +17,7 @@ export interface AttachmentRequired {
 interface AttachmentRequiredProps {
     attachmentRequired: AttachmentRequired;
     listAttachmentsRequired: AttachmentRequired[];
-    handleListEvents(): Promise<void>;
+    handleListAttachmentsRequired(): Promise<void>;
 }
 
 const validationSchema = Yup.object().shape({
@@ -26,7 +26,7 @@ const validationSchema = Yup.object().shape({
     active: Yup.boolean().notRequired(),
 });
 
-const AttachmentsRequiredProject: React.FC<AttachmentRequiredProps> = ({ attachmentRequired, listAttachmentsRequired, handleListEvents }) => {
+const AttachmentsRequiredProject: React.FC<AttachmentRequiredProps> = ({ attachmentRequired, listAttachmentsRequired, handleListAttachmentsRequired }) => {
     const [showModalEditDoc, setShowModalEditDoc] = useState(false);
 
     const handleCloseModalEditDoc = () => { setShowModalEditDoc(false); setIconDeleteConfirm(false); setIconDelete(true); }
@@ -50,7 +50,7 @@ const AttachmentsRequiredProject: React.FC<AttachmentRequiredProps> = ({ attachm
                 active: !attachmentRequired.active,
             });
 
-            await handleListEvents();
+            await handleListAttachmentsRequired();
         }
         catch (err) {
             console.log("Error to pause required attachment");
@@ -92,7 +92,7 @@ const AttachmentsRequiredProject: React.FC<AttachmentRequiredProps> = ({ attachm
 
             handleCloseModalEditDoc();
 
-            handleListEvents();
+            handleListAttachmentsRequired();
         }
         catch (err) {
             setIconDeleteConfirm(false);
@@ -164,7 +164,7 @@ const AttachmentsRequiredProject: React.FC<AttachmentRequiredProps> = ({ attachm
                                     active: attachmentRequired.active,
                                 });
 
-                                await handleListEvents();
+                                await handleListAttachmentsRequired();
 
                                 setTypeMessage("success");
 

@@ -19,6 +19,8 @@ import {
     FaShieldAlt,
     FaSun,
 } from 'react-icons/fa';
+import draftToHtml from 'draftjs-to-html';
+import { convertFromRaw, convertToRaw, EditorState } from 'draft-js';
 
 import api from '../../../api/api';
 import { TokenVerify } from '../../../utils/tokenVerify';
@@ -118,8 +120,17 @@ export default function PropertyDetails() {
                     });
 
                     api.get('store').then(res => {
-                        setStore(res.data);
+                        const storeRes: Store = res.data;
 
+                        try {
+                            // setEditorState(EditorState.createWithContent());
+                            // setEditorState(EditorState.createWithContent(convertFromRaw(JSON.parse(storeRes.services_in))));
+                        }
+                        catch {
+
+                        }
+
+                        setStore(storeRes);
                         setLoadingData(false);
                     }).catch(err => {
                         console.log('Error to get store: ', err);
@@ -135,6 +146,19 @@ export default function PropertyDetails() {
 
     function handleRoute(route: string) {
         router.push(route);
+    }
+
+    const getHtml = (rawText: string) => {
+        try {
+            const rawContent = convertFromRaw(JSON.parse(rawText));
+
+            const content: EditorState = EditorState.createWithContent(rawContent);
+
+            return draftToHtml(convertToRaw(content.getCurrentContent()));
+        }
+        catch {
+            return '';
+        }
     }
 
     return (
@@ -1038,7 +1062,10 @@ export default function PropertyDetails() {
 
                                                                 <Row className="mb-3">
                                                                     <Col>
-                                                                        <span className="text-secondary text-wrap">{store.services_in}</span>
+                                                                        <span
+                                                                            className="text-secondary text-wrap"
+                                                                            dangerouslySetInnerHTML={{ __html: getHtml(store.services_in) }}
+                                                                        ></span>
                                                                     </Col>
                                                                 </Row>
 
@@ -1052,11 +1079,14 @@ export default function PropertyDetails() {
 
                                                                 <Row className="mb-3">
                                                                     <Col>
-                                                                        <span className="text-secondary text-wrap">{`${store.warranty}`}</span>
+                                                                        <span
+                                                                            className="text-secondary text-wrap"
+                                                                            dangerouslySetInnerHTML={{ __html: getHtml(store.warranty) }}
+                                                                        ></span>
                                                                     </Col>
                                                                 </Row>
 
-                                                                <Col className="border-top mt-1 mb-3"></Col>
+                                                                <Col style={{ pageBreakBefore: 'always' }} className="border-top mt-1 mb-3"></Col>
 
                                                                 <Row className="mb-2">
                                                                     <Col>
@@ -1079,9 +1109,16 @@ export default function PropertyDetails() {
                                                                     </Col>
                                                                 </Row>
 
-                                                                <Row className="justify-content-center mb-3">
+                                                                <Row className="justify-content-center">
+                                                                    <Col sm={8} className="border-top mt-5 mb-1"></Col>
+                                                                </Row>
+
+                                                                <Row className="justify-content-center">
                                                                     <Col sm={8}>
-                                                                        <h6 className="text-dark">{store.engineer}</h6>
+                                                                        <h6
+                                                                            className="text-secondary text-wrap"
+                                                                            dangerouslySetInnerHTML={{ __html: getHtml(store.engineer) }}
+                                                                        ></h6>
                                                                     </Col>
                                                                 </Row>
 

@@ -12,7 +12,7 @@ import ProjectListItem from '../../components/ProjectListItem';
 import { PageWaiting, PageType } from '../../components/PageWaiting';
 import { Paginations } from '../../components/Interfaces/Pagination';
 
-import { Member } from '../../components/ProjectMembers';
+import Member from '../../components/ProjectMembers';
 
 import api from '../../api/api';
 import { TokenVerify } from '../../utils/tokenVerify';
@@ -21,8 +21,6 @@ const limit = 15;
 
 export default function Projects() {
     const router = useRouter();
-    const { customer, property, bank } = router.query;
-    const userId = router.query['user'];
 
     const { handleItemSideBar, handleSelectedMenu } = useContext(SideBarContext);
     const { loading, user } = useContext(AuthContext);
@@ -41,32 +39,10 @@ export default function Projects() {
 
         if (user) {
             if (can(user, "projects", "read:any")) {
-                let query = '';
-
-                if (customer) query = `&customer=${customer}`;
-
-                if (property) query = `&property=${property}`;
-
-                if (bank) query = `&bank=${bank}`;
-
-                let requestUrl = `projects?limit=${limit}&page=${activePage}${!!query ? query : ''}`;
-
-                if (userId) requestUrl = `members/projects/user/${userId}?limit=${limit}&page=${activePage}${!!query ? query : ''}`;
+                let requestUrl = `projects?limit=${limit}&page=${activePage}`;
 
                 api.get(requestUrl).then(res => {
-                    if (userId) {
-                        const members: Member[] = res.data;
-
-                        let list: Project[] = [];
-
-                        members.forEach(member => {
-                            if (member.project) list.push(member.project);
-                        });
-
-                        setProjects(list);
-                    }
-                    else
-                        setProjects(res.data);
+                    setProjects(res.data);
 
                     try {
                         setTotalPages(Number(res.headers['x-total-pages']));
@@ -82,39 +58,18 @@ export default function Projects() {
                 });
             }
         }
-    }, [user, customer, property, bank, userId]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
     async function handleActivePage(page: number) {
         setLoadingData(true);
         setActivePage(page);
 
         try {
-            let query = '';
-
-            if (customer) query = `&customer=${customer}`;
-
-            if (property) query = `&property=${property}`;
-
-            if (bank) query = `&bank=${bank}`;
-
-            let requestUrl = `projects?limit=${limit}&page=${activePage}${!!query ? query : ''}`;
-
-            if (userId) requestUrl = `members/projects/user/${userId}?limit=${limit}&page=${activePage}${!!query ? query : ''}`;
+            let requestUrl = `projects?limit=${limit}&page=${activePage}`;
 
             const res = await api.get(requestUrl)
-            if (userId) {
-                const members: Member[] = res.data;
 
-                let list: Project[] = [];
-
-                members.forEach(member => {
-                    if (member.project) list.push(member.project);
-                });
-
-                setProjects(list);
-            }
-            else
-                setProjects(res.data);
+            setProjects(res.data);
 
             setTotalPages(Number(res.headers['x-total-pages']));
         }

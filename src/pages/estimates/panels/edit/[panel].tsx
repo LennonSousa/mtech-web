@@ -189,7 +189,7 @@ export default function UserEdit() {
                                                                     try {
                                                                         await api.put(`panels/${data.id}`, {
                                                                             name: values.name,
-                                                                            capacity: values.capacity.replace('.', '').replace(',', '.'),
+                                                                            capacity: values.capacity.replaceAll('.', '').replaceAll(',', '.'),
                                                                             order: values.order,
                                                                         });
 
@@ -238,9 +238,9 @@ export default function UserEdit() {
                                                                             <Form.Group as={Col} sm={4} controlId="formGridCapacity">
                                                                                 <Form.Label>Capacidade</Form.Label>
                                                                                 <InputGroup className="mb-2">
-                                                                                    <InputGroup.Prepend>
-                                                                                        <InputGroup.Text id="btnGroupCapacity">kWp</InputGroup.Text>
-                                                                                    </InputGroup.Prepend>
+
+                                                                                    <InputGroup.Text id="btnGroupCapacity">kWp</InputGroup.Text>
+
                                                                                     <Form.Control
                                                                                         type="text"
                                                                                         onChange={(e) => {
@@ -389,8 +389,8 @@ export default function UserEdit() {
 
                                                                         try {
                                                                             await api.post('panels/prices', {
-                                                                                potency: values.potency.replace('.', '').replace(',', '.'),
-                                                                                price: values.price.replace('.', '').replace(',', '.'),
+                                                                                potency: values.potency.replaceAll('.', '').replaceAll(',', '.'),
+                                                                                price: values.price.replaceAll('.', '').replaceAll(',', '.'),
                                                                                 inversor: values.inversor,
                                                                                 panel: values.panel,
                                                                             });
@@ -421,13 +421,13 @@ export default function UserEdit() {
                                                                     {({ handleChange, handleBlur, handleSubmit, values, setFieldValue, errors, touched }) => (
                                                                         <Form onSubmit={handleSubmit}>
                                                                             <Modal.Body>
-                                                                                <Form.Row>
+                                                                                <Row>
                                                                                     <Form.Group as={Col} sm={6} controlId="formGridPotency">
                                                                                         <Form.Label>Potência</Form.Label>
                                                                                         <InputGroup className="mb-2">
-                                                                                            <InputGroup.Prepend>
-                                                                                                <InputGroup.Text id="btnGroupPotency">kWp</InputGroup.Text>
-                                                                                            </InputGroup.Prepend>
+
+                                                                                            <InputGroup.Text id="btnGroupPotency">kWp</InputGroup.Text>
+
                                                                                             <Form.Control
                                                                                                 type="text"
                                                                                                 onChange={(e) => {
@@ -449,9 +449,9 @@ export default function UserEdit() {
                                                                                     <Form.Group as={Col} sm={6} controlId="formGridPrice">
                                                                                         <Form.Label>Valor</Form.Label>
                                                                                         <InputGroup className="mb-2">
-                                                                                            <InputGroup.Prepend>
-                                                                                                <InputGroup.Text id="btnGroupPrice">R$</InputGroup.Text>
-                                                                                            </InputGroup.Prepend>
+
+                                                                                            <InputGroup.Text id="btnGroupPrice">R$</InputGroup.Text>
+
                                                                                             <Form.Control
                                                                                                 type="text"
                                                                                                 onChange={(e) => {
@@ -469,7 +469,7 @@ export default function UserEdit() {
                                                                                         </InputGroup>
                                                                                         <Form.Control.Feedback type="invalid">{touched.price && errors.price}</Form.Control.Feedback>
                                                                                     </Form.Group>
-                                                                                </Form.Row>
+                                                                                </Row>
 
                                                                                 <Form.Group controlId="statusFormGridInversor">
                                                                                     <Form.Label>Inversor</Form.Label>

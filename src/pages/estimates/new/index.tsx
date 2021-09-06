@@ -246,26 +246,26 @@ export default function NewCustomer() {
             if (!panel || !roofOrientation) return undefined;
 
             const valuesCalcItem: CalcProps = {
-                kwh: values['kwh'].replace('.', '').replace(',', '.'),
-                irradiation: values['irradiation'].replace('.', '').replace(',', '.'),
+                kwh: values['kwh'].replaceAll('.', '').replaceAll(',', '.'),
+                irradiation: values['irradiation'].replaceAll('.', '').replaceAll(',', '.'),
                 panel,
-                month_01: values['month_01'].replace('.', '').replace(',', '.'),
-                month_02: values['month_02'].replace('.', '').replace(',', '.'),
-                month_03: values['month_03'].replace('.', '').replace(',', '.'),
-                month_04: values['month_04'].replace('.', '').replace(',', '.'),
-                month_05: values['month_05'].replace('.', '').replace(',', '.'),
-                month_06: values['month_06'].replace('.', '').replace(',', '.'),
-                month_07: values['month_07'].replace('.', '').replace(',', '.'),
-                month_08: values['month_08'].replace('.', '').replace(',', '.'),
-                month_09: values['month_09'].replace('.', '').replace(',', '.'),
-                month_10: values['month_10'].replace('.', '').replace(',', '.'),
-                month_11: values['month_11'].replace('.', '').replace(',', '.'),
-                month_12: values['month_12'].replace('.', '').replace(',', '.'),
-                month_13: values['month_13'].replace('.', '').replace(',', '.'),
-                averageIncrease: values['average_increase'].replace('.', '').replace(',', '.'),
+                month_01: values['month_01'].replaceAll('.', '').replaceAll(',', '.'),
+                month_02: values['month_02'].replaceAll('.', '').replaceAll(',', '.'),
+                month_03: values['month_03'].replaceAll('.', '').replaceAll(',', '.'),
+                month_04: values['month_04'].replaceAll('.', '').replaceAll(',', '.'),
+                month_05: values['month_05'].replaceAll('.', '').replaceAll(',', '.'),
+                month_06: values['month_06'].replaceAll('.', '').replaceAll(',', '.'),
+                month_07: values['month_07'].replaceAll('.', '').replaceAll(',', '.'),
+                month_08: values['month_08'].replaceAll('.', '').replaceAll(',', '.'),
+                month_09: values['month_09'].replaceAll('.', '').replaceAll(',', '.'),
+                month_10: values['month_10'].replaceAll('.', '').replaceAll(',', '.'),
+                month_11: values['month_11'].replaceAll('.', '').replaceAll(',', '.'),
+                month_12: values['month_12'].replaceAll('.', '').replaceAll(',', '.'),
+                month_13: values['month_13'].replaceAll('.', '').replaceAll(',', '.'),
+                averageIncrease: values['average_increase'].replaceAll('.', '').replaceAll(',', '.'),
                 roofOrientation: roofOrientation,
-                discount: values['discount'].replace('.', '').replace(',', '.'),
-                increase: values['increase'].replace('.', '').replace(',', '.'),
+                discount: values['discount'].replaceAll('.', '').replaceAll(',', '.'),
+                increase: values['increase'].replaceAll('.', '').replaceAll(',', '.'),
                 percent: values['percent'],
                 estimateItems: estimateItemsList,
             }
@@ -811,9 +811,9 @@ export default function NewCustomer() {
                                                             <Form.Group as={Col} sm={3} controlId="formGridKwh">
                                                                 <Form.Label>Valor unitário do Quilowatts/Hora</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupKwh">R$</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupKwh">R$</InputGroup.Text>
+
 
                                                                     <Form.Control
                                                                         type="text"
@@ -840,9 +840,9 @@ export default function NewCustomer() {
                                                             <Form.Group as={Col} sm={3} controlId="formGridIrratiation">
                                                                 <Form.Label>Irradiação Local</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupIrradiation">kWh/m²</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupIrradiation">kWh/m²</InputGroup.Text>
+
 
                                                                     <Form.Control
                                                                         type="text"
@@ -925,9 +925,9 @@ export default function NewCustomer() {
                                                             <Form.Group as={Col} sm={3} controlId="formGridMonth01">
                                                                 <Form.Label>Mês 01</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupMonth01">kWh</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupMonth01">kWh</InputGroup.Text>
+
 
                                                                     <Form.Control
                                                                         type="text"
@@ -947,38 +947,38 @@ export default function NewCustomer() {
                                                                         aria-label="Consumo em kWh"
                                                                         aria-describedby="btnGroupMonth01"
                                                                     />
-                                                                    <InputGroup.Prepend>
-                                                                        <Button
-                                                                            id="btnGroupMonth01"
-                                                                            variant="success"
-                                                                            title="Copiar valor para todos os outros meses."
-                                                                            onClick={() => {
-                                                                                const updatedValues = {
-                                                                                    ...values,
-                                                                                    month_02: values.month_01,
-                                                                                    month_03: values.month_01,
-                                                                                    month_04: values.month_01,
-                                                                                    month_05: values.month_01,
-                                                                                    month_06: values.month_01,
-                                                                                    month_07: values.month_01,
-                                                                                    month_08: values.month_01,
-                                                                                    month_09: values.month_01,
-                                                                                    month_10: values.month_01,
-                                                                                    month_11: values.month_01,
-                                                                                    month_12: values.month_01,
-                                                                                    month_13: values.month_01,
-                                                                                };
 
-                                                                                setValues(updatedValues);
+                                                                    <Button
+                                                                        id="btnGroupMonth01"
+                                                                        variant="success"
+                                                                        title="Copiar valor para todos os outros meses."
+                                                                        onClick={() => {
+                                                                            const updatedValues = {
+                                                                                ...values,
+                                                                                month_02: values.month_01,
+                                                                                month_03: values.month_01,
+                                                                                month_04: values.month_01,
+                                                                                month_05: values.month_01,
+                                                                                month_06: values.month_01,
+                                                                                month_07: values.month_01,
+                                                                                month_08: values.month_01,
+                                                                                month_09: values.month_01,
+                                                                                month_10: values.month_01,
+                                                                                month_11: values.month_01,
+                                                                                month_12: values.month_01,
+                                                                                month_13: values.month_01,
+                                                                            };
 
-                                                                                const calcValues = handleFormValues(updatedValues);
+                                                                            setValues(updatedValues);
 
-                                                                                if (calcValues) handleCalcEstimate(calcValues, true);
-                                                                            }}
-                                                                        >
-                                                                            <FaCopy />
-                                                                        </Button>
-                                                                    </InputGroup.Prepend>
+                                                                            const calcValues = handleFormValues(updatedValues);
+
+                                                                            if (calcValues) handleCalcEstimate(calcValues, true);
+                                                                        }}
+                                                                    >
+                                                                        <FaCopy />
+                                                                    </Button>
+
                                                                 </InputGroup>
                                                                 <Form.Control.Feedback type="invalid">{touched.month_01 && errors.month_01}</Form.Control.Feedback>
                                                             </Form.Group>
@@ -986,9 +986,9 @@ export default function NewCustomer() {
                                                             <Form.Group as={Col} sm={3} controlId="formGridMonth02">
                                                                 <Form.Label>Mês 02</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupMonth02">kWh</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupMonth02">kWh</InputGroup.Text>
+
 
                                                                     <Form.Control
                                                                         type="text"
@@ -1015,9 +1015,9 @@ export default function NewCustomer() {
                                                             <Form.Group as={Col} sm={3} controlId="formGridMonth03">
                                                                 <Form.Label>Mês 03</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupMonth03">kWh</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupMonth03">kWh</InputGroup.Text>
+
 
                                                                     <Form.Control
                                                                         type="text"
@@ -1044,9 +1044,9 @@ export default function NewCustomer() {
                                                             <Form.Group as={Col} sm={3} controlId="formGridMonth04">
                                                                 <Form.Label>Mês 04</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupMonth04">kWh</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupMonth04">kWh</InputGroup.Text>
+
 
                                                                     <Form.Control
                                                                         type="text"
@@ -1069,15 +1069,15 @@ export default function NewCustomer() {
                                                                 </InputGroup>
                                                                 <Form.Control.Feedback type="invalid">{touched.month_04 && errors.month_04}</Form.Control.Feedback>
                                                             </Form.Group>
-                                                        </Row>
+                                                        </Row >
 
                                                         <Row className="mb-2">
                                                             <Form.Group as={Col} sm={3} controlId="formGridMonth05">
                                                                 <Form.Label>Mês 05</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupMonth05">kWh</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupMonth05">kWh</InputGroup.Text>
+
 
                                                                     <Form.Control
                                                                         type="text"
@@ -1104,9 +1104,9 @@ export default function NewCustomer() {
                                                             <Form.Group as={Col} sm={3} controlId="formGridMonth06">
                                                                 <Form.Label>Mês 06</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupMonth06">kWh</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupMonth06">kWh</InputGroup.Text>
+
 
                                                                     <Form.Control
                                                                         type="text"
@@ -1128,14 +1128,14 @@ export default function NewCustomer() {
                                                                     />
                                                                 </InputGroup>
                                                                 <Form.Control.Feedback type="invalid">{touched.month_06 && errors.month_06}</Form.Control.Feedback>
-                                                            </Form.Group>
+                                                            </Form.Group >
 
                                                             <Form.Group as={Col} sm={3} controlId="formGridMonth07">
                                                                 <Form.Label>Mês 07</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupMonth07">kWh</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupMonth07">kWh</InputGroup.Text>
+
 
                                                                     <Form.Control
                                                                         type="text"
@@ -1157,14 +1157,14 @@ export default function NewCustomer() {
                                                                     />
                                                                 </InputGroup>
                                                                 <Form.Control.Feedback type="invalid">{touched.month_07 && errors.month_07}</Form.Control.Feedback>
-                                                            </Form.Group>
+                                                            </Form.Group >
 
                                                             <Form.Group as={Col} sm={3} controlId="formGridMonth08">
                                                                 <Form.Label>Mês 08</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupMonth08">kWh</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupMonth08">kWh</InputGroup.Text>
+
 
                                                                     <Form.Control
                                                                         type="text"
@@ -1186,16 +1186,16 @@ export default function NewCustomer() {
                                                                     />
                                                                 </InputGroup>
                                                                 <Form.Control.Feedback type="invalid">{touched.month_08 && errors.month_08}</Form.Control.Feedback>
-                                                            </Form.Group>
-                                                        </Row>
+                                                            </Form.Group >
+                                                        </Row >
 
                                                         <Row className="mb-2">
                                                             <Form.Group as={Col} sm={3} controlId="formGridMonth09">
                                                                 <Form.Label>Mês 09</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupMonth09">kWh</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupMonth09">kWh</InputGroup.Text>
+
 
                                                                     <Form.Control
                                                                         type="text"
@@ -1222,9 +1222,9 @@ export default function NewCustomer() {
                                                             <Form.Group as={Col} sm={3} controlId="formGridMonth10">
                                                                 <Form.Label>Mês 10</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupMonth10">kWh</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupMonth10">kWh</InputGroup.Text>
+
 
                                                                     <Form.Control
                                                                         type="text"
@@ -1246,14 +1246,14 @@ export default function NewCustomer() {
                                                                     />
                                                                 </InputGroup>
                                                                 <Form.Control.Feedback type="invalid">{touched.month_10 && errors.month_10}</Form.Control.Feedback>
-                                                            </Form.Group>
+                                                            </Form.Group >
 
                                                             <Form.Group as={Col} sm={3} controlId="formGridMonth11">
                                                                 <Form.Label>Mês 11</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupMonth11">kWh</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupMonth11">kWh</InputGroup.Text>
+
 
                                                                     <Form.Control
                                                                         type="text"
@@ -1275,14 +1275,14 @@ export default function NewCustomer() {
                                                                     />
                                                                 </InputGroup>
                                                                 <Form.Control.Feedback type="invalid">{touched.month_11 && errors.month_11}</Form.Control.Feedback>
-                                                            </Form.Group>
+                                                            </Form.Group >
 
                                                             <Form.Group as={Col} sm={3} controlId="formGridMonth12">
                                                                 <Form.Label>Mês 12</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupMonth12">kWh</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupMonth12">kWh</InputGroup.Text>
+
 
                                                                     <Form.Control
                                                                         type="text"
@@ -1304,16 +1304,16 @@ export default function NewCustomer() {
                                                                     />
                                                                 </InputGroup>
                                                                 <Form.Control.Feedback type="invalid">{touched.month_12 && errors.month_12}</Form.Control.Feedback>
-                                                            </Form.Group>
-                                                        </Row>
+                                                            </Form.Group >
+                                                        </Row >
 
                                                         <Row className="mb-2">
                                                             <Form.Group as={Col} sm={3} controlId="formGridMonth13">
                                                                 <Form.Label>Mês 13</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupMonth13">kWh</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupMonth13">kWh</InputGroup.Text>
+
                                                                     <Form.Control
                                                                         type="text"
                                                                         onChange={(e) => {
@@ -1339,9 +1339,9 @@ export default function NewCustomer() {
                                                             <Form.Group as={Col} sm={3} controlId="formGridMonthsAverageKwh">
                                                                 <Form.Label>Média</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupMonthsAverageKwh">kWh</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupMonthsAverageKwh">kWh</InputGroup.Text>
+
                                                                     <Form.Control
                                                                         type="text"
                                                                         value={prettifyCurrency(String(resultMonthsAverageKwh.toFixed(2)))}
@@ -1351,14 +1351,14 @@ export default function NewCustomer() {
                                                                         readOnly
                                                                     />
                                                                 </InputGroup>
-                                                            </Form.Group>
+                                                            </Form.Group >
 
                                                             <Form.Group as={Col} sm={3} controlId="formGridAverageIncrease">
                                                                 <Form.Label>Previsão de aumento</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupAverageIncrease">kWh</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupAverageIncrease">kWh</InputGroup.Text>
+
                                                                     <Form.Control
                                                                         type="text"
                                                                         onChange={(e) => {
@@ -1379,14 +1379,14 @@ export default function NewCustomer() {
                                                                     />
                                                                 </InputGroup>
                                                                 <Form.Control.Feedback type="invalid">{touched.average_increase && errors.average_increase}</Form.Control.Feedback>
-                                                            </Form.Group>
+                                                            </Form.Group >
 
                                                             <Form.Group as={Col} sm={3} controlId="formGridFinalAverageKwh">
                                                                 <Form.Label>Consumo final</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupFinalAverageKwh">kWh</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupFinalAverageKwh">kWh</InputGroup.Text>
+
                                                                     <Form.Control
                                                                         type="text"
                                                                         value={prettifyCurrency(String(resultFinalAverageKwh.toFixed(2)))}
@@ -1396,8 +1396,8 @@ export default function NewCustomer() {
                                                                         readOnly
                                                                     />
                                                                 </InputGroup>
-                                                            </Form.Group>
-                                                        </Row>
+                                                            </Form.Group >
+                                                        </Row >
 
                                                         <Col className="border-top mt-3 mb-3"></Col>
 
@@ -1415,9 +1415,9 @@ export default function NewCustomer() {
                                                             <Form.Group as={Col} sm={4} controlId="formGridMonthlyPaid">
                                                                 <Form.Label>Valor médio mensal da conta de energia</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupMonthlyPaid">R$</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupMonthlyPaid">R$</InputGroup.Text>
+
                                                                     <Form.Control
                                                                         type="text"
                                                                         value={prettifyCurrency(String(resultMonthlyPaid.toFixed(2)))}
@@ -1432,9 +1432,9 @@ export default function NewCustomer() {
                                                             <Form.Group as={Col} sm={4} controlId="formGridYearlyPaid">
                                                                 <Form.Label>Valor pago anualmente</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupYearlyPaid">R$</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupYearlyPaid">R$</InputGroup.Text>
+
                                                                     <Form.Control
                                                                         type="text"
                                                                         value={prettifyCurrency(String(resultYearlyPaid.toFixed(2)))}
@@ -1444,14 +1444,14 @@ export default function NewCustomer() {
                                                                         readOnly
                                                                     />
                                                                 </InputGroup>
-                                                            </Form.Group>
+                                                            </Form.Group >
 
                                                             <Form.Group as={Col} sm={4} controlId="formGridPanelsAmount">
                                                                 <Form.Label>Número total de Painéis Fotovoltaicos</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupPanelsAmount">Un</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupPanelsAmount">Un</InputGroup.Text>
+
                                                                     <Form.Control
                                                                         type="text"
                                                                         value={resultPanelsAmount}
@@ -1461,16 +1461,16 @@ export default function NewCustomer() {
                                                                         readOnly
                                                                     />
                                                                 </InputGroup>
-                                                            </Form.Group>
-                                                        </Row>
+                                                            </Form.Group >
+                                                        </Row >
 
                                                         <Row className="mb-2">
                                                             <Form.Group as={Col} sm={4} controlId="formGridSystemCapacityKwp">
                                                                 <Form.Label>Capacidade Total do Sistema Fotovoltaico</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupSystemCapacityKwp">kWp</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupSystemCapacityKwp">kWp</InputGroup.Text>
+
                                                                     <Form.Control
                                                                         type="text"
                                                                         value={prettifyCurrency(String(resultSystemCapacityKwp.toFixed(2)))}
@@ -1485,9 +1485,9 @@ export default function NewCustomer() {
                                                             <Form.Group as={Col} sm={4} controlId="formGridMonthlyGeneratedEnergy">
                                                                 <Form.Label>Total de energia gerada mensalmente</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupMonthlyGeneratedEnergy">kWh</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupMonthlyGeneratedEnergy">kWh</InputGroup.Text>
+
                                                                     <Form.Control
                                                                         type="text"
                                                                         value={prettifyCurrency(String(resultMonthlyGeneratedEnergy.toFixed(2)))}
@@ -1497,14 +1497,14 @@ export default function NewCustomer() {
                                                                         readOnly
                                                                     />
                                                                 </InputGroup>
-                                                            </Form.Group>
+                                                            </Form.Group >
 
                                                             <Form.Group as={Col} sm={4} controlId="formGridYearlyGeneratedEnergy">
                                                                 <Form.Label>Total de energia gerada anualmente</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupYearlyGeneratedEnergy">kWh</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupYearlyGeneratedEnergy">kWh</InputGroup.Text>
+
                                                                     <Form.Control
                                                                         type="text"
                                                                         value={prettifyCurrency(String(resultYearlyGeneratedEnergy.toFixed(2)))}
@@ -1514,16 +1514,16 @@ export default function NewCustomer() {
                                                                         readOnly
                                                                     />
                                                                 </InputGroup>
-                                                            </Form.Group>
-                                                        </Row>
+                                                            </Form.Group >
+                                                        </Row >
 
                                                         <Row className="mb-2">
                                                             <Form.Group as={Col} sm={4} controlId="formGridCo2Reduction">
                                                                 <Form.Label>Redução de emissão de gás CO² ao ano</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupCo2Reduction">Kg</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupCo2Reduction">Kg</InputGroup.Text>
+
                                                                     <Form.Control
                                                                         type="text"
                                                                         value={prettifyCurrency(String(resultCo2Reduction.toFixed(2)))}
@@ -1538,9 +1538,9 @@ export default function NewCustomer() {
                                                             <Form.Group as={Col} sm={4} controlId="formGridSystemArea">
                                                                 <Form.Label>Área ocupada pelo sistema</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupSystemArea">m²</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupSystemArea">m²</InputGroup.Text>
+
                                                                     <Form.Control
                                                                         type="text"
                                                                         value={prettifyCurrency(String(resultSystemArea.toFixed(2)))}
@@ -1550,14 +1550,14 @@ export default function NewCustomer() {
                                                                         readOnly
                                                                     />
                                                                 </InputGroup>
-                                                            </Form.Group>
+                                                            </Form.Group >
 
                                                             <Form.Group as={Col} sm={4} controlId="formGridFinalSystemCapacity">
                                                                 <Form.Label>Capacidade arredondada do Sistema</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupFinalSystemCapacity">kWp</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupFinalSystemCapacity">kWp</InputGroup.Text>
+
                                                                     <Form.Control
                                                                         type="text"
                                                                         value={prettifyCurrency(String(resultFinalSystemCapacityKwp.toFixed(2)))}
@@ -1567,8 +1567,8 @@ export default function NewCustomer() {
                                                                         readOnly
                                                                     />
                                                                 </InputGroup>
-                                                            </Form.Group>
-                                                        </Row>
+                                                            </Form.Group >
+                                                        </Row >
 
                                                         <Col className="border-top mt-3 mb-3"></Col>
 
@@ -1582,14 +1582,15 @@ export default function NewCustomer() {
                                                             </Col>
                                                         </Row>
 
-                                                        <Form.Row className="mb-2">
-                                                            <Form.Switch
+                                                        <Row className="mb-2">
+                                                            <Form.Check
+                                                                type="switch"
                                                                 id="show_values"
                                                                 label="Exibir valores dos itens no orçamento?"
                                                                 checked={values.show_values}
                                                                 onChange={() => { setFieldValue('show_values', !values.show_values) }}
                                                             />
-                                                        </Form.Row>
+                                                        </Row>
 
                                                         <Row>
                                                             <Col sm={2}><h6 className="text-secondary">Quantidade</h6></Col>
@@ -1626,9 +1627,9 @@ export default function NewCustomer() {
                                                             <Form.Group as={Col} sm={3} controlId="formGridPreSystemPrice">
                                                                 <Form.Label>Subtotal</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupPreSystemPrice">R$</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupPreSystemPrice">R$</InputGroup.Text>
+
                                                                     <Form.Control
                                                                         type="text"
                                                                         value={prettifyCurrency(String(resultPreSystemPrice.toFixed(2)))}
@@ -1641,7 +1642,8 @@ export default function NewCustomer() {
                                                             </Form.Group>
 
                                                             <Col sm={3}>
-                                                                <Form.Switch
+                                                                <Form.Check
+                                                                    type="switch"
                                                                     id="percent"
                                                                     label="Valores em Reais (R$)"
                                                                     checked={!values.percent}
@@ -1658,9 +1660,9 @@ export default function NewCustomer() {
                                                             <Form.Group as={Col} sm={3} controlId="formGridDiscount">
                                                                 <Form.Label>Desconto</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupDiscount">{values.percent ? '%' : 'R$'}</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupDiscount">{values.percent ? '%' : 'R$'}</InputGroup.Text>
+
                                                                     <Form.Control
                                                                         type="text"
                                                                         onChange={(e) => {
@@ -1681,14 +1683,14 @@ export default function NewCustomer() {
                                                                     />
                                                                 </InputGroup>
                                                                 <Form.Control.Feedback type="invalid">{touched.discount && errors.discount}</Form.Control.Feedback>
-                                                            </Form.Group>
+                                                            </Form.Group >
 
                                                             <Form.Group as={Col} sm={3} controlId="formGridDiscount">
                                                                 <Form.Label>Acréscimo</Form.Label>
                                                                 <InputGroup className="mb-2">
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupDiscount">{values.percent ? '%' : 'R$'}</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+
+                                                                    <InputGroup.Text id="btnGroupDiscount">{values.percent ? '%' : 'R$'}</InputGroup.Text>
+
                                                                     <Form.Control
                                                                         type="text"
                                                                         onChange={(e) => {
@@ -1709,17 +1711,18 @@ export default function NewCustomer() {
                                                                     />
                                                                 </InputGroup>
                                                                 <Form.Control.Feedback type="invalid">{touched.increase && errors.increase}</Form.Control.Feedback>
-                                                            </Form.Group>
-                                                        </Row>
+                                                            </Form.Group >
+                                                        </Row >
 
-                                                        <Form.Row className="mb-2">
-                                                            <Form.Switch
+                                                        <Row className="mb-2">
+                                                            <Form.Check
+                                                                type="switch"
                                                                 id="show_discount"
                                                                 label="Exibir descontos no orçamento?"
                                                                 checked={values.show_discount}
                                                                 onChange={() => { setFieldValue('show_discount', !values.show_discount) }}
                                                             />
-                                                        </Form.Row>
+                                                        </Row>
 
                                                         <Row className="mb-3">
                                                             <Col>
@@ -1734,9 +1737,7 @@ export default function NewCustomer() {
                                                         <Row className="align-items-end">
                                                             <Form.Group as={Col} sm={3} controlId="formGridFinalSystemPrice">
                                                                 <InputGroup>
-                                                                    <InputGroup.Prepend>
-                                                                        <InputGroup.Text id="btnGroupFinalSystemPrice">R$</InputGroup.Text>
-                                                                    </InputGroup.Prepend>
+                                                                    <InputGroup.Text id="btnGroupFinalSystemPrice">R$</InputGroup.Text>
                                                                     <Form.Control
                                                                         type="text"
                                                                         value={prettifyCurrency(String(resultFinalSystemPrice.toFixed(2)))}
@@ -1769,7 +1770,7 @@ export default function NewCustomer() {
                                                             </Form.Group>
                                                         </Row>
 
-                                                        <Form.Row className="mb-3">
+                                                        <Row className="mb-3">
                                                             <Form.Group as={Col} controlId="formGridNotes">
                                                                 <Form.Label>Observações</Form.Label>
                                                                 <Form.Control
@@ -1782,7 +1783,7 @@ export default function NewCustomer() {
                                                                     name="notes"
                                                                 />
                                                             </Form.Group>
-                                                        </Form.Row>
+                                                        </Row>
 
                                                         <Col className="border-top mb-3"></Col>
 
@@ -1795,10 +1796,11 @@ export default function NewCustomer() {
 
                                                             }
                                                         </Row>
-                                                    </Form>
-                                                )}
-                                            </Formik>
-                                        </Container>
+                                                    </Form >
+                                                )
+                                                }
+                                            </Formik >
+                                        </Container >
                                 }
                             </> :
                                 <PageWaiting status="warning" message="Acesso negado!" />

@@ -12,7 +12,7 @@ import { cellphone } from '../../../components/InputMask/masks';
 import { TokenVerify } from '../../../utils/tokenVerify';
 import { SideBarContext } from '../../../contexts/SideBarContext';
 import { AuthContext } from '../../../contexts/AuthContext';
-import { User, UserRole, can, translatedRoles } from '../../../components/Users';
+import { User, UserRole, can, translateRole } from '../../../components/Users';
 import PageBack from '../../../components/PageBack';
 import { AlertMessage, statusModal } from '../../../components/Interfaces/AlertMessage';
 import { PageWaiting, PageType } from '../../../components/PageWaiting';
@@ -306,14 +306,12 @@ export default function UserEdit() {
                                                                                         <ListGroup className="mb-3">
                                                                                             {
                                                                                                 usersRoles.map((role, index) => {
-                                                                                                    const translatedRole = translatedRoles.find(item => { return item.role === role.role });
-
                                                                                                     return <ListGroup.Item key={index} as="div" variant="light">
                                                                                                         <Row>
                                                                                                             <Col>
                                                                                                                 <h6 className="text-success" >
                                                                                                                     {
-                                                                                                                        translatedRole ? translatedRole.translated : role.role
+                                                                                                                        translateRole(role.role)
                                                                                                                     }
                                                                                                                 </h6>
                                                                                                             </Col>

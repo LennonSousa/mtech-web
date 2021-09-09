@@ -71,7 +71,7 @@ const Sidebar: React.FC = () => {
                 </Card>
 
                 {
-                    can(user, "estimates", "read:any") && <Card className={styles.menuCard}>
+                    can(user, "estimates", "view") && <Card className={styles.menuCard}>
                         <AccordionButton
                             as={Card.Header}
                             className={styles.menuCardHeader}
@@ -124,7 +124,7 @@ const Sidebar: React.FC = () => {
                                 }
 
                                 {
-                                    can(user, "estimates", "update:any") && <>
+                                    can(user, "estimates", "update") && <>
                                         <Dropdown.Divider />
                                         <Link href="/estimates/panels">
                                             <a title="Listar os painéis." data-title="Listar os painéis.">
@@ -207,7 +207,7 @@ const Sidebar: React.FC = () => {
                 }
 
                 {
-                    can(user, "projects", "read:any") && <Card className={styles.menuCard}>
+                    can(user, "projects", "view") && <Card className={styles.menuCard}>
                         <AccordionButton
                             as={Card.Header}
                             className={styles.menuCardHeader}
@@ -260,7 +260,7 @@ const Sidebar: React.FC = () => {
                                 }
 
                                 {
-                                    can(user, "projects", "update:any") && <>
+                                    can(user, "projects", "update") && <>
                                         <Dropdown.Divider />
 
                                         <Link href="/projects/status">
@@ -324,7 +324,7 @@ const Sidebar: React.FC = () => {
                 }
 
                 {
-                    can(user, "finances", "read:any") && <Card className={styles.menuCard}>
+                    can(user, "finances", "view") && <Card className={styles.menuCard}>
                         <AccordionButton
                             as={Card.Header}
                             className={styles.menuCardHeader}
@@ -357,7 +357,7 @@ const Sidebar: React.FC = () => {
                                 </Link>
 
                                 {
-                                    can(user, "finances", "update:any") && <>
+                                    can(user, "finances", "update") && <>
                                         <Dropdown.Divider />
 
                                         <Link href="/finances/types">
@@ -385,7 +385,7 @@ const Sidebar: React.FC = () => {
                 }
 
                 {
-                    can(user, "users", "read:any") && <Card className={styles.menuCard}>
+                    can(user, "users", "view") && <Card className={styles.menuCard}>
                         <AccordionButton
                             as={Card.Header}
                             className={styles.menuCardHeader}
@@ -441,7 +441,7 @@ const Sidebar: React.FC = () => {
                 }
 
                 {
-                    can(user, "store", "read:any") && <Card className={styles.menuCard}>
+                    can(user, "store", "view") && <Card className={styles.menuCard}>
                         <AccordionButton
                             as={Card.Header}
                             className={styles.menuCardHeader}
@@ -456,7 +456,7 @@ const Sidebar: React.FC = () => {
                         <Accordion.Collapse eventKey="store">
                             <Card.Body className={styles.menuCardBody}>
                                 {
-                                    can(user, "store", "update:any") && <Link href="/store">
+                                    can(user, "store", "update") && <Link href="/store">
                                         <a title="Editar as informações da loja." data-title="Editar as informações da loja.">
                                             <Row
                                                 className={
@@ -493,7 +493,7 @@ export function SideNavBar() {
             </Link>
 
             {
-                can(user, "estimates", "read:any") && <NavDropdown title="Clientes" id="estimates-dropdown">
+                can(user, "estimates", "view") && <NavDropdown title="Clientes" id="estimates-dropdown">
                     <Link href="/estimates" passHref>
                         <NavDropdown.Item ><FaList size={14} /> Lista</NavDropdown.Item>
                     </Link>
@@ -505,7 +505,7 @@ export function SideNavBar() {
                     }
 
                     {
-                        can(user, "estimates", "update:any") && <>
+                        can(user, "estimates", "update") && <>
                             <NavDropdown.Divider />
 
                             <Link href="/docs/customer" passHref>
@@ -521,7 +521,7 @@ export function SideNavBar() {
             }
 
             {
-                can(user, "projects", "read:any") && <NavDropdown title="Projetos" id="projects-dropdown">
+                can(user, "projects", "view") && <NavDropdown title="Projetos" id="projects-dropdown">
                     <Link href="/projects" passHref>
                         <NavDropdown.Item ><FaList size={14} /> Lista</NavDropdown.Item>
                     </Link>
@@ -533,7 +533,7 @@ export function SideNavBar() {
                     }
 
                     {
-                        can(user, "projects", "update:any") && <>
+                        can(user, "projects", "update") && <>
                             <Link href="/docs/project" passHref>
                                 <NavDropdown.Item ><FaIdCard size={14} /> Documentos</NavDropdown.Item>
                             </Link>
@@ -557,7 +557,7 @@ export function SideNavBar() {
             }
 
             {
-                can(user, "users", "read:any") && <NavDropdown title="Usuários" id="users-dropdown">
+                can(user, "users", "view") && <NavDropdown title="Usuários" id="users-dropdown">
                     {
                         can(user, "users", "create") && <Link href="/users" passHref>
                             <NavDropdown.Item ><FaList size={14} /> Lista</NavDropdown.Item>
@@ -567,7 +567,7 @@ export function SideNavBar() {
                     <NavDropdown.Divider />
 
                     {
-                        can(user, "users", "read:any") && <Link href="/users/new" passHref>
+                        can(user, "users", "view") && <Link href="/users/new" passHref>
                             <NavDropdown.Item ><FaPlus size={14} /> Novo</NavDropdown.Item>
                         </Link>
                     }

@@ -43,7 +43,7 @@ export default function UserDetails() {
         handleSelectedMenu('users-index');
 
         if (user) {
-            if (can(user, "users", "read:any") || userId === user.id) {
+            if (can(user, "users", "view") || userId === user.id) {
                 api.get(`users/${userId}`).then(res => {
                     let userRes: User = res.data;
 
@@ -89,7 +89,7 @@ export default function UserDetails() {
                 !user || loading ? <PageWaiting status="waiting" /> :
                     <>
                         {
-                            can(user, "users", "read:any") || userId === user.id ? <>
+                            can(user, "users", "view") || userId === user.id ? <>
                                 {
                                     loadingData ? <PageWaiting
                                         status={typeLoadingMessage}
@@ -102,7 +102,7 @@ export default function UserDetails() {
                                                         <Row>
                                                             <Col>
                                                                 {
-                                                                    can(user, "users", "read:any") && <Row className="mb-3">
+                                                                    can(user, "users", "view") && <Row className="mb-3">
                                                                         <Col>
                                                                             <PageBack href="/users" subTitle="Voltar para a lista de usuários" />
                                                                         </Col>
@@ -117,8 +117,8 @@ export default function UserDetails() {
                                                                             </Col>
 
                                                                             {
-                                                                                can(user, "users", "update:any") ||
-                                                                                    can(user, "users", "update:own") &&
+                                                                                can(user, "users", "update") ||
+                                                                                    can(user, "users", "update_self") &&
                                                                                     userId === user.id ?
                                                                                     <Col className="col-row">
                                                                                         <ButtonGroup size="sm" className="col-12">

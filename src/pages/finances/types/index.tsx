@@ -46,7 +46,7 @@ export default function Types() {
         handleSelectedMenu('finances-types');
 
         if (user) {
-            if (can(user, "finances", "read:any")) {
+            if (can(user, "finances", "view")) {
 
                 api.get('payments/types').then(res => {
                     setPayTypes(res.data);
@@ -129,7 +129,7 @@ export default function Types() {
                 !user || loading ? <PageWaiting status="waiting" /> :
                     <>
                         {
-                            can(user, "finances", "update:any") ? <Container className="content-page">
+                            can(user, "finances", "update") ? <Container className="content-page">
                                 <Row>
                                     <Col>
                                         <Button variant="outline-success" onClick={handleShowModalNewType}>

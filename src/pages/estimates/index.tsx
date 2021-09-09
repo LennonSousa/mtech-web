@@ -54,7 +54,7 @@ export default function Estimates() {
         handleSelectedMenu('estimates-index');
 
         if (user) {
-            if (can(user, "estimates", "read:any")) {
+            if (can(user, "estimates", "view")) {
                 let requestUrl = `estimates?limit=${limit}&page=${activePage}`;
 
                 if (userId) requestUrl = `members/estimates/user/${userId}?limit=${limit}&page=${activePage}`;
@@ -128,7 +128,7 @@ export default function Estimates() {
                 !user || loading ? <PageWaiting status="waiting" /> :
                     <>
                         {
-                            can(user, "estimates", "read:any") ? <>
+                            can(user, "estimates", "view") ? <>
                                 <Container className="page-container">
                                     <Row>
                                         {

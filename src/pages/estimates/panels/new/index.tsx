@@ -43,7 +43,7 @@ export default function NewUser() {
         handleSelectedMenu('estimates-panels');
 
         if (user) {
-            if (can(user, "estimates", "update:any")) {
+            if (can(user, "estimates", "update")) {
 
                 api.get('panels').then(res => {
                     setPanels(res.data);

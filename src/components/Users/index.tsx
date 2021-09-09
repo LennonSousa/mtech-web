@@ -5,8 +5,19 @@ import { FaUserEdit, FaPause, FaPlay, FaUserClock, FaUserTag } from 'react-icons
 
 import api from '../../api/api';
 
-type Resource = 'employees' | 'shifts' | 'attendances' | 'estimates' | 'projects' | 'services' | 'store' | 'finances' | 'users';
-type Action = 'read:any' | 'read:own' | 'create' | 'update:any' | 'update:own' | 'delete';
+export type Role = 'employees' | 'shifts' | 'attendances' | 'estimates' | 'projects' | 'services' | 'store' | 'finances' | 'users';
+export type Grant = 'view' | 'view_self' | 'create' | 'update' | 'update_self' | 'remove';
+
+export interface UserRole {
+    id: string;
+    role: Role;
+    view: boolean;
+    view_self: boolean;
+    create: boolean;
+    update: boolean;
+    update_self: boolean;
+    remove: boolean;
+}
 
 export interface User {
     id: string,
@@ -19,66 +30,48 @@ export interface User {
     root: boolean;
     created_at: Date;
     roles: UserRole[];
-    grants: Grants[];
 }
 
-export interface UserRole {
-    id: string;
-    role: string;
-    view: boolean;
-    view_self: boolean;
-    create: boolean;
-    update: boolean;
-    update_self: boolean;
-    remove: boolean;
-}
-
-export interface Grants {
-    role: string;
-    resource: string;
-    action: string;
-}
-
-interface TranslateRoles {
-    role: string,
+interface TranslateItem {
+    item: string,
     translated: string;
 }
 
-export const translatedRoles: TranslateRoles[] = [
+export const translatedRoles: TranslateItem[] = [
     {
-        role: 'employees',
+        item: 'employees',
         translated: 'Funcionários',
     },
     {
-        role: 'shifts',
+        item: 'shifts',
         translated: 'Turnos',
     },
     {
-        role: 'attendances',
+        item: 'attendances',
         translated: 'Ponto',
     },
     {
-        role: 'estimates',
+        item: 'estimates',
         translated: 'Orçamentos',
     },
     {
-        role: 'projects',
+        item: 'projects',
         translated: 'Projetos',
     },
     {
-        role: 'services',
+        item: 'services',
         translated: 'Ordens de Serviço',
     },
     {
-        role: 'store',
+        item: 'store',
         translated: 'Loja'
     },
     {
-        role: 'finances',
+        item: 'finances',
         translated: 'Financeiro'
     },
     {
-        role: 'users',
+        item: 'users',
         translated: 'Usuários',
     },
 ];
@@ -89,14 +82,22 @@ interface UsersProps {
     handleListUsers(): Promise<void>;
 }
 
-export function can(user: User, resource: Resource, action: Action) {
-    const foundResource = user.grants.find(grant => {
-        return grant.role === user.id && grant.resource === resource && grant.action === action
+export function can(user: User, userRole: Role, userGrant: Grant) {
+    const foundRole = user.roles.find(role => {
+        return role.role === userRole && role[userGrant] === true
     });
 
-    if (foundResource) return true;
+    if (foundRole) return true;
 
     return false;
+}
+
+export function translateRole(resource: Role) {
+    const translatedRole = translatedRoles.find(role => { return role.item === resource });
+
+    if (translatedRole) return translatedRole.translated;
+
+    return resource;
 }
 
 const Users: React.FC<UsersProps> = ({ user, userAuthenticated, handleListUsers }) => {
@@ -143,7 +144,7 @@ const Users: React.FC<UsersProps> = ({ user, userAuthenticated, handleListUsers 
 
                 {
                     userAuthenticated.id !== user.id
-                    && can(userAuthenticated, "users", "update:any")
+                    && can(userAuthenticated, "users", "update")
                     && !user.root
                     && <Col className="col-row text-end">
                         <Button
@@ -177,9 +178,9 @@ const Users: React.FC<UsersProps> = ({ user, userAuthenticated, handleListUsers 
                 </Col>
 
                 {
-                    can(userAuthenticated, "users", "update:any")
+                    can(userAuthenticated, "users", "update")
                         || userAuthenticated.id === user.id
-                        && can(userAuthenticated, "users", "update:own")
+                        && can(userAuthenticated, "users", "update_self")
                         ? <Col className="col-row text-end">
                             <Button
                                 variant="outline-success"

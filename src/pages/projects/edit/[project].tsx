@@ -134,12 +134,19 @@ export default function NewCustomer() {
     const handleCloseModalNew = () => setShowModalNew(false);
     const handleShowModalNew = () => setShowModalNew(true);
 
+    const [deletingMessageShow, setDeletingMessageShow] = useState(false);
+
+    const [showItemDelete, setShowItemDelete] = useState(false);
+
+    const handleCloseItemDelete = () => setShowItemDelete(false);
+    const handelShowItemDelete = () => setShowItemDelete(true);
+
     useEffect(() => {
         handleItemSideBar('projects');
         handleSelectedMenu('projects-index');
 
         if (user) {
-            if (can(user, "projects", "update:any")) {
+            if (can(user, "projects", "update")) {
                 if (project) {
 
                     api.get(`projects/${project}`).then(res => {
@@ -359,6 +366,35 @@ export default function NewCustomer() {
         }
     }
 
+    async function handleItemDelete() {
+        if (user && project) {
+            setTypeMessage("waiting");
+            setDeletingMessageShow(true);
+
+            try {
+                if (can(user, "projects", "remove")) {
+                    await api.delete(`projects/${project}`);
+
+                    setTypeMessage("success");
+
+                    setTimeout(() => {
+                        router.push('/projects');
+                    }, 1000);
+                }
+            }
+            catch (err) {
+                console.log('error deleting project');
+                console.log(err);
+
+                setTypeMessage("error");
+
+                setTimeout(() => {
+                    setDeletingMessageShow(false);
+                }, 4000);
+            }
+        }
+    }
+
     return (
         <>
             <NextSeo
@@ -382,7 +418,7 @@ export default function NewCustomer() {
                 !user || loading ? <PageWaiting status="waiting" /> :
                     <>
                         {
-                            can(user, "projects", "update:any") ? <>
+                            can(user, "projects", "update") ? <>
                                 {
                                     loadingData || hasErrors ? <PageWaiting
                                         status={typeLoadingMessage}
@@ -1337,10 +1373,23 @@ export default function NewCustomer() {
                                                                         <Row className="mb-3 justify-content-end">
                                                                             {
                                                                                 messageShow ? <Col sm={3}><AlertMessage status={typeMessage} /></Col> :
-                                                                                    <Col sm={1}>
-                                                                                        <Button variant="success" type="submit">Salvar</Button>
-                                                                                    </Col>
+                                                                                    <>
+                                                                                        {
+                                                                                            can(user, "projects", "remove") && <Col className="col-row">
+                                                                                                <Button
+                                                                                                    variant="danger"
+                                                                                                    title="Excluir projeto."
+                                                                                                    onClick={handelShowItemDelete}
+                                                                                                >
+                                                                                                    Excluir
+                                                                                                </Button>
+                                                                                            </Col>
+                                                                                        }
 
+                                                                                        <Col sm={1}>
+                                                                                            <Button variant="success" type="submit">Salvar</Button>
+                                                                                        </Col>
+                                                                                    </>
                                                                             }
                                                                         </Row>
                                                                     </Form>
@@ -1350,7 +1399,7 @@ export default function NewCustomer() {
                                                             <Col className="border-top mt-3 mb-3"></Col>
 
                                                             {
-                                                                can(user, "finances", "read:any") && <Row className="mb-5">
+                                                                can(user, "finances", "view") && <Row className="mb-5">
                                                                     <Form.Group as={Col} controlId="formGridAttachments">
                                                                         <Row>
                                                                             <Col className="col-row">
@@ -1728,6 +1777,39 @@ export default function NewCustomer() {
                                                                         </Form>
                                                                     )}
                                                                 </Formik>
+                                                            </Modal>
+
+                                                            <Modal show={showItemDelete} onHide={handleCloseItemDelete}>
+                                                                <Modal.Header closeButton>
+                                                                    <Modal.Title>Excluir projeto</Modal.Title>
+                                                                </Modal.Header>
+                                                                <Modal.Body>
+                                                                    Você tem certeza que deseja excluir este projeto? Essa ação não poderá ser desfeita.
+                                                                </Modal.Body>
+                                                                <Modal.Footer>
+                                                                    {
+                                                                        deletingMessageShow ? <AlertMessage status={typeMessage} /> :
+                                                                            <>
+                                                                                {
+                                                                                    can(user, "projects", "remove") && <Button
+                                                                                        variant="danger"
+                                                                                        type="button"
+                                                                                        onClick={handleItemDelete}
+                                                                                    >
+                                                                                        Excluir
+                                                                                    </Button>
+                                                                                }
+
+                                                                                <Button
+                                                                                    className="col-row"
+                                                                                    variant="outline-secondary"
+                                                                                    onClick={handleCloseItemDelete}
+                                                                                >
+                                                                                    Cancelar
+                                                                                </Button>
+                                                                            </>
+                                                                    }
+                                                                </Modal.Footer>
                                                             </Modal>
                                                         </>
                                                     </Container>

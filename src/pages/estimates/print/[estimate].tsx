@@ -59,7 +59,7 @@ export default function PropertyDetails() {
             handleItemSideBar('estimates');
             handleSelectedMenu('estimates-index');
 
-            if (can(user, "estimates", "read:any")) {
+            if (can(user, "estimates", "view")) {
                 if (estimate) {
                     api.get(`estimates/${estimate}`).then(res => {
                         const estimateRes: Estimate = res.data;
@@ -184,7 +184,7 @@ export default function PropertyDetails() {
                 !user || loading ? <PageWaiting status="waiting" /> :
                     <>
                         {
-                            can(user, "estimates", "read:any") ? <>
+                            can(user, "estimates", "view") ? <>
                                 {
                                     loadingData || hasErrors ? <PageWaiting
                                         status={typeLoadingMessage}

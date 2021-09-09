@@ -3,7 +3,7 @@ import { createContext, useState } from 'react';
 import Cookies from 'js-cookie';
 
 import api from '../api/api';
-import { User, Grants } from '../components/Users';
+import { User } from '../components/Users';
 
 interface AuthContextData {
     user: User | undefined;
@@ -40,7 +40,7 @@ const AuthProvider: React.FC = ({ children }) => {
             const userRes: User = res.data;
 
             setSigned(true);
-            setUser({ ...userRes, grants: setUserGrants(userRes) });
+            setUser(userRes);
 
             setLoading(false);
         }
@@ -67,7 +67,7 @@ const AuthProvider: React.FC = ({ children }) => {
 
                 const userRes: User = user;
 
-                setUser({ ...userRes, grants: setUserGrants(userRes) });
+                setUser(userRes);
 
                 api.defaults.headers['Authorization'] = `Bearer ${token}`;
 
@@ -87,64 +87,6 @@ const AuthProvider: React.FC = ({ children }) => {
         catch {
             return "error";
         }
-    }
-
-    function setUserGrants(user: User) {
-        let listGrants: Grants[] = [];
-
-        user.roles.forEach(role => {
-            if (role.view) {
-                listGrants.push({
-                    role: user.id,
-                    resource: role.role,
-                    action: 'read:any'
-                });
-            }
-
-            if (role.view_self) {
-                listGrants.push({
-                    role: user.id,
-                    resource: role.role,
-                    action: 'read:own'
-                });
-            }
-
-            if (role.create) {
-                listGrants.push({
-                    role: user.id,
-                    resource: role.role,
-                    action: 'create'
-                });
-            }
-
-            if (role.update) {
-                listGrants.push({
-                    role: user.id,
-                    resource: role.role,
-                    action: 'update:any'
-                });
-
-            }
-
-            if (role.update_self) {
-                listGrants.push({
-                    role: user.id,
-                    resource: role.role,
-                    action: 'update:own'
-                });
-
-            }
-
-            if (role.remove) {
-                listGrants.push({
-                    role: user.id,
-                    resource: role.role,
-                    action: 'delete'
-                });
-            }
-        });
-
-        return listGrants;
     }
 
     async function handleLogout() {

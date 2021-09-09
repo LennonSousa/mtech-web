@@ -78,7 +78,7 @@ const IncomeModal: React.FC<IncomeModalProps> = ({ incomeId, show = false, handl
     useEffect(() => {
         setHasErrors(false);
 
-        if (user && can(user, "finances", "update:any") && show) {
+        if (user && can(user, "finances", "update") && show) {
             api.get(`incomings/${incomeId}`).then(res => {
                 const incomeRes: Income = res.data;
 
@@ -140,7 +140,7 @@ const IncomeModal: React.FC<IncomeModalProps> = ({ incomeId, show = false, handl
 
     async function handleListItems() {
         try {
-            if (user && can(user, "finances", "update:any") && data) {
+            if (user && can(user, "finances", "update") && data) {
                 const res = await api.get(`incomings/${incomeId}`);
 
                 const updatedIncome: Income = res.data;
@@ -158,7 +158,7 @@ const IncomeModal: React.FC<IncomeModalProps> = ({ incomeId, show = false, handl
 
     async function handleNewItem() {
         try {
-            if (user && can(user, "finances", "update:any") && data) {
+            if (user && can(user, "finances", "update") && data) {
                 setIsCreatingItem(true);
 
                 await api.post('incomings/items', {
@@ -213,7 +213,7 @@ const IncomeModal: React.FC<IncomeModalProps> = ({ incomeId, show = false, handl
                 <Modal.Title>Edtiar receita</Modal.Title>
             </Modal.Header>
             {
-                user && can(user, "finances", "update:any") ? <>
+                user && can(user, "finances", "update") ? <>
                     {
                         data ? <>
                             <Formik

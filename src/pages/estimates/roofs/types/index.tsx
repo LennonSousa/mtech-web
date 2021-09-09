@@ -45,7 +45,7 @@ export default function Types() {
         handleSelectedMenu('estimates-roofs-types');
 
         if (user) {
-            if (can(user, "estimates", "read:any")) {
+            if (can(user, "estimates", "view")) {
 
                 api.get('roofs/types').then(res => {
                     setRoofTypes(res.data);
@@ -128,7 +128,7 @@ export default function Types() {
                 !user || loading ? <PageWaiting status="waiting" /> :
                     <>
                         {
-                            can(user, "estimates", "update:any") ? <Container className="content-page">
+                            can(user, "estimates", "update") ? <Container className="content-page">
                                 <Row>
                                     <Col>
                                         <Button variant="outline-success" onClick={handleShowModalNewType}>

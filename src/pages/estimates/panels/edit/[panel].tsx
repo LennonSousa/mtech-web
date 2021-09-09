@@ -76,7 +76,7 @@ export default function UserEdit() {
         handleSelectedMenu('estimates-panels');
 
         if (user) {
-            if (can(user, "estimates", "update:any") || can(user, "users", "update:own") && panel === user.id) {
+            if (can(user, "estimates", "update") || can(user, "users", "update_self") && panel === user.id) {
                 api.get(`panels/${panel}`).then(res => {
                     setData(res.data);
 
@@ -105,7 +105,7 @@ export default function UserEdit() {
             setDeletingMessageShow(true);
 
             try {
-                if (can(user, "estimates", "delete")) {
+                if (can(user, "estimates", "remove")) {
                     await api.delete(`panels/${panel}`);
 
                     setTypeMessage("success");
@@ -165,7 +165,7 @@ export default function UserEdit() {
                 !user || loading ? <PageWaiting status="waiting" /> :
                     <>
                         {
-                            can(user, "users", "update:any") || can(user, "users", "update:own") && panel === user.id ? <>
+                            can(user, "users", "update") || can(user, "users", "update_self") && panel === user.id ? <>
                                 {
                                     loadingData ? <PageWaiting
                                         status={typeLoadingMessage}
@@ -313,7 +313,7 @@ export default function UserEdit() {
                                                                                 messageShow ? <Col sm={3}><AlertMessage status={typeMessage} /></Col> :
                                                                                     <>
                                                                                         {
-                                                                                            can(user, "estimates", "delete") && <Col className="col-row">
+                                                                                            can(user, "estimates", "remove") && <Col className="col-row">
                                                                                                 <Button
                                                                                                     variant="danger"
                                                                                                     onClick={handelShowItemDelete}
@@ -346,7 +346,7 @@ export default function UserEdit() {
                                                                             deletingMessageShow ? <Col><AlertMessage status={typeMessage} /></Col> :
                                                                                 <>
                                                                                     {
-                                                                                        can(user, "users", "delete") && <Col className="col-row">
+                                                                                        can(user, "users", "remove") && <Col className="col-row">
                                                                                             <Button
                                                                                                 variant="danger"
                                                                                                 type="button"

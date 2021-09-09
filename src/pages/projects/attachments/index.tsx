@@ -46,7 +46,7 @@ export default function AttachmentsRequired() {
         handleSelectedMenu('projects-attachments-required');
 
         if (user) {
-            if (can(user, "projects", "update:any")) {
+            if (can(user, "projects", "update")) {
                 api.get('attachments-required/project').then(res => {
                     setAttachmentsRequiredProject(res.data);
 
@@ -127,7 +127,7 @@ export default function AttachmentsRequired() {
             {
                 !user || loading ? <PageWaiting status="waiting" /> : <>
                     {
-                        can(user, "projects", "update:any") ? <Container className="content-page">
+                        can(user, "projects", "update") ? <Container className="content-page">
                             <Row>
                                 <Col>
                                     <Button variant="outline-success" onClick={handleShowModalNewItem}>

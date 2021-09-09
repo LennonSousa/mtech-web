@@ -135,7 +135,7 @@ export default function EditEstimate() {
         handleSelectedMenu('estimates-index');
 
         if (user) {
-            if (can(user, "estimates", "update:any")) {
+            if (can(user, "estimates", "update")) {
                 api.get(`estimates/${estimate}`).then(res => {
                     let estimateRes: Estimate = res.data;
 
@@ -329,7 +329,7 @@ export default function EditEstimate() {
             setDeletingMessageShow(true);
 
             try {
-                if (can(user, "estimates", "delete")) {
+                if (can(user, "estimates", "remove")) {
                     await api.delete(`estimates/${estimate}`);
 
                     setTypeMessage("success");
@@ -375,7 +375,7 @@ export default function EditEstimate() {
                 !user || loading ? <PageWaiting status="waiting" /> :
                     <>
                         {
-                            can(user, "estimates", "update:any") ? <>
+                            can(user, "estimates", "update") ? <>
                                 {
                                     loadingData || hasErrors ? <PageWaiting
                                         status={typeLoadingMessage}
@@ -1849,7 +1849,7 @@ export default function EditEstimate() {
                                                                             messageShow ? <Col sm={3}><AlertMessage status={typeMessage} /></Col> :
                                                                                 <>
                                                                                     {
-                                                                                        can(user, "estimates", "delete") && <Col className="col-row">
+                                                                                        can(user, "estimates", "remove") && <Col className="col-row">
                                                                                             <Button
                                                                                                 variant="danger"
                                                                                                 title="Excluir orçamento."
@@ -1879,32 +1879,28 @@ export default function EditEstimate() {
                                                                 Você tem certeza que deseja excluir este orçamento? Essa ação não poderá ser desfeita.
                                                             </Modal.Body>
                                                             <Modal.Footer>
-                                                                <Row>
-                                                                    {
-                                                                        deletingMessageShow ? <Col><AlertMessage status={typeMessage} /></Col> :
-                                                                            <>
-                                                                                {
-                                                                                    can(user, "estimates", "delete") && <Col className="col-row">
-                                                                                        <Button
-                                                                                            variant="danger"
-                                                                                            type="button"
-                                                                                            onClick={handleItemDelete}
-                                                                                        >
-                                                                                            Excluir
-                                                                                        </Button>
-                                                                                    </Col>
-                                                                                }
-
-                                                                                <Button
-                                                                                    className="col-row"
-                                                                                    variant="outline-secondary"
-                                                                                    onClick={handleCloseItemDelete}
+                                                                {
+                                                                    deletingMessageShow ? <AlertMessage status={typeMessage} /> :
+                                                                        <>
+                                                                            {
+                                                                                can(user, "estimates", "remove") && <Button
+                                                                                    variant="danger"
+                                                                                    type="button"
+                                                                                    onClick={handleItemDelete}
                                                                                 >
-                                                                                    Cancelar
+                                                                                    Excluir
                                                                                 </Button>
-                                                                            </>
-                                                                    }
-                                                                </Row>
+                                                                            }
+
+                                                                            <Button
+                                                                                className="col-row"
+                                                                                variant="outline-secondary"
+                                                                                onClick={handleCloseItemDelete}
+                                                                            >
+                                                                                Cancelar
+                                                                            </Button>
+                                                                        </>
+                                                                }
                                                             </Modal.Footer>
                                                         </Modal>
                                                     </Container>

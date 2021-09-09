@@ -38,7 +38,7 @@ export default function Projects() {
         handleSelectedMenu('projects-index');
 
         if (user) {
-            if (can(user, "projects", "read:any")) {
+            if (can(user, "projects", "view")) {
                 let requestUrl = `projects?limit=${limit}&page=${activePage}`;
 
                 api.get(requestUrl).then(res => {
@@ -104,7 +104,7 @@ export default function Projects() {
                 !user || loading ? <PageWaiting status="waiting" /> :
                     <>
                         {
-                            can(user, "projects", "read:any") ? <>
+                            can(user, "projects", "view") ? <>
                                 <Container className="page-container">
                                     <Row>
                                         {

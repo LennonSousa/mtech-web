@@ -33,7 +33,7 @@ export default function IncomingsPage() {
         handleItemSideBar('finances');
         handleSelectedMenu('finances-incomings');
 
-        if (user && can(user, "finances", "read:any")) {
+        if (user && can(user, "finances", "view")) {
             api.get('incomings').then(res => {
                 setIncomings(res.data);
 
@@ -76,7 +76,7 @@ export default function IncomingsPage() {
                 !user || loading ? <PageWaiting status="waiting" /> :
                     <>
                         {
-                            can(user, "finances", "read:any") ? <Container className="content-page">
+                            can(user, "finances", "view") ? <Container className="content-page">
                                 {
                                     can(user, "finances", "create") && <Row>
                                         <Col>

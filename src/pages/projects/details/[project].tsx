@@ -53,7 +53,7 @@ export default function PropertyDetails() {
             handleItemSideBar('projects');
             handleSelectedMenu('projects-index');
 
-            if (can(user, "projects", "read:any")) {
+            if (can(user, "projects", "view")) {
                 if (project) {
                     api.get(`projects/${project}`).then(res => {
                         let projectRes: Project = res.data;
@@ -163,7 +163,7 @@ export default function PropertyDetails() {
                 !user || loading ? <PageWaiting status="waiting" /> :
                     <>
                         {
-                            can(user, "projects", "read:any") ? <>
+                            can(user, "projects", "view") ? <>
                                 {
                                     loadingData || hasErrors ? <PageWaiting
                                         status={typeLoadingMessage}
@@ -855,7 +855,7 @@ export default function PropertyDetails() {
                                                                 <Col className="border-top mt-3 mb-3"></Col>
 
                                                                 {
-                                                                    can(user, "finances", "read:any") && <Row className="mt-5 mb-3">
+                                                                    can(user, "finances", "view") && <Row className="mt-5 mb-3">
                                                                         <Col>
                                                                             <Row>
                                                                                 <Col>

@@ -29,7 +29,7 @@ export default function PanelsPage() {
         handleItemSideBar('estimates');
         handleSelectedMenu('estimates-panels');
 
-        if (user && can(user, "estimates", "read:any")) {
+        if (user && can(user, "estimates", "view")) {
             api.get('panels').then(res => {
                 setPanels(res.data);
 
@@ -76,7 +76,7 @@ export default function PanelsPage() {
                 !user || loading ? <PageWaiting status="waiting" /> :
                     <>
                         {
-                            can(user, "estimates", "read:any") ? <Container className="content-page">
+                            can(user, "estimates", "view") ? <Container className="content-page">
                                 {
                                     can(user, "estimates", "create") && <Row>
                                         <Col>

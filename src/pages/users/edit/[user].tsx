@@ -50,7 +50,7 @@ export default function UserEdit() {
         handleSelectedMenu('users-index');
 
         if (user) {
-            if (can(user, "users", "update:any") || can(user, "users", "update:own") && userId === user.id) {
+            if (can(user, "users", "update") || can(user, "users", "update_self") && userId === user.id) {
                 api.get(`users/${userId}`).then(res => {
                     const userRes: User = res.data;
 
@@ -140,7 +140,7 @@ export default function UserEdit() {
             setDeletingMessageShow(true);
 
             try {
-                if (can(user, "users", "delete") && !userData.root) {
+                if (can(user, "users", "remove") && !userData.root) {
                     await api.delete(`users/${userId}`);
 
                     setTypeMessage("success");
@@ -186,7 +186,7 @@ export default function UserEdit() {
                 !user || loading ? <PageWaiting status="waiting" /> :
                     <>
                         {
-                            can(user, "users", "update:any") || can(user, "users", "update:own") && userId === user.id ? <>
+                            can(user, "users", "update") || can(user, "users", "update_self") && userId === user.id ? <>
                                 {
                                     loadingData ? <PageWaiting
                                         status={typeLoadingMessage}
@@ -245,7 +245,7 @@ export default function UserEdit() {
                                                                 {({ handleChange, handleBlur, handleSubmit, values, setFieldValue, errors, touched }) => (
                                                                     <Form onSubmit={handleSubmit}>
                                                                         {
-                                                                            can(user, "users", "read:any") ? <Row className="mb-3">
+                                                                            can(user, "users", "view") ? <Row className="mb-3">
                                                                                 <Col>
                                                                                     <PageBack href="/users" subTitle="Voltar para a lista usuários." />
                                                                                 </Col>
@@ -418,7 +418,7 @@ export default function UserEdit() {
                                                                                 messageShow ? <Col sm={3}><AlertMessage status={typeMessage} /></Col> :
                                                                                     <>
                                                                                         {
-                                                                                            can(user, "users", "delete")
+                                                                                            can(user, "users", "remove")
                                                                                             && userId !== user.id
                                                                                             && !userData.root
                                                                                             && <Col className="col-row">
@@ -454,7 +454,7 @@ export default function UserEdit() {
                                                                             deletingMessageShow ? <Col><AlertMessage status={typeMessage} /></Col> :
                                                                                 <>
                                                                                     {
-                                                                                        can(user, "users", "delete")
+                                                                                        can(user, "users", "remove")
                                                                                         && userId !== user.id
                                                                                         && !userData.root
                                                                                         && <Col className="col-row">

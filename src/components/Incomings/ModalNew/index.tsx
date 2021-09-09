@@ -43,7 +43,7 @@ const IncomeModalNew: React.FC<IncomeModalNewProps> = ({ project, show = false, 
     useEffect(() => {
         setHasErrors(false);
 
-        if (user && can(user, "finances", "update:any") && show) {
+        if (user && can(user, "finances", "update") && show) {
             setIncomeItems([]);
 
             api.get('payments/types').then(res => {

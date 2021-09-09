@@ -73,7 +73,7 @@ export default function EditStore() {
         handleSelectedMenu('store-edit');
 
         if (user) {
-            if (can(user, "store", "update:any")) {
+            if (can(user, "store", "update")) {
                 api.get('store').then(res => {
                     let storeRes: Store = res.data;
 
@@ -126,7 +126,7 @@ export default function EditStore() {
                 !user || loading ? <PageWaiting status="waiting" /> :
                     <>
                         {
-                            can(user, "store", "update:any") ? <>
+                            can(user, "store", "update") ? <>
                                 {
                                     loadingData || hasErrors ? <PageWaiting
                                         status={typeLoadingMessage}

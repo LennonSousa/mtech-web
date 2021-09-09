@@ -35,7 +35,7 @@ export default function UserDetails() {
         handleSelectedMenu('estimates-panels');
 
         if (user) {
-            if (can(user, "estimates", "read:any") || panel === user.id) {
+            if (can(user, "estimates", "view") || panel === user.id) {
                 api.get(`panels/${panel}`).then(res => {
                     setData(res.data);
 
@@ -77,7 +77,7 @@ export default function UserDetails() {
                 !user || loading ? <PageWaiting status="waiting" /> :
                     <>
                         {
-                            can(user, "estimates", "read:any") || panel === user.id ? <>
+                            can(user, "estimates", "view") || panel === user.id ? <>
                                 {
                                     loadingData ? <PageWaiting
                                         status={typeLoadingMessage}
@@ -103,7 +103,7 @@ export default function UserDetails() {
                                                                             </Col>
 
                                                                             {
-                                                                                can(user, "estimates", "update:any") && <Col className="col-row">
+                                                                                can(user, "estimates", "update") && <Col className="col-row">
                                                                                     <ButtonGroup size="sm" className="col-12">
                                                                                         <Button
                                                                                             title="Editar painel."

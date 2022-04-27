@@ -1,5 +1,6 @@
 import { useContext, useEffect, useState } from 'react';
 import { GetServerSideProps } from 'next';
+import type { NextPage } from 'next';
 import { NextSeo } from 'next-seo';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { Button, Col, Container, Form, Image, ListGroup, Modal, Row } from 'react-bootstrap';
@@ -22,7 +23,7 @@ const validationSchema = Yup.object().shape({
     order: Yup.number().required(),
 });
 
-export default function Types() {
+const EstimateStatusPage: NextPage = () => {
     const { handleItemSideBar, handleSelectedMenu } = useContext(SideBarContext);
     const { loading, user } = useContext(AuthContext);
 
@@ -45,7 +46,7 @@ export default function Types() {
         handleSelectedMenu('estimates-status');
 
         if (user) {
-            if (can(user, "estimates", "view")) {
+            if (can(user, "settings", "read:any")) {
 
                 api.get('estimates/status').then(res => {
                     setEstimateStatus(res.data);
@@ -109,17 +110,17 @@ export default function Types() {
         <>
             <NextSeo
                 title="Fases do orçamento"
-                description="Fases do orçamento da plataforma de gerenciamento da Mtech Solar."
+                description="Fases do orçamento da plataforma de gerenciamento da Plataforma solar."
                 openGraph={{
-                    url: 'https://app.mtechsolar.com.br',
+                    url: process.env.NEXT_PUBLIC_API_URL,
                     title: 'Fases do orçamento',
-                    description: 'Fases do orçamento da plataforma de gerenciamento da Mtech Solar.',
+                    description: 'Fases do orçamento da plataforma de gerenciamento da Plataforma solar.',
                     images: [
                         {
-                            url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
-                            alt: 'Fases do orçamento | Plataforma Mtech Solar',
+                            url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg`,
+                            alt: 'Fases do orçamento | Plataforma solar',
                         },
-                        { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
+                        { url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg` },
                     ],
                 }}
             />
@@ -128,12 +129,14 @@ export default function Types() {
                 !user || loading ? <PageWaiting status="waiting" /> :
                     <>
                         {
-                            can(user, "estimates", "update") ? <Container className="content-page">
+                            can(user, "settings", "read:any") ? <Container className="content-page">
                                 <Row>
                                     <Col>
-                                        <Button variant="outline-success" onClick={handleShowModalNewType}>
-                                            <FaPlus /> Criar um item
-                                        </Button>
+                                        {
+                                            can(user, "settings", "create") && <Button variant="outline-success" onClick={handleShowModalNewType}>
+                                                <FaPlus /> Criar um item
+                                            </Button>
+                                        }
                                     </Col>
                                 </Row>
 
@@ -298,6 +301,8 @@ export default function Types() {
         </>
     )
 }
+
+export default EstimateStatusPage;
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
     const { token } = context.req.cookies;

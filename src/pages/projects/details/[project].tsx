@@ -1,14 +1,18 @@
 import { useContext, useEffect, useState } from 'react';
 import { GetServerSideProps } from 'next';
+import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { NextSeo } from 'next-seo';
-import { Col, Container, Button, ButtonGroup, ListGroup, Row } from 'react-bootstrap';
+import { Col, Container, Button, ButtonGroup, ListGroup, Row, Table } from 'react-bootstrap';
 import { format } from 'date-fns';
 import {
+    FaClipboardList,
     FaDonate,
     FaFileAlt,
+    FaFileExport,
     FaHistory,
     FaPencilAlt,
+    FaPrint,
     FaSolarPanel,
     FaStickyNote,
     FaUserTag,
@@ -33,7 +37,7 @@ import { PageWaiting, PageType } from '../../../components/PageWaiting';
 import { AlertMessage } from '../../../components/Interfaces/AlertMessage';
 import { prettifyCurrency } from '../../../components/InputMask/masks';
 
-export default function PropertyDetails() {
+const ProjectDetails: NextPage = () => {
     const router = useRouter();
     const { project } = router.query;
 
@@ -53,7 +57,7 @@ export default function PropertyDetails() {
             handleItemSideBar('projects');
             handleSelectedMenu('projects-index');
 
-            if (can(user, "projects", "view")) {
+            if (can(user, "projects", "read:any") || can(user, "projects", "read:own")) {
                 if (project) {
                     api.get(`projects/${project}`).then(res => {
                         let projectRes: Project = res.data;
@@ -144,17 +148,17 @@ export default function PropertyDetails() {
         <>
             <NextSeo
                 title="Editar projeto"
-                description="Editar projeto da plataforma de gerenciamento da Mtech Solar."
+                description="Editar projeto da plataforma de gerenciamento da Plataforma solar."
                 openGraph={{
-                    url: 'https://app.mtechsolar.com.br',
+                    url: process.env.NEXT_PUBLIC_API_URL,
                     title: 'Editar projeto',
-                    description: 'Editar projeto da plataforma de gerenciamento da Mtech Solar.',
+                    description: 'Editar projeto da plataforma de gerenciamento da Plataforma solar.',
                     images: [
                         {
-                            url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
-                            alt: 'Editar projeto | Plataforma Mtech',
+                            url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg`,
+                            alt: 'Editar projeto | Plataforma solar',
                         },
-                        { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
+                        { url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg` },
                     ],
                 }}
             />
@@ -163,7 +167,7 @@ export default function PropertyDetails() {
                 !user || loading ? <PageWaiting status="waiting" /> :
                     <>
                         {
-                            can(user, "projects", "view") ? <>
+                            can(user, "projects", "read:any") || can(user, "projects", "read:own") ? <>
                                 {
                                     loadingData || hasErrors ? <PageWaiting
                                         status={typeLoadingMessage}
@@ -182,12 +186,32 @@ export default function PropertyDetails() {
 
                                                                     <Col className="col-row">
                                                                         <ButtonGroup className="col-12">
+                                                                            {
+                                                                                can(user, "projects", "update:any") && <Button
+                                                                                    title="Editar projeto."
+                                                                                    variant="success"
+                                                                                    onClick={() => handleRoute(`/projects/edit/${data.id}`)}
+                                                                                >
+                                                                                    <FaPencilAlt />
+                                                                                </Button>
+                                                                            }
+
+                                                                            {
+                                                                                can(user, "services", "create") && <Button
+                                                                                    title="Criar ordem de serviço."
+                                                                                    variant="success"
+                                                                                    onClick={() => handleRoute(`/service-orders/new?from=${data.id}`)}
+                                                                                >
+                                                                                    <FaFileExport />
+                                                                                </Button>
+                                                                            }
+
                                                                             <Button
-                                                                                title="Editar projeto."
+                                                                                title="Imprimir contrato."
                                                                                 variant="success"
-                                                                                onClick={() => handleRoute(`/projects/edit/${data.id}`)}
+                                                                                onClick={() => handleRoute(`/projects/print/${data.id}`)}
                                                                             >
-                                                                                <FaPencilAlt />
+                                                                                <FaPrint />
                                                                             </Button>
                                                                         </ButtonGroup>
                                                                     </Col>
@@ -562,25 +586,52 @@ export default function PropertyDetails() {
                                                                     </Col>
                                                                 </Row>
 
-                                                                <Row className="mb-3">
-                                                                    <Col sm={3}>
-                                                                        <Row>
-                                                                            <Col>
-                                                                                <span className="text-success">Valor</span>
-                                                                            </Col>
-                                                                        </Row>
+                                                                {
+                                                                    can(user, "finances", "read:any") && <Row className="mb-3">
+                                                                        <Col sm={3}>
+                                                                            <Row>
+                                                                                <Col>
+                                                                                    <span className="text-success">Valor</span>
+                                                                                </Col>
+                                                                            </Row>
 
-                                                                        <Row>
-                                                                            <Col>
-                                                                                <h6
-                                                                                    className="text-secondary"
-                                                                                >
-                                                                                    {`R$ ${Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(data.price)}`}
-                                                                                </h6>
-                                                                            </Col>
-                                                                        </Row>
+                                                                            <Row>
+                                                                                <Col>
+                                                                                    <h6
+                                                                                        className="text-secondary"
+                                                                                    >
+                                                                                        {`R$ ${Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(data.price)}`}
+                                                                                    </h6>
+                                                                                </Col>
+                                                                            </Row>
+                                                                        </Col>
+                                                                    </Row>
+                                                                }
+
+                                                                <Row>
+                                                                    <Col>
+                                                                        <h6 className="text-success">Itens <FaClipboardList /></h6>
                                                                     </Col>
                                                                 </Row>
+
+                                                                <Table striped hover size="sm" responsive>
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th>Quantidade</th>
+                                                                            <th>Produto</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {
+                                                                            data.items.map((item, index) => {
+                                                                                return <tr key={index}>
+                                                                                    <td>{prettifyCurrency(Number(item.amount).toFixed(2))}</td>
+                                                                                    <td>{item.name}</td>
+                                                                                </tr>
+                                                                            })
+                                                                        }
+                                                                    </tbody>
+                                                                </Table>
 
                                                                 <Col className="border-top mt-3 mb-3"></Col>
 
@@ -775,7 +826,7 @@ export default function PropertyDetails() {
                                                                 </Row>
 
                                                                 <Row className="mb-3">
-                                                                    <Col sm={4} >
+                                                                    <Col sm={6} >
                                                                         <Row>
                                                                             <Col>
                                                                                 <span className="text-success">Situação do projeto</span>
@@ -788,6 +839,22 @@ export default function PropertyDetails() {
                                                                             </Col>
                                                                         </Row>
                                                                     </Col>
+
+                                                                    {
+                                                                        !user.store_only && <Col sm={6}>
+                                                                            <Row>
+                                                                                <Col>
+                                                                                    <span className="text-success">Loja</span>
+                                                                                </Col>
+                                                                            </Row>
+
+                                                                            <Row>
+                                                                                <Col>
+                                                                                    <h6 className="text-secondary">{data.store.name}</h6>
+                                                                                </Col>
+                                                                            </Row>
+                                                                        </Col>
+                                                                    }
                                                                 </Row>
 
                                                                 <Col className="border-top mt-3 mb-3"></Col>
@@ -855,7 +922,7 @@ export default function PropertyDetails() {
                                                                 <Col className="border-top mt-3 mb-3"></Col>
 
                                                                 {
-                                                                    can(user, "finances", "view") && <Row className="mt-5 mb-3">
+                                                                    can(user, "finances", "read:any") && <Row className="mt-5 mb-3">
                                                                         <Col>
                                                                             <Row>
                                                                                 <Col>
@@ -1020,6 +1087,8 @@ export default function PropertyDetails() {
         </>
     )
 }
+
+export default ProjectDetails;
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
     const { token } = context.req.cookies;

@@ -1,5 +1,6 @@
 import { useContext, useState } from 'react';
 import { GetServerSideProps } from 'next';
+import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { NextSeo } from 'next-seo';
@@ -21,7 +22,7 @@ const validationSchema = Yup.object().shape({
   password: Yup.string().required('Obrigatório!').min(8, 'Mínimo 8 caracteres.')
 });
 
-export default function Login() {
+const Login: NextPage = () => {
   const router = useRouter();
   const { returnto } = router.query;
 
@@ -34,18 +35,18 @@ export default function Login() {
   return (
     <>
       <NextSeo
-        title="Bem-vindo(a)"
-        description="Bem-vindo(a) a plataforma de gerenciamento da Mtech Solar."
+        title="Plataforma solar"
+        description="Bem-vindo(a) a plataforma de gerenciamento da Plataforma solar."
         openGraph={{
-          url: 'https://app.mtechsolar.com.br',
-          title: 'Bem-vindo(a)',
-          description: 'Bem-vindo(a) a plataforma de gerenciamento da Mtech Solar.',
+          url: process.env.NEXT_PUBLIC_API_URL,
+          title: 'Plataforma solar',
+          description: 'Bem-vindo(a) a plataforma de gerenciamento da Plataforma solar.',
           images: [
             {
-              url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
-              alt: 'Bem-vindo(a) | Plataforma Mtech Solar',
+              url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg`,
+              alt: 'Bem-vindo(a) | Plataforma solar',
             },
-            { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
+            { url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg` },
           ],
         }}
       />
@@ -55,10 +56,10 @@ export default function Login() {
           <Row className="justify-content-center align-items-center">
             <Col sm={12} className={`${styles.formContainer} col-11`}>
               <Row className="justify-content-center align-items-center">
-                <Col md={6} className="mt-1 mb-4">
+                <Col md={6} className="col-8 mt-1 mb-1">
                   <Row className="justify-content-center align-items-center">
                     <Col sm={8}>
-                      <Image fluid src="/assets/images/logo-mtech.svg" alt="Mtech Solar." />
+                      <Image fluid src="/assets/images/logo.svg" alt="Plataforma solar." />
                     </Col>
                   </Row>
                 </Col>
@@ -185,6 +186,8 @@ export default function Login() {
     </>
   )
 }
+
+export default Login;
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const { token } = context.req.cookies;

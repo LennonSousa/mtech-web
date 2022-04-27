@@ -16,11 +16,10 @@ export interface EstimateItem {
 interface EstimateItemsProps {
     estimateItem: EstimateItem;
     estimateItemsList: EstimateItem[];
-    canEdit?: boolean;
     handleListEstimateItems?: (estimateItemsList: EstimateItem[]) => void;
 }
 
-const EstimateItems: React.FC<EstimateItemsProps> = ({ estimateItem, estimateItemsList, canEdit = true, handleListEstimateItems }) => {
+const EstimateItems: React.FC<EstimateItemsProps> = ({ estimateItem, estimateItemsList, handleListEstimateItems }) => {
     const [name, setName] = useState('');
     const [amount, setAmount] = useState(0);
     const [price, setPrice] = useState('0,00');
@@ -72,7 +71,7 @@ const EstimateItems: React.FC<EstimateItemsProps> = ({ estimateItem, estimateIte
                             setFieldsFormTouched(true);
                         }
                     }}
-                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                    onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                         try {
                             const newAmount = Number(e.target.value);
 
@@ -99,7 +98,7 @@ const EstimateItems: React.FC<EstimateItemsProps> = ({ estimateItem, estimateIte
 
                         setFieldsFormTouched(true);
                     }}
-                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                    onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                         setName(e.target.value);
 
                         setFieldsFormTouched(true);
@@ -130,7 +129,7 @@ const EstimateItems: React.FC<EstimateItemsProps> = ({ estimateItem, estimateIte
                                 setFieldsFormTouched(true);
                             }
                         }}
-                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                        onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                             try {
                                 const newTotalPrice = amount * Number(prettifyCurrency(e.target.value).replaceAll('.', '').replaceAll(',', '.'));
 

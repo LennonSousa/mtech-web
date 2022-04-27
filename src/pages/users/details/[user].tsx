@@ -1,29 +1,33 @@
 import { useContext, useEffect, useState } from 'react';
 import { GetServerSideProps } from 'next';
+import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { NextSeo } from 'next-seo';
-import { Button, ButtonGroup, Col, Container, Tab, Tabs, ListGroup, Row } from 'react-bootstrap';
-import { FaAngleRight, FaKey, FaUserEdit } from 'react-icons/fa';
+import { Button, ButtonGroup, Col, Container, ListGroup, Row } from 'react-bootstrap';
+import { FaKey, FaUserEdit } from 'react-icons/fa';
 import { format } from 'date-fns';
 
 import api from '../../../api/api';
 import { TokenVerify } from '../../../utils/tokenVerify';
 import { SideBarContext } from '../../../contexts/SideBarContext';
 import { AuthContext } from '../../../contexts/AuthContext';
-import { User, UserRole, can, translateRole } from '../../../components/Users';
+import { User, UserRole, can, translatedRoles } from '../../../components/Users';
+import { prettifyCurrency } from '../../../components/InputMask/masks';
 
 import PageBack from '../../../components/PageBack';
 import { PageWaiting, PageType } from '../../../components/PageWaiting';
-import { AlertMessage } from '../../../components/Interfaces/AlertMessage';
 
-import styles from './styles.module.css';
+const rolesToViewSelf = [
+    'estimates',
+    'projects',
+    'services',
+];
 
-interface TranslateRoles {
-    role: string,
-    translated: string;
-}
+const rolesToEditSelf = [
+    'users',
+];
 
-export default function UserDetails() {
+const UserDetails: NextPage = () => {
     const router = useRouter();
     const userId = router.query['user'];
 
@@ -32,6 +36,7 @@ export default function UserDetails() {
     const { handleItemSideBar, handleSelectedMenu } = useContext(SideBarContext);
 
     const [loadingData, setLoadingData] = useState(true);
+    const [documentType, setDocumentType] = useState("CPF");
     const [typeLoadingMessage, setTypeLoadingMessage] = useState<PageType>("waiting");
     const [textLoadingMessage, setTextLoadingMessage] = useState('Aguarde, carregando...');
 
@@ -43,9 +48,12 @@ export default function UserDetails() {
         handleSelectedMenu('users-index');
 
         if (user) {
-            if (can(user, "users", "view") || userId === user.id) {
+            if (can(user, "users", "read:any") || userId === user.id) {
                 api.get(`users/${userId}`).then(res => {
                     let userRes: User = res.data;
+
+                    if (userRes.document.length > 14)
+                        setDocumentType("CNPJ");
 
                     setUsersRoles(userRes.roles);
 
@@ -70,17 +78,17 @@ export default function UserDetails() {
         <>
             <NextSeo
                 title="Detalhes do usuário"
-                description="Detalhes do usuário da plataforma de gerenciamento da Mtech Solar."
+                description="Detalhes do usuário da plataforma de gerenciamento da Plataforma solar."
                 openGraph={{
-                    url: 'https://app.mtechsolar.com.br',
+                    url: process.env.NEXT_PUBLIC_API_URL,
                     title: 'Detalhes do usuário',
-                    description: 'Detalhes do usuário da plataforma de gerenciamento da Mtech Solar.',
+                    description: 'Detalhes do usuário da plataforma de gerenciamento da Plataforma solar.',
                     images: [
                         {
-                            url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
-                            alt: 'Detalhes do usuário | Plataforma Mtech Solar',
+                            url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg`,
+                            alt: 'Detalhes do usuário | Plataforma solar',
                         },
-                        { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
+                        { url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg` },
                     ],
                 }}
             />
@@ -89,7 +97,7 @@ export default function UserDetails() {
                 !user || loading ? <PageWaiting status="waiting" /> :
                     <>
                         {
-                            can(user, "users", "view") || userId === user.id ? <>
+                            can(user, "users", "read:any") || userId === user.id ? <>
                                 {
                                     loadingData ? <PageWaiting
                                         status={typeLoadingMessage}
@@ -102,7 +110,7 @@ export default function UserDetails() {
                                                         <Row>
                                                             <Col>
                                                                 {
-                                                                    can(user, "users", "view") && <Row className="mb-3">
+                                                                    can(user, "users", "read:any") && <Row className="mb-3">
                                                                         <Col>
                                                                             <PageBack href="/users" subTitle="Voltar para a lista de usuários" />
                                                                         </Col>
@@ -117,8 +125,8 @@ export default function UserDetails() {
                                                                             </Col>
 
                                                                             {
-                                                                                can(user, "users", "update") ||
-                                                                                    can(user, "users", "update_self") &&
+                                                                                can(user, "users", "update:any") ||
+                                                                                    can(user, "users", "update:own") &&
                                                                                     userId === user.id ?
                                                                                     <Col className="col-row">
                                                                                         <ButtonGroup size="sm" className="col-12">
@@ -137,6 +145,20 @@ export default function UserDetails() {
                                                                 </Row>
 
                                                                 <Row className="mb-3">
+                                                                    <Col sm={3} >
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">{documentType}</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">{userData.document}</h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+
                                                                     <Col sm={3} >
                                                                         <Row>
                                                                             <Col>
@@ -169,7 +191,7 @@ export default function UserDetails() {
                                                                 <Col className="border-top mb-3"></Col>
 
                                                                 <Row className="mb-3">
-                                                                    <Col sm={4} >
+                                                                    <Col sm={3} >
                                                                         <Row>
                                                                             <Col>
                                                                                 <span className="text-success">Criado em</span>
@@ -182,6 +204,40 @@ export default function UserDetails() {
                                                                             </Col>
                                                                         </Row>
                                                                     </Col>
+
+                                                                    <Col sm={3} >
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <span className="text-success">Limite de desconto</span>
+                                                                            </Col>
+                                                                        </Row>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <h6 className="text-secondary">
+                                                                                    {`${prettifyCurrency(Number(userData.discountLimit).toFixed(2))} %`}
+                                                                                </h6>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Col>
+
+                                                                    {
+                                                                        userData.store_only && <Col sm={6} >
+                                                                            <Row>
+                                                                                <Col>
+                                                                                    <span className="text-success">Vinculado a loja</span>
+                                                                                </Col>
+                                                                            </Row>
+
+                                                                            <Row>
+                                                                                <Col>
+                                                                                    <h6 className="text-secondary">
+                                                                                        {userData.store ? userData.store.name : ''}
+                                                                                    </h6>
+                                                                                </Col>
+                                                                            </Row>
+                                                                        </Col>
+                                                                    }
                                                                 </Row>
 
                                                                 <Row className="mb-3">
@@ -197,12 +253,14 @@ export default function UserDetails() {
                                                                                 <ListGroup className="mb-3">
                                                                                     {
                                                                                         usersRoles.map((role, index) => {
+                                                                                            const translatedRole = translatedRoles.find(item => { return item.role === role.role });
+
                                                                                             return <ListGroup.Item key={index} as="div" variant="light">
                                                                                                 <Row>
                                                                                                     <Col>
                                                                                                         <h6 className="text-success" >
                                                                                                             {
-                                                                                                                translateRole(role.role)
+                                                                                                                translatedRole ? translatedRole.translated : role.role
                                                                                                             }
                                                                                                         </h6>
                                                                                                     </Col>
@@ -210,6 +268,13 @@ export default function UserDetails() {
                                                                                                     {
                                                                                                         role.view && <Col className="col-row">
                                                                                                             <span>Visualizar</span>
+                                                                                                        </Col>
+                                                                                                    }
+
+                                                                                                    {
+                                                                                                        rolesToViewSelf.find(item => { return item === role.role }) && role.view_self &&
+                                                                                                        <Col className="col-row">
+                                                                                                            <span>Visualizar próprio</span>
                                                                                                         </Col>
                                                                                                     }
 
@@ -225,10 +290,9 @@ export default function UserDetails() {
                                                                                                         </Col>
                                                                                                     }
 
-
-
                                                                                                     {
-                                                                                                        role.role === 'users' && role.update_self && <Col className="col-row">
+                                                                                                        rolesToEditSelf.find(item => { return item === role.role }) && role.update_self &&
+                                                                                                        <Col className="col-row">
                                                                                                             <span>Editar próprio</span>
                                                                                                         </Col>
                                                                                                     }
@@ -261,6 +325,8 @@ export default function UserDetails() {
         </>
     )
 }
+
+export default UserDetails;
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
     const { token } = context.req.cookies;

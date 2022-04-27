@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { InferGetServerSidePropsType, GetServerSideProps } from 'next';
+import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { NextSeo } from 'next-seo';
 import { Button, Col, Container, Form, Image, Modal, Row } from 'react-bootstrap';
@@ -20,7 +21,7 @@ const validationSchema = Yup.object().shape({
     repeat: Yup.string().required('Obrigatório!').min(8, 'Mínimo 8 caracteres.'),
 });
 
-export default function NewCustomer({ authenticated, user, token }: InferGetServerSidePropsType<typeof getServerSideProps>) {
+const UserResetAuth: NextPage = ({ authenticated, user, token }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
     const router = useRouter();
     const authenticatedUser: User = user ? user : null;
 
@@ -46,17 +47,17 @@ export default function NewCustomer({ authenticated, user, token }: InferGetServ
         <>
             <NextSeo
                 title="Criar nova senha"
-                description="Criar nova senha da plataforma de gerenciamento da Mtech Solar."
+                description="Criar nova senha da plataforma de gerenciamento da Plataforma solar."
                 openGraph={{
-                    url: 'https://app.mtechsolar.com.br',
+                    url: process.env.NEXT_PUBLIC_API_URL,
                     title: 'Criar nova senha',
-                    description: 'Criar nova senha da plataforma de gerenciamento da Mtech Solar.',
+                    description: 'Criar nova senha da plataforma de gerenciamento da Plataforma solar.',
                     images: [
                         {
-                            url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
-                            alt: 'Criar nova senha | Plataforma Mtech Solar',
+                            url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg`,
+                            alt: 'Criar nova senha | Plataforma solar',
                         },
-                        { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
+                        { url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg` },
                     ],
                 }}
             />
@@ -71,7 +72,7 @@ export default function NewCustomer({ authenticated, user, token }: InferGetServ
                                         <Col md={6} className="mt-1 mb-4">
                                             <Row className="justify-content-center align-items-center">
                                                 <Col sm={8}>
-                                                    <Image fluid src="/assets/images/logo-mtech.svg" alt="Mtech Solar." />
+                                                    <Image fluid src="/assets/images/logo.svg" alt="Plataforma solar." />
                                                 </Col>
                                             </Row>
                                         </Col>
@@ -127,7 +128,7 @@ export default function NewCustomer({ authenticated, user, token }: InferGetServ
                                                                     <Form.Label>Senha</Form.Label>
                                                                     <Form.Control type="password"
                                                                         onChange={handleChange}
-                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                                                                             if (values.password !== values.repeat || errors.repeat)
                                                                                 setIsEqualPassword(false);
                                                                             else
@@ -146,7 +147,7 @@ export default function NewCustomer({ authenticated, user, token }: InferGetServ
                                                                     <Form.Label>Repita a senha</Form.Label>
                                                                     <Form.Control type="password"
                                                                         onChange={handleChange}
-                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                                                                             if (values.password !== values.repeat || errors.repeat)
                                                                                 setIsEqualPassword(false);
                                                                             else
@@ -243,7 +244,7 @@ export default function NewCustomer({ authenticated, user, token }: InferGetServ
                             backdrop="static"
                             keyboard={false}
                         >
-                            <Modal.Header closeButton>
+                            <Modal.Header>
                                 <Modal.Title>Cadastro concluído!</Modal.Title>
                             </Modal.Header>
 
@@ -273,6 +274,8 @@ export default function NewCustomer({ authenticated, user, token }: InferGetServ
         </>
     )
 }
+
+export default UserResetAuth;
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
     const { email, token } = context.query;

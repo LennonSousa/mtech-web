@@ -1,3 +1,4 @@
+import type { NextPage } from 'next';
 import Link from 'next/link';
 import { NextSeo } from 'next-seo';
 import { Col, Container, Image, Row } from 'react-bootstrap';
@@ -5,22 +6,22 @@ import { FaArrowRight } from 'react-icons/fa';
 
 import { AlertMessage } from '../components/Interfaces/AlertMessage';
 
-export default function Page404() {
+const Page404: NextPage = () => {
   return (
     <>
       <NextSeo
         title="Página não encontrada"
-        description="Página não encontrada da plataforma de gerenciamento da Mtech Solar."
+        description="Página não encontrada da plataforma de gerenciamento da Plataforma solar."
         openGraph={{
-          url: 'https://app.mtechsolar.com.br',
+          url: process.env.NEXT_PUBLIC_API_URL,
           title: 'Página não encontrada',
-          description: 'Página não encontrada da plataforma de gerenciamento da Mtech Solar.',
+          description: 'Página não encontrada da plataforma de gerenciamento da Plataforma solar.',
           images: [
             {
-              url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
-              alt: 'Página não encontrada | Plataforma Mtech Solar',
+              url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg`,
+              alt: 'Página não encontrada | Plataforma solar',
             },
-            { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
+            { url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg` },
           ],
         }}
       />
@@ -59,3 +60,5 @@ export default function Page404() {
     </>
   )
 }
+
+export default Page404;

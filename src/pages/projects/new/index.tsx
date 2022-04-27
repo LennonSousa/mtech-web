@@ -1,24 +1,26 @@
 import { useContext, useEffect, useState } from 'react';
 import { GetServerSideProps } from 'next';
+import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { NextSeo } from 'next-seo';
 import { Button, Col, Container, Form, InputGroup, ListGroup, Row, Spinner } from 'react-bootstrap';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { FaHistory, FaSolarPanel, FaUserTie, FaUserTag } from 'react-icons/fa';
-import { format } from 'date-fns';
+import { FaClipboardList, FaHistory, FaSolarPanel, FaUserTie, FaUserTag } from 'react-icons/fa';
 import cep, { CEP } from 'cep-promise';
 
 import api from '../../../api/api';
 import { TokenVerify } from '../../../utils/tokenVerify';
 import { SideBarContext } from '../../../contexts/SideBarContext';
 import { AuthContext } from '../../../contexts/AuthContext';
+import { StoresContext } from '../../../contexts/StoresContext';
 import { can } from '../../../components/Users';
 import { ProjectStatus } from '../../../components/ProjectStatus';
 import { EventProject } from '../../../components/EventsProject';
 import ProjectEvents, { ProjectEvent } from '../../../components/ProjectEvents';
+import ProjectItems, { ProjectItem } from '../../../components/ProjectItems';
 import { Estimate } from '../../../components/Estimates';
-import { EstimateItem } from '../../../components/EstimateItems';
+import NewIncomeModal, { NewIncome } from '../../../components/Incomings/ModalNew';
 
 import Members from '../../../components/ProjectMembers';
 import { statesCities } from '../../../components/StatesCities';
@@ -27,7 +29,57 @@ import PageBack from '../../../components/PageBack';
 import { PageWaiting, PageType } from '../../../components/PageWaiting';
 import { AlertMessage, statusModal } from '../../../components/Interfaces/AlertMessage';
 import { prettifyCurrency } from '../../../components/InputMask/masks';
-import { calculate, CalcProps } from '../../../utils/calcEstimate';
+import {
+    calculate,
+    calcFinalTotal,
+    ConsumptionCalcProps
+} from '../../../utils/calcEstimate';
+
+interface NewProject {
+    customer: string;
+    document: string;
+    phone: string;
+    cellphone: string;
+    contacts: string;
+    email: string;
+    zip_code: string;
+    street: string;
+    number: string;
+    neighborhood: string;
+    complement: string;
+    city: string;
+    state: string;
+    energy_company: string;
+    unity: string;
+    months_average: number;
+    average_increase: number;
+    coordinates: string;
+    capacity: number;
+    inversor: string;
+    roof_orientation: string;
+    roof_type: string;
+    panel: string;
+    panel_amount: number;
+    price: number;
+    notes: string;
+    financier_same: boolean;
+    financier: string;
+    financier_document: string;
+    financier_rg: string;
+    financier_cellphone: string;
+    financier_email: string;
+    financier_zip_code: string;
+    financier_street: string;
+    financier_number: string;
+    financier_neighborhood: string;
+    financier_complement: string;
+    financier_city: string;
+    financier_state: string;
+    status: string;
+    store: string;
+    events: Object[];
+    items: Object[];
+}
 
 const validationSchema = Yup.object().shape({
     customer: Yup.string().required('Obrigatório!'),
@@ -70,22 +122,25 @@ const validationSchema = Yup.object().shape({
     financier_city: Yup.string().required('Obrigatório!'),
     financier_state: Yup.string().required('Obrigatório!'),
     status: Yup.string().required('Obrigatório!'),
+    store: Yup.string().required('Obrigatório!'),
 });
 
-export default function NewProject() {
+const NewProject: NextPage = () => {
     const router = useRouter();
     const { from } = router.query;
 
     const { handleItemSideBar, handleSelectedMenu } = useContext(SideBarContext);
     const { loading, user } = useContext(AuthContext);
+    const { stores } = useContext(StoresContext);
 
+    const [newProject, setNewProject] = useState<NewProject>();
     const [projectEvents, setProjectEvents] = useState<ProjectEvent[]>([]);
     const [projectStatus, setProjectStatus] = useState<ProjectStatus[]>([]);
     const [estimateFrom, setEstimateFrom] = useState<Estimate>();
+    const [projectItemsList, setProjectItemsList] = useState<ProjectItem[]>([]);
 
     const [monthsAverage, setMonthsAverage] = useState(0);
     const [capacity, setCapacity] = useState(0);
-    const [estimateItemsList, setEstimateItemsList] = useState<EstimateItem[]>([]);
     const [panelsAmount, setPanelsAmount] = useState(0);
     const [inversor, setInversor] = useState('');
     const [price, setPrice] = useState(0);
@@ -102,6 +157,11 @@ export default function NewProject() {
 
     const [messageShow, setMessageShow] = useState(false);
     const [typeMessage, setTypeMessage] = useState<statusModal>("waiting");
+
+    const [showModalNew, setShowModalNew] = useState(false);
+
+    const handleCloseModalNew = () => setShowModalNew(false);
+    const handleShowModalNew = () => setShowModalNew(true);
 
     useEffect(() => {
         handleItemSideBar('projects');
@@ -150,6 +210,7 @@ export default function NewProject() {
                             catch { }
 
                             setEstimateFrom(estimateRes);
+                            setProjectItemsList(estimateRes.items);
 
                             setLoadingData(false);
                         }).catch(err => {
@@ -159,7 +220,45 @@ export default function NewProject() {
                             setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
                             setHasErrors(true);
                         });
-                    } else setLoadingData(false);
+                    } else {
+                        setProjectItemsList(
+                            [
+                                {
+                                    id: '0',
+                                    name: 'Inversor',
+                                    amount: 1,
+                                    price: 0,
+                                    percent: 20,
+                                    order: 0,
+                                },
+                                {
+                                    id: '1',
+                                    name: 'Painel',
+                                    amount: 1,
+                                    price: 0,
+                                    percent: 65,
+                                    order: 1,
+                                },
+                                {
+                                    id: '2',
+                                    name: 'ESTRUTURA METÁLICA PARA PAINEL SOLAR',
+                                    amount: 1,
+                                    price: 0,
+                                    percent: 10,
+                                    order: 2,
+                                },
+                                {
+                                    id: '3',
+                                    name: 'ENGENHARIA E INSTALAÇÃO',
+                                    amount: 1,
+                                    price: 0,
+                                    percent: 5,
+                                    order: 3,
+                                }
+                            ]
+                        );
+                        setLoadingData(false);
+                    }
                 }).catch(err => {
                     console.log('Error to get docs project, ', err);
 
@@ -173,32 +272,28 @@ export default function NewProject() {
 
     useEffect(() => {
         if (estimateFrom) {
-            const values: CalcProps = {
-                kwh: estimateFrom.kwh,
-                irradiation: estimateFrom.irradiation,
+            const values: ConsumptionCalcProps = {
+                kwh: Number(estimateFrom.kwh),
+                irradiation: Number(estimateFrom.irradiation),
                 panel: estimateFrom.panel,
-                month_01: estimateFrom.month_01,
-                month_02: estimateFrom.month_02,
-                month_03: estimateFrom.month_03,
-                month_04: estimateFrom.month_04,
-                month_05: estimateFrom.month_05,
-                month_06: estimateFrom.month_06,
-                month_07: estimateFrom.month_07,
-                month_08: estimateFrom.month_08,
-                month_09: estimateFrom.month_09,
-                month_10: estimateFrom.month_10,
-                month_11: estimateFrom.month_11,
-                month_12: estimateFrom.month_12,
-                month_13: estimateFrom.month_13,
-                averageIncrease: estimateFrom.average_increase,
+                month_01: Number(estimateFrom.month_01),
+                month_02: Number(estimateFrom.month_02),
+                month_03: Number(estimateFrom.month_03),
+                month_04: Number(estimateFrom.month_04),
+                month_05: Number(estimateFrom.month_05),
+                month_06: Number(estimateFrom.month_06),
+                month_07: Number(estimateFrom.month_07),
+                month_08: Number(estimateFrom.month_08),
+                month_09: Number(estimateFrom.month_09),
+                month_10: Number(estimateFrom.month_10),
+                month_11: Number(estimateFrom.month_11),
+                month_12: Number(estimateFrom.month_12),
+                month_13: Number(estimateFrom.month_13),
+                averageIncrease: Number(estimateFrom.average_increase),
                 roofOrientation: estimateFrom.roof_orientation,
-                discount: estimateFrom.discount,
-                increase: estimateFrom.increase,
-                percent: estimateFrom.percent,
-                estimateItems: estimateFrom.items,
             }
 
-            const calcResults = calculate(values, false);
+            const calcResults = calculate(values, estimateFrom.items, false);
 
             if (calcResults) {
                 setMonthsAverage(calcResults.monthsAverageKwh);
@@ -209,40 +304,57 @@ export default function NewProject() {
                     if (item.order === 1) setPanelsAmount(item.amount);
                 });
 
-                setPrice(calcResults.finalSystemPrice);
+                const newFinalTotal = calcFinalTotal(
+                    calcResults.systemInitialPrice,
+                    estimateFrom.discount_percent,
+                    estimateFrom.discount,
+                    estimateFrom.increase_percent,
+                    estimateFrom.increase
+                );
 
-                setEstimateItemsList(calcResults.estimateItems);
+                setPrice(newFinalTotal);
             }
         }
     }, [estimateFrom]);
 
     async function handleListEvents(listEvents?: ProjectEvent[]) {
         if (!listEvents) {
-            // const res = await api.get(`projects/${project}`);
-
-            // setProjectData(res.data);
-
             return;
         }
 
         setProjectEvents(listEvents);
     }
 
+    function handleListProjectItems(projectItemsList: ProjectItem[]) {
+        setProjectItemsList(projectItemsList);
+    }
+
+    async function handleListIncomings(newIncome: NewIncome) {
+        const res = await api.post('projects', {
+            ...newProject,
+            incomings: [newIncome],
+        });
+
+        setTimeout(() => {
+            router.push(`/projects/details/${res.data.id}`);
+        }, 1000);
+    }
+
     return (
         <>
             <NextSeo
                 title="Criar projeto"
-                description="Criar projeto da plataforma de gerenciamento da Mtech Solar."
+                description="Criar projeto da plataforma de gerenciamento da Plataforma solar."
                 openGraph={{
-                    url: 'https://app.mtechsolar.com.br',
+                    url: process.env.NEXT_PUBLIC_API_URL,
                     title: 'Criar projeto',
-                    description: 'Criar projeto da plataforma de gerenciamento da Mtech Solar.',
+                    description: 'Criar projeto da plataforma de gerenciamento da Plataforma solar.',
                     images: [
                         {
-                            url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
-                            alt: 'Criar projeto | Plataforma Mtech Solar',
+                            url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg`,
+                            alt: 'Criar projeto | Plataforma solar',
                         },
-                        { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
+                        { url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg` },
                     ],
                 }}
             />
@@ -319,11 +431,9 @@ export default function NewProject() {
                                                     financier_city: '',
                                                     financier_state: '',
                                                     status: '',
+                                                    store: user.store_only ? (user.store ? user.store.id : '') : '',
                                                 }}
                                                 onSubmit={async values => {
-                                                    setTypeMessage("waiting");
-                                                    setMessageShow(true);
-
                                                     try {
                                                         const events = projectEvents.map(projectEvent => {
                                                             return {
@@ -334,7 +444,17 @@ export default function NewProject() {
                                                             }
                                                         });
 
-                                                        const res = await api.post('projects', {
+                                                        const items = projectItemsList.map(item => {
+                                                            return {
+                                                                name: item.name,
+                                                                amount: item.amount,
+                                                                price: item.price,
+                                                                percent: item.percent,
+                                                                order: item.order,
+                                                            }
+                                                        });
+
+                                                        setNewProject({
                                                             customer: values.customer,
                                                             document: values.document,
                                                             phone: values.phone,
@@ -375,14 +495,12 @@ export default function NewProject() {
                                                             financier_city: values.financier_city,
                                                             financier_state: values.financier_state,
                                                             status: values.status,
+                                                            store: values.store,
                                                             events,
+                                                            items,
                                                         });
 
-                                                        setTypeMessage("success");
-
-                                                        setTimeout(() => {
-                                                            router.push(`/projects/details/${res.data.id}`);
-                                                        }, 2000);
+                                                        handleShowModalNew();
                                                     }
                                                     catch {
                                                         setTypeMessage("error");
@@ -432,7 +550,7 @@ export default function NewProject() {
                                                                         else
                                                                             setDocumentType("CPF");
                                                                     }}
-                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                                                                         setFieldValue('document', e.target.value.length <= 14 ? cpf(e.target.value) : cnpj(e.target.value));
                                                                         if (e.target.value.length > 14)
                                                                             setDocumentType("CNPJ");
@@ -456,7 +574,7 @@ export default function NewProject() {
                                                                     onChange={(e) => {
                                                                         setFieldValue('phone', cellphone(e.target.value));
                                                                     }}
-                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                                                                         setFieldValue('phone', cellphone(e.target.value));
                                                                     }}
                                                                     value={values.phone}
@@ -474,7 +592,7 @@ export default function NewProject() {
                                                                     onChange={(e) => {
                                                                         setFieldValue('cellphone', cellphone(e.target.value));
                                                                     }}
-                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                                                                         setFieldValue('cellphone', cellphone(e.target.value));
                                                                     }}
                                                                     value={values.cellphone}
@@ -720,7 +838,7 @@ export default function NewProject() {
                                                                         onChange={(e) => {
                                                                             setFieldValue('months_average', prettifyCurrency(e.target.value));
                                                                         }}
-                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                                                                             setFieldValue('months_average', prettifyCurrency(e.target.value));
                                                                         }}
                                                                         value={values.months_average}
@@ -742,7 +860,7 @@ export default function NewProject() {
                                                                         onChange={(e) => {
                                                                             setFieldValue('average_increase', prettifyCurrency(e.target.value));
                                                                         }}
-                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                                                                             setFieldValue('average_increase', prettifyCurrency(e.target.value));
                                                                         }}
                                                                         value={values.average_increase}
@@ -779,7 +897,7 @@ export default function NewProject() {
                                                                         onChange={(e) => {
                                                                             setFieldValue('capacity', prettifyCurrency(e.target.value));
                                                                         }}
-                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                                                                             setFieldValue('capacity', prettifyCurrency(e.target.value));
                                                                         }}
                                                                         value={values.capacity}
@@ -875,7 +993,7 @@ export default function NewProject() {
                                                                         onChange={(e) => {
                                                                             setFieldValue('price', prettifyCurrency(e.target.value));
                                                                         }}
-                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                                                                             setFieldValue('price', prettifyCurrency(e.target.value));
                                                                         }}
                                                                         value={values.price}
@@ -888,6 +1006,34 @@ export default function NewProject() {
                                                                 <Form.Control.Feedback type="invalid">{touched.price && errors.price}</Form.Control.Feedback>
                                                             </Form.Group>
                                                         </Row>
+
+                                                        <Col className="border-top mt-3 mb-3"></Col>
+
+                                                        <Row>
+                                                            <Col>
+                                                                <Row>
+                                                                    <Col>
+                                                                        <h6 className="text-success">Itens <FaClipboardList /></h6>
+                                                                    </Col>
+                                                                </Row>
+                                                            </Col>
+                                                        </Row>
+
+                                                        <Row>
+                                                            <Col sm={2}><h6 className="text-secondary">Quantidade</h6></Col>
+                                                            <Col sm={10}><h6 className="text-secondary">Produto</h6></Col>
+                                                        </Row>
+
+                                                        {
+                                                            projectItemsList && projectItemsList.map(projectItem => {
+                                                                return <ProjectItems
+                                                                    key={projectItem.id}
+                                                                    projectItem={projectItem}
+                                                                    projectItemsList={projectItemsList}
+                                                                    handleListProjectItems={handleListProjectItems}
+                                                                />
+                                                            })
+                                                        }
 
                                                         <Col className="border-top mb-3"></Col>
 
@@ -966,7 +1112,7 @@ export default function NewProject() {
                                                                         else
                                                                             setFinancierDocumentType("CPF");
                                                                     }}
-                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                                                                         setFieldValue('financier_document', e.target.value.length <= 14 ? cpf(e.target.value) : cnpj(e.target.value));
                                                                         if (e.target.value.length > 14)
                                                                             setFinancierDocumentType("CNPJ");
@@ -1003,7 +1149,7 @@ export default function NewProject() {
                                                                     onChange={(e) => {
                                                                         setFieldValue('financier_cellphone', cellphone(e.target.value));
                                                                     }}
-                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                                                                         setFieldValue('financier_cellphone', cellphone(e.target.value));
                                                                     }}
                                                                     value={values.cellphone}
@@ -1203,7 +1349,7 @@ export default function NewProject() {
                                                         </Row>
 
                                                         <Row className="mb-3">
-                                                            <Form.Group as={Col} sm={4} controlId="formGridStatus">
+                                                            <Form.Group as={Col} sm={6} controlId="formGridStatus">
                                                                 <Form.Label>Fase</Form.Label>
                                                                 <Form.Control
                                                                     as="select"
@@ -1222,6 +1368,28 @@ export default function NewProject() {
                                                                 </Form.Control>
                                                                 <Form.Control.Feedback type="invalid">{touched.status && errors.status}</Form.Control.Feedback>
                                                             </Form.Group>
+
+                                                            {
+                                                                !user.store_only && <Form.Group as={Col} sm={6} controlId="formGridStore">
+                                                                    <Form.Label>Loja</Form.Label>
+                                                                    <Form.Control
+                                                                        as="select"
+                                                                        onChange={handleChange}
+                                                                        onBlur={handleBlur}
+                                                                        value={values.store}
+                                                                        name="store"
+                                                                        isInvalid={!!errors.store && touched.store}
+                                                                    >
+                                                                        <option hidden>Escolha uma opção</option>
+                                                                        {
+                                                                            stores.map((store, index) => {
+                                                                                return <option key={index} value={store.id}>{store.name}</option>
+                                                                            })
+                                                                        }
+                                                                    </Form.Control>
+                                                                    <Form.Control.Feedback type="invalid">{touched.store && errors.store}</Form.Control.Feedback>
+                                                                </Form.Group>
+                                                            }
                                                         </Row>
 
                                                         <Row className="mb-3 justify-content-end">
@@ -1294,6 +1462,15 @@ export default function NewProject() {
                                                     </Row>
                                                 </Col>
                                             </Row>
+
+                                            <NewIncomeModal
+                                                show={showModalNew}
+                                                customer={newProject?.customer}
+                                                value={newProject?.price}
+                                                projectIn
+                                                handleListIncomings={handleListIncomings}
+                                                handleCloseModal={handleCloseModalNew}
+                                            />
                                         </Container>
                                 }
                             </> :
@@ -1304,6 +1481,8 @@ export default function NewProject() {
         </>
     )
 }
+
+export default NewProject;
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
     const { token } = context.req.cookies;

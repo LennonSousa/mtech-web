@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react';
-import { Button, Col, Form, InputGroup, ListGroup, Modal, Row, Spinner } from 'react-bootstrap';
+import { Button, Col, Form, InputGroup, ListGroup, Modal, Row } from 'react-bootstrap';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { FaHistory, FaPlus } from 'react-icons/fa';
@@ -7,30 +7,55 @@ import { FaHistory, FaPlus } from 'react-icons/fa';
 import api from '../../../api/api';
 import { can } from '../../Users';
 import { AuthContext } from '../../../contexts/AuthContext';
-import { Income } from '../../Incomings';
+import { StoresContext } from '../../../contexts/StoresContext';
 import IncomeItems, { IncomeItem } from '../../IncomeItems';
 import { PayType } from '../../PayTypes';
 import { Project } from '../../Projects';
 import { prettifyCurrency } from '../../InputMask/masks';
 import { PageWaiting } from '../../PageWaiting';
-import { AlertMessage, statusModal } from '../../Interfaces/AlertMessage'
+import { AlertMessage, statusModal } from '../../Interfaces/AlertMessage';
+
+export interface NewIncome {
+    description: string;
+    value: number;
+    store: string;
+    project: string;
+    payType: string;
+    items: IncomeItem[];
+    created_by: string;
+}
 
 interface IncomeModalNewProps {
     project?: Project;
+    projectIn?: boolean;
     show: boolean;
-    handleListIncomings(): Promise<void>;
+    customer?: string;
+    value?: number;
+    handleListIncomings(newIncome?: NewIncome): Promise<void>;
     handleCloseModal: () => void;
 }
 
 const validationSchema = Yup.object().shape({
     description: Yup.string().required('Obrigatório!').max(50, 'Deve conter no máximo 50 caracteres!'),
     value: Yup.string().required('Obrigatório!'),
+    store: Yup.string().required('Obrigatório!'),
     project: Yup.string().notRequired().nullable(),
     payType: Yup.string().required('Obrigatório!'),
 });
 
-const IncomeModalNew: React.FC<IncomeModalNewProps> = ({ project, show = false, handleListIncomings, handleCloseModal }) => {
+const IncomeModalNew: React.FC<IncomeModalNewProps> = (
+    {
+        project,
+        projectIn = false,
+        show = false,
+        customer,
+        value,
+        handleListIncomings,
+        handleCloseModal
+    }
+) => {
     const { user } = useContext(AuthContext);
+    const { stores } = useContext(StoresContext);
 
     const [payTypes, setPayTypes] = useState<PayType[]>([]);
     const [incomeItems, setIncomeItems] = useState<IncomeItem[]>([]);
@@ -43,7 +68,7 @@ const IncomeModalNew: React.FC<IncomeModalNewProps> = ({ project, show = false, 
     useEffect(() => {
         setHasErrors(false);
 
-        if (user && can(user, "finances", "update") && show) {
+        if (show) {
             setIncomeItems([]);
 
             api.get('payments/types').then(res => {
@@ -55,7 +80,7 @@ const IncomeModalNew: React.FC<IncomeModalNewProps> = ({ project, show = false, 
             });
         }
 
-    }, [user, show]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [show]); // eslint-disable-line react-hooks/exhaustive-deps
 
     async function handleNewItem() {
         setIncomeItems([...incomeItems, {
@@ -91,14 +116,15 @@ const IncomeModalNew: React.FC<IncomeModalNewProps> = ({ project, show = false, 
                 <Modal.Title>Criar receita</Modal.Title>
             </Modal.Header>
             {
-                user && can(user, "finances", "create") ? <>
+                user ? <>
                     {
                         !hasErrors ? <>
                             <Formik
                                 initialValues={
                                     {
-                                        description: '',
-                                        value: '0,00',
+                                        description: customer ? `Projeto ${customer.substring(0, 49)}` : '',
+                                        value: value ? prettifyCurrency(value.toFixed(2)) : '0,00',
+                                        store: project ? project.store.id : user.store_only ? user.store.id : '',
                                         project: project ? project.id : '',
                                         payType: '',
                                     }
@@ -108,22 +134,38 @@ const IncomeModalNew: React.FC<IncomeModalNewProps> = ({ project, show = false, 
                                     setMessageShow(true);
 
                                     try {
-                                        await api.post('incomings', {
-                                            description: values.description,
-                                            value: Number(values.value.replaceAll(".", "").replaceAll(",", ".")),
-                                            project: values.project,
-                                            payType: values.payType,
-                                            items: incomeItems,
-                                        });
+                                        if (projectIn) {
+                                            const newIncome: NewIncome = {
+                                                description: values.description,
+                                                value: Number(values.value.replaceAll(".", "").replaceAll(",", ".")),
+                                                store: values.store,
+                                                project: values.project,
+                                                payType: values.payType,
+                                                items: incomeItems,
+                                                created_by: user.id,
+                                            }
 
-                                        if (handleListIncomings) await handleListIncomings();
+                                            if (handleListIncomings) await handleListIncomings(newIncome);
+                                        }
+                                        else {
+                                            await api.post('incomings', {
+                                                description: values.description,
+                                                value: Number(values.value.replaceAll(".", "").replaceAll(",", ".")),
+                                                store: values.store,
+                                                project: values.project,
+                                                payType: values.payType,
+                                                items: incomeItems,
+                                            });
 
-                                        setTypeMessage("success");
+                                            if (handleListIncomings) await handleListIncomings();
 
-                                        setTimeout(() => {
-                                            setMessageShow(false);
-                                            handleCloseModal();
-                                        }, 1000);
+                                            setTypeMessage("success");
+
+                                            setTimeout(() => {
+                                                setMessageShow(false);
+                                                handleCloseModal();
+                                            }, 1000);
+                                        }
                                     }
                                     catch (err) {
                                         console.log('error edit data.');
@@ -165,11 +207,12 @@ const IncomeModalNew: React.FC<IncomeModalNewProps> = ({ project, show = false, 
                                                             onChange={(e) => {
                                                                 setFieldValue('value', prettifyCurrency(e.target.value));
                                                             }}
-                                                            onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                            onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                                                                 setFieldValue('value', prettifyCurrency(e.target.value));
                                                             }}
                                                             value={values.value}
                                                             name="value"
+                                                            disabled={projectIn}
                                                             isInvalid={!!errors.value && touched.value}
                                                             aria-label="Valor do projeto"
                                                             aria-describedby="btnGroupValue"
@@ -197,6 +240,30 @@ const IncomeModalNew: React.FC<IncomeModalNewProps> = ({ project, show = false, 
                                                     </Form.Control>
                                                     <Form.Control.Feedback type="invalid">{touched.payType && errors.payType}</Form.Control.Feedback>
                                                 </Form.Group>
+                                            </Row>
+
+                                            <Row className="mb-3">
+                                                {
+                                                    !project && !user.store_only && <Form.Group as={Col} controlId="formGridStore">
+                                                        <Form.Label>Loja</Form.Label>
+                                                        <Form.Control
+                                                            as="select"
+                                                            onChange={handleChange}
+                                                            onBlur={handleBlur}
+                                                            value={values.store}
+                                                            name="store"
+                                                            isInvalid={!!errors.store && touched.store}
+                                                        >
+                                                            <option hidden>Escolha uma opção</option>
+                                                            {
+                                                                stores.map((store, index) => {
+                                                                    return <option key={index} value={store.id}>{store.name}</option>
+                                                                })
+                                                            }
+                                                        </Form.Control>
+                                                        <Form.Control.Feedback type="invalid">{touched.store && errors.store}</Form.Control.Feedback>
+                                                    </Form.Group>
+                                                }
                                             </Row>
                                         </Modal.Body>
                                         <Modal.Footer>

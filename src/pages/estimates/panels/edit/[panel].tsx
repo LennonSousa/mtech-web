@@ -1,5 +1,6 @@
 import { ChangeEvent, useContext, useEffect, useState } from 'react';
 import { GetServerSideProps } from 'next';
+import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { NextSeo } from 'next-seo';
 import { Button, Col, Container, Form, InputGroup, ListGroup, Modal, Row } from 'react-bootstrap';
@@ -35,7 +36,7 @@ const copyPricesValidationSchema = Yup.object().shape({
     panel: Yup.string().required('Obrigatório!'),
 });
 
-export default function UserEdit() {
+const PanelEdit: NextPage = () => {
     const router = useRouter();
     const { panel } = router.query;
 
@@ -76,7 +77,7 @@ export default function UserEdit() {
         handleSelectedMenu('estimates-panels');
 
         if (user) {
-            if (can(user, "estimates", "update") || can(user, "users", "update_self") && panel === user.id) {
+            if (can(user, "settings", "update:any") || can(user, "users", "update:own") && panel === user.id) {
                 api.get(`panels/${panel}`).then(res => {
                     setData(res.data);
 
@@ -105,7 +106,7 @@ export default function UserEdit() {
             setDeletingMessageShow(true);
 
             try {
-                if (can(user, "estimates", "remove")) {
+                if (can(user, "settings", "delete")) {
                     await api.delete(`panels/${panel}`);
 
                     setTypeMessage("success");
@@ -146,17 +147,17 @@ export default function UserEdit() {
         <>
             <NextSeo
                 title="Editar painel"
-                description="Editar painel da plataforma de gerenciamento da Mtech Solar."
+                description="Editar painel da plataforma de gerenciamento da Plataforma solar."
                 openGraph={{
-                    url: 'https://app.mtechsolar.com.br',
+                    url: process.env.NEXT_PUBLIC_API_URL,
                     title: 'Editar painel',
-                    description: 'Editar painel da plataforma de gerenciamento da Mtech Solar.',
+                    description: 'Editar painel da plataforma de gerenciamento da Plataforma solar.',
                     images: [
                         {
-                            url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
-                            alt: 'Editar painel | Plataforma Mtech Solar',
+                            url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg`,
+                            alt: 'Editar painel | Plataforma solar',
                         },
-                        { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
+                        { url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg` },
                     ],
                 }}
             />
@@ -165,7 +166,7 @@ export default function UserEdit() {
                 !user || loading ? <PageWaiting status="waiting" /> :
                     <>
                         {
-                            can(user, "users", "update") || can(user, "users", "update_self") && panel === user.id ? <>
+                            can(user, "settings", "update:any") || can(user, "users", "update:own") && panel === user.id ? <>
                                 {
                                     loadingData ? <PageWaiting
                                         status={typeLoadingMessage}
@@ -246,7 +247,7 @@ export default function UserEdit() {
                                                                                         onChange={(e) => {
                                                                                             setFieldValue('capacity', prettifyCurrency(e.target.value));
                                                                                         }}
-                                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                                                                                             setFieldValue('capacity', prettifyCurrency(e.target.value));
                                                                                         }}
                                                                                         value={values.capacity}
@@ -313,7 +314,7 @@ export default function UserEdit() {
                                                                                 messageShow ? <Col sm={3}><AlertMessage status={typeMessage} /></Col> :
                                                                                     <>
                                                                                         {
-                                                                                            can(user, "estimates", "remove") && <Col className="col-row">
+                                                                                            can(user, "settings", "delete") && <Col className="col-row">
                                                                                                 <Button
                                                                                                     variant="danger"
                                                                                                     onClick={handelShowItemDelete}
@@ -346,7 +347,7 @@ export default function UserEdit() {
                                                                             deletingMessageShow ? <Col><AlertMessage status={typeMessage} /></Col> :
                                                                                 <>
                                                                                     {
-                                                                                        can(user, "users", "remove") && <Col className="col-row">
+                                                                                        can(user, "users", "delete") && <Col className="col-row">
                                                                                             <Button
                                                                                                 variant="danger"
                                                                                                 type="button"
@@ -433,7 +434,7 @@ export default function UserEdit() {
                                                                                                 onChange={(e) => {
                                                                                                     setFieldValue('potency', prettifyCurrency(e.target.value));
                                                                                                 }}
-                                                                                                onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                                                onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                                                                                                     setFieldValue('potency', prettifyCurrency(e.target.value));
                                                                                                 }}
                                                                                                 value={values.potency}
@@ -457,7 +458,7 @@ export default function UserEdit() {
                                                                                                 onChange={(e) => {
                                                                                                     setFieldValue('price', prettifyCurrency(e.target.value));
                                                                                                 }}
-                                                                                                onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                                                onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                                                                                                     setFieldValue('price', prettifyCurrency(e.target.value));
                                                                                                 }}
                                                                                                 value={values.price}
@@ -642,6 +643,8 @@ export default function UserEdit() {
         </>
     )
 }
+
+export default PanelEdit;
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
     const { token } = context.req.cookies;

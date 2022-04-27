@@ -1,8 +1,9 @@
 import { ChangeEvent, useContext, useEffect, useState } from 'react';
 import { GetServerSideProps } from 'next';
+import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { NextSeo } from 'next-seo';
-import { Button, Col, Container, Form, ListGroup, Modal, Row } from 'react-bootstrap';
+import { Button, Col, Container, Form, InputGroup, ListGroup, Modal, Row } from 'react-bootstrap';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { FaKey } from 'react-icons/fa';
@@ -12,7 +13,9 @@ import { cellphone } from '../../../components/InputMask/masks';
 import { TokenVerify } from '../../../utils/tokenVerify';
 import { SideBarContext } from '../../../contexts/SideBarContext';
 import { AuthContext } from '../../../contexts/AuthContext';
-import { User, UserRole, can, translateRole } from '../../../components/Users';
+import { StoresContext } from '../../../contexts/StoresContext';
+import { User, UserRole, can, translatedRoles } from '../../../components/Users';
+import { cpf, cnpj, prettifyCurrency } from '../../../components/InputMask/masks';
 import PageBack from '../../../components/PageBack';
 import { AlertMessage, statusModal } from '../../../components/Interfaces/AlertMessage';
 import { PageWaiting, PageType } from '../../../components/PageWaiting';
@@ -20,25 +23,34 @@ import { PageWaiting, PageType } from '../../../components/PageWaiting';
 const validationSchema = Yup.object().shape({
     name: Yup.string().required('Obrigatório!'),
     phone: Yup.string().notRequired(),
+    discountLimit: Yup.string().notRequired(),
 });
 
-export default function UserEdit() {
+const rolesToViewSelf = [
+    'estimates',
+    'projects',
+    'services',
+];
+
+const UserEdit: NextPage = () => {
     const router = useRouter();
     const userId = router.query['user'];
 
     const { loading, user } = useContext(AuthContext);
-
     const { handleItemSideBar, handleSelectedMenu } = useContext(SideBarContext);
+    const { stores } = useContext(StoresContext);
 
     const [userData, setUserData] = useState<User>();
     const [usersRoles, setUsersRoles] = useState<UserRole[]>([]);
 
     const [loadingData, setLoadingData] = useState(true);
+    const [hasErrors, setHasErrors] = useState(false);
     const [typeLoadingMessage, setTypeLoadingMessage] = useState<PageType>("waiting");
     const [textLoadingMessage, setTextLoadingMessage] = useState('Aguarde, carregando...');
     const [messageShow, setMessageShow] = useState(false);
     const [deletingMessageShow, setDeletingMessageShow] = useState(false);
     const [typeMessage, setTypeMessage] = useState<statusModal>("waiting");
+    const [documentType, setDocumentType] = useState("CPF");
 
     const [showUserDelete, setShowUserDelete] = useState(false);
 
@@ -50,20 +62,23 @@ export default function UserEdit() {
         handleSelectedMenu('users-index');
 
         if (user) {
-            if (can(user, "users", "update") || can(user, "users", "update_self") && userId === user.id) {
+            if (can(user, "users", "update:any") || can(user, "users", "update:own") && userId === user.id) {
                 api.get(`users/${userId}`).then(res => {
                     const userRes: User = res.data;
+
+                    if (userRes.document.length > 14)
+                        setDocumentType("CNPJ");
 
                     setUsersRoles(userRes.roles);
 
                     setUserData(userRes);
-
                     setLoadingData(false);
                 }).catch(err => {
                     console.log('Error get user to edit, ', err);
 
                     setTypeLoadingMessage("error");
                     setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
+                    setHasErrors(true);
                 });
             }
         }
@@ -79,7 +94,7 @@ export default function UserEdit() {
                     return {
                         ...role,
                         view: true,
-                        view_self: true,
+                        view_self: false,
                         create: true,
                         update: true,
                         update_self: true,
@@ -88,15 +103,23 @@ export default function UserEdit() {
                 }
 
                 if (grant === 'view') {
-                    if (role.view) {
+                    if (role.view && !role.view_self) {
                         const updatedRole = handleRole(role, ['create', 'update', 'remove'], false);
 
                         return { ...updatedRole, view: !updatedRole.view };
                     }
 
-                    return { ...role, view: !role.view };
+                    return { ...role, view: !role.view, view_self: false };
                 }
-                if (grant === 'view_self') return { ...role, view_self: !role.view_self };
+                if (grant === 'view_self') {
+                    if (role.view_self && !role.view) {
+                        const updatedRole = handleRole(role, ['create', 'update', 'remove'], false);
+
+                        return { ...updatedRole, view_self: !updatedRole.view_self };
+                    }
+
+                    return { ...role, view_self: !role.view_self, view: false };
+                }
                 if (grant === 'create') return { ...role, create: !role.create };
                 if (grant === 'update') {
                     if (role.update) {
@@ -140,7 +163,7 @@ export default function UserEdit() {
             setDeletingMessageShow(true);
 
             try {
-                if (can(user, "users", "remove") && !userData.root) {
+                if (can(user, "users", "delete") && !userData.root) {
                     await api.delete(`users/${userId}`);
 
                     setTypeMessage("success");
@@ -167,17 +190,17 @@ export default function UserEdit() {
         <>
             <NextSeo
                 title="Editar usuário"
-                description="Editar usuário da plataforma de gerenciamento da Mtech Solar."
+                description="Editar usuário da plataforma de gerenciamento da Plataforma solar."
                 openGraph={{
-                    url: 'https://app.mtechsolar.com.br',
+                    url: process.env.NEXT_PUBLIC_API_URL,
                     title: 'Editar usuário',
-                    description: 'Editar usuário da plataforma de gerenciamento da Mtech Solar.',
+                    description: 'Editar usuário da plataforma de gerenciamento da Plataforma solar.',
                     images: [
                         {
-                            url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
-                            alt: 'Editar usuário | Plataforma Mtech Solar',
+                            url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg`,
+                            alt: 'Editar usuário | Plataforma solar',
                         },
-                        { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
+                        { url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg` },
                     ],
                 }}
             />
@@ -186,9 +209,9 @@ export default function UserEdit() {
                 !user || loading ? <PageWaiting status="waiting" /> :
                     <>
                         {
-                            can(user, "users", "update") || can(user, "users", "update_self") && userId === user.id ? <>
+                            can(user, "users", "update:any") || can(user, "users", "update:own") && userId === user.id ? <>
                                 {
-                                    loadingData ? <PageWaiting
+                                    loadingData || hasErrors ? <PageWaiting
                                         status={typeLoadingMessage}
                                         message={textLoadingMessage}
                                     /> :
@@ -200,16 +223,30 @@ export default function UserEdit() {
                                                             <Formik
                                                                 initialValues={{
                                                                     name: userData.name,
+                                                                    document: userData.document,
                                                                     phone: userData.phone ? userData.phone : '',
+                                                                    store_only: userData.store_only,
+                                                                    discountLimit: prettifyCurrency(String(userData.discountLimit)),
+                                                                    store: userData.store ? userData.store.id : '',
                                                                 }}
                                                                 onSubmit={async values => {
+                                                                    if (values.store_only && !!!values.store) return;
+
                                                                     setTypeMessage("waiting");
                                                                     setMessageShow(true);
 
                                                                     try {
                                                                         await api.put(`users/${userData.id}`, {
                                                                             name: values.name,
+                                                                            document: values.document,
                                                                             phone: values.phone,
+                                                                            store_only: values.store_only,
+                                                                            discountLimit: Number(
+                                                                                values.discountLimit
+                                                                                    .replaceAll(".", "")
+                                                                                    .replaceAll(",", ".")
+                                                                            ),
+                                                                            store: values.store,
                                                                         });
 
                                                                         if (userId !== user.id && !userData.root) {
@@ -245,7 +282,7 @@ export default function UserEdit() {
                                                                 {({ handleChange, handleBlur, handleSubmit, values, setFieldValue, errors, touched }) => (
                                                                     <Form onSubmit={handleSubmit}>
                                                                         {
-                                                                            can(user, "users", "view") ? <Row className="mb-3">
+                                                                            can(user, "users", "read:any") ? <Row className="mb-3">
                                                                                 <Col>
                                                                                     <PageBack href="/users" subTitle="Voltar para a lista usuários." />
                                                                                 </Col>
@@ -261,7 +298,7 @@ export default function UserEdit() {
                                                                         }
 
                                                                         <Row className="mb-3">
-                                                                            <Form.Group as={Col} sm={6} controlId="formGridName">
+                                                                            <Form.Group as={Col} sm={5} controlId="formGridName">
                                                                                 <Form.Label>Nome</Form.Label>
                                                                                 <Form.Control
                                                                                     type="name"
@@ -274,7 +311,33 @@ export default function UserEdit() {
                                                                                 <Form.Control.Feedback type="invalid">{touched.name && errors.name}</Form.Control.Feedback>
                                                                             </Form.Group>
 
-                                                                            <Form.Group className="mb-4" controlId="formLoginPhone">
+                                                                            <Form.Group as={Col} sm={3} controlId="formGridDocument">
+                                                                                <Form.Label>{documentType}</Form.Label>
+                                                                                <Form.Control
+                                                                                    type="text"
+                                                                                    maxLength={18}
+                                                                                    onChange={(e) => {
+                                                                                        setFieldValue('document', e.target.value.length <= 14 ? cpf(e.target.value) : cnpj(e.target.value), false);
+                                                                                        if (e.target.value.length > 14)
+                                                                                            setDocumentType("CNPJ");
+                                                                                        else
+                                                                                            setDocumentType("CPF");
+                                                                                    }}
+                                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+                                                                                        setFieldValue('document', e.target.value.length <= 14 ? cpf(e.target.value) : cnpj(e.target.value));
+                                                                                        if (e.target.value.length > 14)
+                                                                                            setDocumentType("CNPJ");
+                                                                                        else
+                                                                                            setDocumentType("CPF");
+                                                                                    }}
+                                                                                    value={values.document}
+                                                                                    name="document"
+                                                                                    isInvalid={!!errors.document && touched.document}
+                                                                                />
+                                                                                <Form.Control.Feedback type="invalid">{touched.document && errors.document}</Form.Control.Feedback>
+                                                                            </Form.Group>
+
+                                                                            <Form.Group as={Col} sm={4} controlId="formLoginPhone">
                                                                                 <Form.Label>Telefone</Form.Label>
                                                                                 <Form.Control
                                                                                     type="text"
@@ -282,7 +345,7 @@ export default function UserEdit() {
                                                                                     onChange={(e) => {
                                                                                         setFieldValue('phone', cellphone(e.target.value));
                                                                                     }}
-                                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                                                                                         setFieldValue('phone', cellphone(e.target.value));
                                                                                     }}
                                                                                     value={values.phone}
@@ -291,6 +354,72 @@ export default function UserEdit() {
                                                                                 />
                                                                                 <Form.Control.Feedback type="invalid">{touched.phone && errors.phone}</Form.Control.Feedback>
                                                                             </Form.Group>
+                                                                        </Row>
+
+                                                                        <Row className="mb-2 align-items-center">
+                                                                            {
+                                                                                !userData.root && userId !== user.id && <>
+                                                                                    <Form.Group as={Col} sm={3} controlId="formGridDiscountLimit">
+                                                                                        <Form.Label>Limite de desconto</Form.Label>
+                                                                                        <InputGroup className="mb-2">
+                                                                                            <InputGroup.Text id="btnGroupDiscountLimit">%</InputGroup.Text>
+
+                                                                                            <Form.Control
+                                                                                                type="text"
+                                                                                                onChange={(e) => {
+                                                                                                    setFieldValue('discountLimit', prettifyCurrency(e.target.value));
+                                                                                                }}
+                                                                                                onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+                                                                                                    setFieldValue('discountLimit', prettifyCurrency(e.target.value));
+                                                                                                }}
+                                                                                                value={values.discountLimit}
+                                                                                                name="discountLimit"
+                                                                                                isInvalid={!!errors.discountLimit && touched.discountLimit}
+                                                                                                aria-label="Limite para desconto em orçamentos."
+                                                                                                aria-describedby="btnGroupDiscountLimit"
+                                                                                            />
+                                                                                        </InputGroup>
+                                                                                        <Form.Control.Feedback type="invalid">{touched.discountLimit && errors.discountLimit}</Form.Control.Feedback>
+                                                                                    </Form.Group>
+
+                                                                                    <Col sm={3}>
+                                                                                        <Form.Check
+                                                                                            type="switch"
+                                                                                            id="store_only"
+                                                                                            label="Vincular a uma loja"
+                                                                                            checked={values.store_only}
+                                                                                            onChange={() => { setFieldValue('store_only', !values.store_only) }}
+                                                                                        />
+                                                                                    </Col>
+
+                                                                                    {
+                                                                                        values.store_only && <Form.Group as={Col} sm={4} controlId="formGridStore">
+                                                                                            <Form.Label>Loja</Form.Label>
+                                                                                            <Form.Control
+                                                                                                as="select"
+                                                                                                onChange={handleChange}
+                                                                                                onBlur={handleBlur}
+                                                                                                value={values.store}
+                                                                                                name="store"
+                                                                                                isInvalid={!!errors.store && touched.store}
+                                                                                            >
+                                                                                                <option hidden>Escolha uma opção</option>
+                                                                                                {
+                                                                                                    stores.map((store, index) => {
+                                                                                                        return <option key={index} value={store.id}>{store.name}</option>
+                                                                                                    })
+                                                                                                }
+                                                                                            </Form.Control>
+                                                                                            <Form.Control.Feedback type="invalid">{touched.store && errors.store}</Form.Control.Feedback>
+                                                                                            {
+                                                                                                values.store_only && !!!values.store && <label className="invalid-feedback" style={{ display: 'block' }}>
+                                                                                                    Obrigatório escolher uma opção
+                                                                                                </label>
+                                                                                            }
+                                                                                        </Form.Group>
+                                                                                    }
+                                                                                </>
+                                                                            }
                                                                         </Row>
 
                                                                         {
@@ -306,12 +435,14 @@ export default function UserEdit() {
                                                                                         <ListGroup className="mb-3">
                                                                                             {
                                                                                                 usersRoles.map((role, index) => {
+                                                                                                    const translatedRole = translatedRoles.find(item => { return item.role === role.role });
+
                                                                                                     return <ListGroup.Item key={index} as="div" variant="light">
                                                                                                         <Row>
                                                                                                             <Col>
                                                                                                                 <h6 className="text-success" >
                                                                                                                     {
-                                                                                                                        translateRole(role.role)
+                                                                                                                        translatedRole ? translatedRole.translated : role.role
                                                                                                                     }
                                                                                                                 </h6>
                                                                                                             </Col>
@@ -328,6 +459,20 @@ export default function UserEdit() {
                                                                                                                 />
                                                                                                             </Col>
 
+                                                                                                            {
+                                                                                                                rolesToViewSelf.find(item => { return item === role.role }) && <Col>
+                                                                                                                    <Form.Check
+                                                                                                                        checked={role.view_self}
+                                                                                                                        type="checkbox"
+                                                                                                                        label="Visualizar próprio"
+                                                                                                                        name="type"
+                                                                                                                        id={`formUserRoles${role.id}ViewSelf`}
+                                                                                                                        value={`${role.id}@view_self`}
+                                                                                                                        onChange={handleChecks}
+                                                                                                                    />
+                                                                                                                </Col>
+                                                                                                            }
+
                                                                                                             <Col>
                                                                                                                 <Form.Check
                                                                                                                     checked={role.create}
@@ -337,7 +482,7 @@ export default function UserEdit() {
                                                                                                                     id={`formUserRoles${role.id}Create`}
                                                                                                                     value={`${role.id}@create`}
                                                                                                                     onChange={handleChecks}
-                                                                                                                    disabled={!role.view}
+                                                                                                                    disabled={!role.view && !role.view_self}
                                                                                                                 />
                                                                                                             </Col>
 
@@ -350,23 +495,9 @@ export default function UserEdit() {
                                                                                                                     id={`formUserRoles${role.id}Update`}
                                                                                                                     value={`${role.id}@update`}
                                                                                                                     onChange={handleChecks}
-                                                                                                                    disabled={!role.view}
+                                                                                                                    disabled={!role.view && !role.view_self}
                                                                                                                 />
                                                                                                             </Col>
-
-                                                                                                            {
-                                                                                                                role.role === 'users' && <Col>
-                                                                                                                    <Form.Check
-                                                                                                                        checked={role.update_self}
-                                                                                                                        type="checkbox"
-                                                                                                                        label="Editar próprio"
-                                                                                                                        name="type"
-                                                                                                                        id={`formUserRoles${role.id}UpdateSelf`}
-                                                                                                                        value={`${role.id}@update_self`}
-                                                                                                                        onChange={handleChecks}
-                                                                                                                    />
-                                                                                                                </Col>
-                                                                                                            }
 
                                                                                                             <Col>
                                                                                                                 <Form.Check
@@ -385,7 +516,6 @@ export default function UserEdit() {
                                                                                                                 <Form.Check
                                                                                                                     checked={
                                                                                                                         role.view &&
-                                                                                                                            role.view_self &&
                                                                                                                             role.create &&
                                                                                                                             role.update &&
                                                                                                                             role.update_self &&
@@ -416,7 +546,7 @@ export default function UserEdit() {
                                                                                 messageShow ? <Col sm={3}><AlertMessage status={typeMessage} /></Col> :
                                                                                     <>
                                                                                         {
-                                                                                            can(user, "users", "remove")
+                                                                                            can(user, "users", "delete")
                                                                                             && userId !== user.id
                                                                                             && !userData.root
                                                                                             && <Col className="col-row">
@@ -452,7 +582,7 @@ export default function UserEdit() {
                                                                             deletingMessageShow ? <Col><AlertMessage status={typeMessage} /></Col> :
                                                                                 <>
                                                                                     {
-                                                                                        can(user, "users", "remove")
+                                                                                        can(user, "users", "delete")
                                                                                         && userId !== user.id
                                                                                         && !userData.root
                                                                                         && <Col className="col-row">
@@ -466,13 +596,15 @@ export default function UserEdit() {
                                                                                         </Col>
                                                                                     }
 
-                                                                                    <Button
-                                                                                        className="col-row"
-                                                                                        variant="outline-secondary"
-                                                                                        onClick={handleCloseUsersDelete}
-                                                                                    >
-                                                                                        Cancelar
-                                                                                    </Button>
+                                                                                    <Col className="col-row">
+                                                                                        <Button
+
+                                                                                            variant="outline-secondary"
+                                                                                            onClick={handleCloseUsersDelete}
+                                                                                        >
+                                                                                            Cancelar
+                                                                                        </Button>
+                                                                                    </Col>
                                                                                 </>
                                                                         }
                                                                     </Row>
@@ -492,6 +624,8 @@ export default function UserEdit() {
         </>
     )
 }
+
+export default UserEdit;
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
     const { token } = context.req.cookies;

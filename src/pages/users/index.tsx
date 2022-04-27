@@ -1,5 +1,6 @@
 import { useContext, useEffect, useState } from 'react';
 import { GetServerSideProps } from 'next';
+import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { NextSeo } from 'next-seo';
 import { Button, Col, Container, Image, ListGroup, Row } from 'react-bootstrap';
@@ -13,7 +14,7 @@ import Users, { User, can } from '../../components/Users';
 import { PageWaiting } from '../../components/PageWaiting';
 import { AlertMessage, statusModal } from '../../components/Interfaces/AlertMessage';
 
-export default function UsersPage() {
+const UsersPage: NextPage = () => {
     const router = useRouter();
     const { handleItemSideBar, handleSelectedMenu } = useContext(SideBarContext);
     const { loading, user } = useContext(AuthContext);
@@ -28,7 +29,7 @@ export default function UsersPage() {
         handleItemSideBar('users');
         handleSelectedMenu('users-index');
 
-        if (user && can(user, "users", "view")) {
+        if (user && can(user, "users", "read:any")) {
             api.get('users').then(res => {
                 setUsers(res.data);
 
@@ -56,17 +57,17 @@ export default function UsersPage() {
         <>
             <NextSeo
                 title="Lista de usuários"
-                description="Lista de usuários da plataforma de gerenciamento da Mtech Solar."
+                description="Lista de usuários da plataforma de gerenciamento da Plataforma solar."
                 openGraph={{
-                    url: 'https://app.mtechsolar.com.br',
+                    url: process.env.NEXT_PUBLIC_API_URL,
                     title: 'Lista de usuários',
-                    description: 'Lista de usuários da plataforma de gerenciamento da Mtech Solar.',
+                    description: 'Lista de usuários da plataforma de gerenciamento da Plataforma solar.',
                     images: [
                         {
-                            url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
-                            alt: 'Lista de usuários | Plataforma Mtech Solar',
+                            url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg`,
+                            alt: 'Lista de usuários | Plataforma solar',
                         },
-                        { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
+                        { url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg` },
                     ],
                 }}
             />
@@ -75,7 +76,7 @@ export default function UsersPage() {
                 !user || loading ? <PageWaiting status="waiting" /> :
                     <>
                         {
-                            can(user, "users", "view") ? <Container className="content-page">
+                            can(user, "users", "read:any") ? <Container className="content-page">
                                 {
                                     can(user, "users", "create") && <Row>
                                         <Col>
@@ -144,6 +145,8 @@ export default function UsersPage() {
         </>
     )
 }
+
+export default UsersPage;
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
     const { token } = context.req.cookies;

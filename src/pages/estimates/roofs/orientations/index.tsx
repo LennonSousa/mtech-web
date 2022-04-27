@@ -43,10 +43,10 @@ export default function Types() {
 
     useEffect(() => {
         handleItemSideBar('estimates');
-        handleSelectedMenu('estimates-roof-orientations');
+        handleSelectedMenu('estimates-roofs-orientations');
 
         if (user) {
-            if (can(user, "estimates", "view")) {
+            if (can(user, "estimates", "read:any") || can(user, "estimates", "read:own")) {
 
                 api.get('roofs/orientations').then(res => {
                     setRoofOrientations(res.data);
@@ -110,17 +110,17 @@ export default function Types() {
         <>
             <NextSeo
                 title="Orientaçõs de telhado"
-                description="Orientaçõs de telhado da plataforma de gerenciamento da Mtech Solar."
+                description="Orientaçõs de telhado da plataforma de gerenciamento da Plataforma solar."
                 openGraph={{
-                    url: 'https://app.mtechsolar.com.br',
+                    url: process.env.NEXT_PUBLIC_API_URL,
                     title: 'Orientaçõs de telhado',
-                    description: 'Orientaçõs de telhado da plataforma de gerenciamento da Mtech Solar.',
+                    description: 'Orientaçõs de telhado da plataforma de gerenciamento da Plataforma solar.',
                     images: [
                         {
-                            url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
-                            alt: 'Orientaçõs de telhado | Plataforma Mtech Solar',
+                            url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg`,
+                            alt: 'Orientaçõs de telhado | Plataforma solar',
                         },
-                        { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
+                        { url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg` },
                     ],
                 }}
             />
@@ -129,7 +129,7 @@ export default function Types() {
                 !user || loading ? <PageWaiting status="waiting" /> :
                     <>
                         {
-                            can(user, "estimates", "update") ? <Container className="content-page">
+                            can(user, "estimates", "update:any") ? <Container className="content-page">
                                 <Row>
                                     <Col>
                                         <Button variant="outline-success" onClick={handleShowModalNewType}>

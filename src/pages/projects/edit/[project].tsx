@@ -1,11 +1,12 @@
 import { ChangeEvent, useContext, useEffect, useState } from 'react';
 import { GetServerSideProps } from 'next';
+import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { NextSeo } from 'next-seo';
 import { Button, Col, Container, Form, InputGroup, ListGroup, Modal, Row, Spinner } from 'react-bootstrap';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { FaHistory, FaFileAlt, FaPlus, FaUserTie, FaUserTag, FaDonate, FaSolarPanel } from 'react-icons/fa';
+import { FaClipboardList, FaHistory, FaFileAlt, FaPlus, FaUserTie, FaUserTag, FaDonate, FaSolarPanel } from 'react-icons/fa';
 import { format } from 'date-fns';
 import cep, { CEP } from 'cep-promise';
 import { CircularProgressbar } from 'react-circular-progressbar';
@@ -15,6 +16,7 @@ import api from '../../../api/api';
 import { TokenVerify } from '../../../utils/tokenVerify';
 import { SideBarContext } from '../../../contexts/SideBarContext';
 import { AuthContext } from '../../../contexts/AuthContext';
+import { StoresContext } from '../../../contexts/StoresContext';
 import { can } from '../../../components/Users';
 import { Project } from '../../../components/Projects';
 import { ProjectStatus } from '../../../components/ProjectStatus';
@@ -23,6 +25,7 @@ import { AttachmentRequired } from '../../../components/AttachmentsRequiredProje
 import Incomings, { Income } from '../../../components/Incomings';
 import NewIncomeModal from '../../../components/Incomings/ModalNew';
 import ProjectEvents, { ProjectEvent } from '../../../components/ProjectEvents';
+import ProjectItems, { ProjectItem } from '../../../components/ProjectItems';
 import ProjectAttachments, { ProjectAttachment } from '../../../components/ProjectAttachments';
 import ProjectAttachmentsRequired, { ProjectAttachmentRequired } from '../../../components/ProjectAttachmentsRequired';
 
@@ -77,6 +80,7 @@ const validationSchema = Yup.object().shape({
     financier_complement: Yup.string().notRequired().nullable(),
     financier_city: Yup.string().required('Obrigatório!'),
     financier_state: Yup.string().required('Obrigatório!'),
+    store: Yup.string().required('Obrigatório!'),
     status: Yup.string().required('Obrigatório!'),
 });
 
@@ -88,11 +92,12 @@ const attachmentValidationSchema = Yup.object().shape({
     project: Yup.string().required('Obrigatório!'),
 });
 
-export default function NewCustomer() {
+const ProjectEdit: NextPage = () => {
     const router = useRouter();
     const { project } = router.query;
     const { handleItemSideBar, handleSelectedMenu } = useContext(SideBarContext);
     const { loading, user } = useContext(AuthContext);
+    const { stores } = useContext(StoresContext);
 
     const [projectData, setProjectData] = useState<Project>();
     const [projectStatus, setProjectStatus] = useState<ProjectStatus[]>([]);
@@ -100,6 +105,7 @@ export default function NewCustomer() {
     const [projectAttachments, setProjectAttachments] = useState<ProjectAttachment[]>([]);
     const [projectAttachmentsRequired, setProjectAttachmentsRequired] = useState<ProjectAttachmentRequired[]>([]);
     const [incomings, setIncomings] = useState<Income[]>([]);
+    const [projectItemsList, setProjectItemsList] = useState<ProjectItem[]>([]);
 
     const [spinnerCep, setSpinnerCep] = useState(false);
     const [documentType, setDocumentType] = useState("CPF");
@@ -111,6 +117,7 @@ export default function NewCustomer() {
     const [typeLoadingMessage, setTypeLoadingMessage] = useState<PageType>("waiting");
     const [textLoadingMessage, setTextLoadingMessage] = useState('Aguarde, carregando...');
 
+    const [isAuthorized, setIsAuthorized] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadingPercentage, setUploadingPercentage] = useState(0);
     const [messageShow, setMessageShow] = useState(false);
@@ -145,11 +152,19 @@ export default function NewCustomer() {
         handleItemSideBar('projects');
         handleSelectedMenu('projects-index');
 
-        if (user) {
-            if (can(user, "projects", "update")) {
-                if (project) {
+        if (!user || !can(user, "projects", "update:any")) {
+            setIsAuthorized(false);
+            return;
+        } else if (project) {
+            setIsAuthorized(true);
 
-                    api.get(`projects/${project}`).then(res => {
+            api.get(`projects/${project}`, {
+                validateStatus: function (status) {
+                    return status < 500; // Resolve only if the status code is less than 500
+                }
+            }).then(res => {
+                switch (res.status) {
+                    case 200:
                         let projectRes: Project = res.data;
 
                         if (projectRes.document.length > 14)
@@ -199,6 +214,7 @@ export default function NewCustomer() {
                             if (attachmentsRequiredData) setProjectAttachmentsRequired(attachmentsRequiredData);
 
                             setProjectData(projectRes);
+                            setProjectItemsList(projectRes.items);
 
                             setLoadingData(false);
                         }).catch(err => {
@@ -208,15 +224,22 @@ export default function NewCustomer() {
                             setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
                             setHasErrors(true);
                         });
-                    }).catch(err => {
-                        console.log('Error to get project, ', err);
-
+                        break;
+                    case 403:
+                        setIsAuthorized(false);
+                        break;
+                    default:
                         setTypeLoadingMessage("error");
                         setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
                         setHasErrors(true);
-                    });
                 }
-            }
+            }).catch(err => {
+                console.log('Error to get project, ', err);
+
+                setTypeLoadingMessage("error");
+                setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
+                setHasErrors(true);
+            });
         }
     }, [user, project]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -354,6 +377,10 @@ export default function NewCustomer() {
         }
     }
 
+    function handleListProjectItems(projectItemsList: ProjectItem[]) {
+        setProjectItemsList(projectItemsList);
+    }
+
     function handleImages(event: ChangeEvent<HTMLInputElement>) {
         if (event.target.files && event.target.files[0]) {
             const image = event.target.files[0];
@@ -372,7 +399,7 @@ export default function NewCustomer() {
             setDeletingMessageShow(true);
 
             try {
-                if (can(user, "projects", "remove")) {
+                if (can(user, "projects", "delete")) {
                     await api.delete(`projects/${project}`);
 
                     setTypeMessage("success");
@@ -418,7 +445,7 @@ export default function NewCustomer() {
                 !user || loading ? <PageWaiting status="waiting" /> :
                     <>
                         {
-                            can(user, "projects", "update") ? <>
+                            isAuthorized ? <>
                                 {
                                     loadingData || hasErrors ? <PageWaiting
                                         status={typeLoadingMessage}
@@ -489,6 +516,7 @@ export default function NewCustomer() {
                                                                     financier_complement: projectData.financier_complement,
                                                                     financier_city: projectData.financier_city,
                                                                     financier_state: projectData.financier_state,
+                                                                    store: projectData.store.id,
                                                                     status: projectData.status.id,
                                                                 }}
                                                                 onSubmit={async values => {
@@ -537,7 +565,18 @@ export default function NewCustomer() {
                                                                             financier_complement: values.financier_complement,
                                                                             financier_city: values.financier_city,
                                                                             financier_state: values.financier_state,
+                                                                            store: values.store,
                                                                             status: values.status,
+                                                                        });
+
+                                                                        projectItemsList.forEach(async item => {
+                                                                            await api.put(`projects/items/${item.id}`, {
+                                                                                name: item.name,
+                                                                                amount: item.amount,
+                                                                                price: item.price,
+                                                                                percent: item.percent,
+                                                                                order: item.order,
+                                                                            });
                                                                         });
 
                                                                         setTypeMessage("success");
@@ -594,7 +633,7 @@ export default function NewCustomer() {
                                                                                         else
                                                                                             setDocumentType("CPF");
                                                                                     }}
-                                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                                                                                         setFieldValue('document', e.target.value.length <= 14 ? cpf(e.target.value) : cnpj(e.target.value));
                                                                                         if (e.target.value.length > 14)
                                                                                             setDocumentType("CNPJ");
@@ -618,7 +657,7 @@ export default function NewCustomer() {
                                                                                     onChange={(e) => {
                                                                                         setFieldValue('phone', cellphone(e.target.value));
                                                                                     }}
-                                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                                                                                         setFieldValue('phone', cellphone(e.target.value));
                                                                                     }}
                                                                                     value={values.phone}
@@ -636,7 +675,7 @@ export default function NewCustomer() {
                                                                                     onChange={(e) => {
                                                                                         setFieldValue('cellphone', cellphone(e.target.value));
                                                                                     }}
-                                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                                                                                         setFieldValue('cellphone', cellphone(e.target.value));
                                                                                     }}
                                                                                     value={values.cellphone}
@@ -882,7 +921,7 @@ export default function NewCustomer() {
                                                                                         onChange={(e) => {
                                                                                             setFieldValue('months_average', prettifyCurrency(e.target.value));
                                                                                         }}
-                                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                                                                                             setFieldValue('months_average', prettifyCurrency(e.target.value));
                                                                                         }}
                                                                                         value={values.months_average}
@@ -904,7 +943,7 @@ export default function NewCustomer() {
                                                                                         onChange={(e) => {
                                                                                             setFieldValue('average_increase', prettifyCurrency(e.target.value));
                                                                                         }}
-                                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                                                                                             setFieldValue('average_increase', prettifyCurrency(e.target.value));
                                                                                         }}
                                                                                         value={values.average_increase}
@@ -941,7 +980,7 @@ export default function NewCustomer() {
                                                                                         onChange={(e) => {
                                                                                             setFieldValue('capacity', prettifyCurrency(e.target.value));
                                                                                         }}
-                                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                                                                                             setFieldValue('capacity', prettifyCurrency(e.target.value));
                                                                                         }}
                                                                                         value={values.capacity}
@@ -1027,29 +1066,61 @@ export default function NewCustomer() {
                                                                             </Form.Group>
                                                                         </Row>
 
-                                                                        <Row className="mb-2">
-                                                                            <Form.Group as={Col} sm={3} controlId="formGridPrice">
-                                                                                <Form.Label>Valor do sistema</Form.Label>
-                                                                                <InputGroup className="mb-2">
-                                                                                    <InputGroup.Text id="btnGroupPrice">R$</InputGroup.Text>
-                                                                                    <Form.Control
-                                                                                        type="text"
-                                                                                        onChange={(e) => {
-                                                                                            setFieldValue('price', prettifyCurrency(e.target.value));
-                                                                                        }}
-                                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-                                                                                            setFieldValue('price', prettifyCurrency(e.target.value));
-                                                                                        }}
-                                                                                        value={values.price}
-                                                                                        name="price"
-                                                                                        isInvalid={!!errors.price && touched.price}
-                                                                                        aria-label="Valor do projeto"
-                                                                                        aria-describedby="btnGroupPrice"
-                                                                                    />
-                                                                                </InputGroup>
-                                                                                <Form.Control.Feedback type="invalid">{touched.price && errors.price}</Form.Control.Feedback>
-                                                                            </Form.Group>
+                                                                        {
+                                                                            can(user, "finances", "read:any") && <Row className="mb-2">
+                                                                                <Form.Group as={Col} sm={3} controlId="formGridPrice">
+                                                                                    <Form.Label>Valor do sistema</Form.Label>
+                                                                                    <InputGroup className="mb-2">
+                                                                                        <InputGroup.Text id="btnGroupPrice">R$</InputGroup.Text>
+                                                                                        <Form.Control
+                                                                                            type="text"
+                                                                                            onChange={(e) => {
+                                                                                                setFieldValue('price', prettifyCurrency(e.target.value));
+                                                                                            }}
+                                                                                            onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+                                                                                                setFieldValue('price', prettifyCurrency(e.target.value));
+                                                                                            }}
+                                                                                            value={values.price}
+                                                                                            name="price"
+                                                                                            isInvalid={!!errors.price && touched.price}
+                                                                                            aria-label="Valor do projeto"
+                                                                                            aria-describedby="btnGroupPrice"
+                                                                                        />
+                                                                                    </InputGroup>
+                                                                                    <Form.Control.Feedback type="invalid">{touched.price && errors.price}</Form.Control.Feedback>
+                                                                                </Form.Group>
+                                                                            </Row>
+                                                                        }
+
+                                                                        <Col className="border-top mt-3 mb-3"></Col>
+
+                                                                        <Row>
+                                                                            <Col>
+                                                                                <Row>
+                                                                                    <Col>
+                                                                                        <h6 className="text-success">Itens <FaClipboardList /></h6>
+                                                                                    </Col>
+                                                                                </Row>
+                                                                            </Col>
                                                                         </Row>
+
+                                                                        <Row>
+                                                                            <Col sm={2}><h6 className="text-secondary">Quantidade</h6></Col>
+                                                                            <Col sm={10}><h6 className="text-secondary">Produto</h6></Col>
+                                                                        </Row>
+
+                                                                        {
+                                                                            projectItemsList && projectItemsList.map(projectItem => {
+                                                                                return <ProjectItems
+                                                                                    key={projectItem.id}
+                                                                                    projectItem={projectItem}
+                                                                                    projectItemsList={projectItemsList}
+                                                                                    handleListProjectItems={handleListProjectItems}
+                                                                                />
+                                                                            })
+                                                                        }
+
+                                                                        <Col className="border-top mt-3 mb-3"></Col>
 
                                                                         <Row className="mt-5 mb-3">
                                                                             <Col>
@@ -1115,7 +1186,7 @@ export default function NewCustomer() {
                                                                                         else
                                                                                             setFinancierDocumentType("CPF");
                                                                                     }}
-                                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                                                                                         setFieldValue('financier_document', e.target.value.length <= 14 ? cpf(e.target.value) : cnpj(e.target.value));
                                                                                         if (e.target.value.length > 14)
                                                                                             setFinancierDocumentType("CNPJ");
@@ -1152,7 +1223,7 @@ export default function NewCustomer() {
                                                                                     onChange={(e) => {
                                                                                         setFieldValue('financier_cellphone', cellphone(e.target.value));
                                                                                     }}
-                                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                                                                                         setFieldValue('financier_cellphone', cellphone(e.target.value));
                                                                                     }}
                                                                                     value={values.cellphone}
@@ -1350,32 +1421,56 @@ export default function NewCustomer() {
                                                                             </Form.Group>
                                                                         </Row>
 
-                                                                        <Form.Group as={Col} sm={4} controlId="formGridStatus">
-                                                                            <Form.Label>Fase</Form.Label>
-                                                                            <Form.Control
-                                                                                as="select"
-                                                                                onChange={handleChange}
-                                                                                onBlur={handleBlur}
-                                                                                value={values.status}
-                                                                                name="status"
-                                                                                isInvalid={!!errors.status && touched.status}
-                                                                            >
-                                                                                <option hidden>...</option>
-                                                                                {
-                                                                                    projectStatus.map((status, index) => {
-                                                                                        return <option key={index} value={status.id}>{status.name}</option>
-                                                                                    })
-                                                                                }
-                                                                            </Form.Control>
-                                                                            <Form.Control.Feedback type="invalid">{touched.status && errors.status}</Form.Control.Feedback>
-                                                                        </Form.Group>
+                                                                        <Row className="mb-3">
+                                                                            <Form.Group as={Col} sm={6} controlId="formGridStatus">
+                                                                                <Form.Label>Fase</Form.Label>
+                                                                                <Form.Control
+                                                                                    as="select"
+                                                                                    onChange={handleChange}
+                                                                                    onBlur={handleBlur}
+                                                                                    value={values.status}
+                                                                                    name="status"
+                                                                                    isInvalid={!!errors.status && touched.status}
+                                                                                >
+                                                                                    <option hidden>...</option>
+                                                                                    {
+                                                                                        projectStatus.map((status, index) => {
+                                                                                            return <option key={index} value={status.id}>{status.name}</option>
+                                                                                        })
+                                                                                    }
+                                                                                </Form.Control>
+                                                                                <Form.Control.Feedback type="invalid">{touched.status && errors.status}</Form.Control.Feedback>
+                                                                            </Form.Group>
+
+                                                                            {
+                                                                                !user.store_only && <Form.Group as={Col} sm={4} controlId="formGridStore">
+                                                                                    <Form.Label>Loja</Form.Label>
+                                                                                    <Form.Control
+                                                                                        as="select"
+                                                                                        onChange={handleChange}
+                                                                                        onBlur={handleBlur}
+                                                                                        value={values.store}
+                                                                                        name="store"
+                                                                                        isInvalid={!!errors.store && touched.store}
+                                                                                    >
+                                                                                        <option hidden>Escolha uma opção</option>
+                                                                                        {
+                                                                                            stores.map((store, index) => {
+                                                                                                return <option key={index} value={store.id}>{store.name}</option>
+                                                                                            })
+                                                                                        }
+                                                                                    </Form.Control>
+                                                                                    <Form.Control.Feedback type="invalid">{touched.store && errors.store}</Form.Control.Feedback>
+                                                                                </Form.Group>
+                                                                            }
+                                                                        </Row>
 
                                                                         <Row className="mb-3 justify-content-end">
                                                                             {
                                                                                 messageShow ? <Col sm={3}><AlertMessage status={typeMessage} /></Col> :
                                                                                     <>
                                                                                         {
-                                                                                            can(user, "projects", "remove") && <Col className="col-row">
+                                                                                            can(user, "projects", "delete") && <Col className="col-row">
                                                                                                 <Button
                                                                                                     variant="danger"
                                                                                                     title="Excluir projeto."
@@ -1386,7 +1481,7 @@ export default function NewCustomer() {
                                                                                             </Col>
                                                                                         }
 
-                                                                                        <Col sm={1}>
+                                                                                        <Col className="col-row" sm={1}>
                                                                                             <Button variant="success" type="submit">Salvar</Button>
                                                                                         </Col>
                                                                                     </>
@@ -1399,23 +1494,25 @@ export default function NewCustomer() {
                                                             <Col className="border-top mt-3 mb-3"></Col>
 
                                                             {
-                                                                can(user, "finances", "view") && <Row className="mb-5">
+                                                                can(user, "finances", "read:any") && <Row className="mb-5">
                                                                     <Form.Group as={Col} controlId="formGridAttachments">
                                                                         <Row>
                                                                             <Col className="col-row">
                                                                                 <h6 className="text-success">Receitas <FaDonate /></h6>
                                                                             </Col>
 
-                                                                            <Col sm={1}>
-                                                                                <Button
-                                                                                    variant="outline-success"
-                                                                                    size="sm"
-                                                                                    onClick={handleShowModalNew}
-                                                                                    title="Criar uma nova receita para esse projeto."
-                                                                                >
-                                                                                    <FaPlus />
-                                                                                </Button>
-                                                                            </Col>
+                                                                            {
+                                                                                can(user, "finances", "update:any") && <Col sm={1}>
+                                                                                    <Button
+                                                                                        variant="outline-success"
+                                                                                        size="sm"
+                                                                                        onClick={handleShowModalNew}
+                                                                                        title="Criar uma nova receita para esse projeto."
+                                                                                    >
+                                                                                        <FaPlus />
+                                                                                    </Button>
+                                                                                </Col>
+                                                                            }
                                                                         </Row>
 
                                                                         <Row className="mt-2">
@@ -1787,28 +1884,33 @@ export default function NewCustomer() {
                                                                     Você tem certeza que deseja excluir este projeto? Essa ação não poderá ser desfeita.
                                                                 </Modal.Body>
                                                                 <Modal.Footer>
-                                                                    {
-                                                                        deletingMessageShow ? <AlertMessage status={typeMessage} /> :
-                                                                            <>
-                                                                                {
-                                                                                    can(user, "projects", "remove") && <Button
-                                                                                        variant="danger"
-                                                                                        type="button"
-                                                                                        onClick={handleItemDelete}
-                                                                                    >
-                                                                                        Excluir
-                                                                                    </Button>
-                                                                                }
+                                                                    <Row>
+                                                                        {
+                                                                            deletingMessageShow ? <Col><AlertMessage status={typeMessage} /></Col> :
+                                                                                <>
+                                                                                    {
+                                                                                        can(user, "projects", "delete") && <Col className="col-row">
+                                                                                            <Button
+                                                                                                variant="danger"
+                                                                                                type="button"
+                                                                                                onClick={handleItemDelete}
+                                                                                            >
+                                                                                                Excluir
+                                                                                            </Button>
+                                                                                        </Col>
+                                                                                    }
 
-                                                                                <Button
-                                                                                    className="col-row"
-                                                                                    variant="outline-secondary"
-                                                                                    onClick={handleCloseItemDelete}
-                                                                                >
-                                                                                    Cancelar
-                                                                                </Button>
-                                                                            </>
-                                                                    }
+                                                                                    <Col className="col-row">
+                                                                                        <Button
+                                                                                            variant="outline-secondary"
+                                                                                            onClick={handleCloseItemDelete}
+                                                                                        >
+                                                                                            Cancelar
+                                                                                        </Button>
+                                                                                    </Col>
+                                                                                </>
+                                                                        }
+                                                                    </Row>
                                                                 </Modal.Footer>
                                                             </Modal>
                                                         </>
@@ -1824,6 +1926,8 @@ export default function NewCustomer() {
         </>
     )
 }
+
+export default ProjectEdit;
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
     const { token } = context.req.cookies;

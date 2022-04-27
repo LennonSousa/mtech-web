@@ -10,6 +10,7 @@ import filesize from "filesize";
 import api from '../../../api/api';
 import { can } from '../../Users';
 import { AuthContext } from '../../../contexts/AuthContext';
+import { StoresContext } from '../../../contexts/StoresContext';
 import { Income } from '../../Incomings';
 import IncomeItems from '../../IncomeItems';
 import IncomeAttachments, { IncomeAttachment } from '../../IncomeAttachments';
@@ -32,6 +33,7 @@ interface IncomeModalProps {
 const validationSchema = Yup.object().shape({
     description: Yup.string().required('Obrigatório!').max(50, 'Deve conter no máximo 50 caracteres!'),
     value: Yup.string().required('Obrigatório!'),
+    store: Yup.string().required('Obrigatório!'),
     project: Yup.string().notRequired().nullable(),
     payType: Yup.string().required('Obrigatório!'),
 });
@@ -46,9 +48,12 @@ const attachmentValidationSchema = Yup.object().shape({
 
 const IncomeModal: React.FC<IncomeModalProps> = ({ incomeId, show = false, handleIncome, handleCloseModal }) => {
     const { user } = useContext(AuthContext);
+    const { stores } = useContext(StoresContext);
+
     const [data, setData] = useState<Income>();
     const [payTypes, setPayTypes] = useState<PayType[]>([]);
     const [incomeAttachments, setProjectAttachments] = useState<IncomeAttachment[]>([]);
+    const [userCanEdit, setUserCanEdit] = useState(false);
 
     const [messageShow, setMessageShow] = useState(false);
     const [typeMessage, setTypeMessage] = useState<statusModal>("waiting");
@@ -78,7 +83,9 @@ const IncomeModal: React.FC<IncomeModalProps> = ({ incomeId, show = false, handl
     useEffect(() => {
         setHasErrors(false);
 
-        if (user && can(user, "finances", "update") && show) {
+        if (user && can(user, "finances", "read:any") && show) {
+            if (can(user, "finances", "update:any")) setUserCanEdit(true);
+
             api.get(`incomings/${incomeId}`).then(res => {
                 const incomeRes: Income = res.data;
 
@@ -140,7 +147,7 @@ const IncomeModal: React.FC<IncomeModalProps> = ({ incomeId, show = false, handl
 
     async function handleListItems() {
         try {
-            if (user && can(user, "finances", "update") && data) {
+            if (user && can(user, "finances", "update:any") && data) {
                 const res = await api.get(`incomings/${incomeId}`);
 
                 const updatedIncome: Income = res.data;
@@ -158,7 +165,7 @@ const IncomeModal: React.FC<IncomeModalProps> = ({ incomeId, show = false, handl
 
     async function handleNewItem() {
         try {
-            if (user && can(user, "finances", "update") && data) {
+            if (user && can(user, "finances", "update:any") && data) {
                 setIsCreatingItem(true);
 
                 await api.post('incomings/items', {
@@ -210,10 +217,10 @@ const IncomeModal: React.FC<IncomeModalProps> = ({ incomeId, show = false, handl
     return (
         <Modal size="lg" show={show} onHide={handleCloseModal}>
             <Modal.Header closeButton>
-                <Modal.Title>Edtiar receita</Modal.Title>
+                <Modal.Title>Editar receita</Modal.Title>
             </Modal.Header>
             {
-                user && can(user, "finances", "update") ? <>
+                user && can(user, "finances", "read:any") ? <>
                     {
                         data ? <>
                             <Formik
@@ -221,42 +228,45 @@ const IncomeModal: React.FC<IncomeModalProps> = ({ incomeId, show = false, handl
                                     {
                                         description: data.description,
                                         value: prettifyCurrency(String(data.value)),
-                                        done: false,
+                                        store: data.store.id,
                                         created_at: data.created_at,
                                         project: data.project ? data.project.id : '',
                                         payType: data.payType.id,
                                     }
                                 }
                                 onSubmit={async values => {
-                                    setTypeMessage("waiting");
-                                    setMessageShow(true);
+                                    if (userCanEdit) {
+                                        setTypeMessage("waiting");
+                                        setMessageShow(true);
 
-                                    try {
-                                        await api.put(`incomings/${data.id}`, {
-                                            description: values.description,
-                                            value: Number(values.value.replaceAll(".", "").replaceAll(",", ".")),
-                                            project: values.project,
-                                            payType: values.payType,
-                                        });
+                                        try {
+                                            await api.put(`incomings/${data.id}`, {
+                                                description: values.description,
+                                                value: Number(values.value.replaceAll(".", "").replaceAll(",", ".")),
+                                                store: values.store,
+                                                project: values.project,
+                                                payType: values.payType,
+                                            });
 
-                                        if (handleIncome) await handleIncome();
+                                            if (handleIncome) await handleIncome();
 
-                                        setTypeMessage("success");
+                                            setTypeMessage("success");
 
-                                        setTimeout(() => {
-                                            setMessageShow(false);
-                                            handleCloseModal();
-                                        }, 1000);
-                                    }
-                                    catch (err) {
-                                        console.log('error edit data.');
-                                        console.log(err);
+                                            setTimeout(() => {
+                                                setMessageShow(false);
+                                                handleCloseModal();
+                                            }, 1000);
+                                        }
+                                        catch (err) {
+                                            console.log('error edit data.');
+                                            console.log(err);
 
-                                        setTypeMessage("error");
+                                            setTypeMessage("error");
 
-                                        setTimeout(() => {
-                                            setMessageShow(false);
-                                        }, 4000);
+                                            setTimeout(() => {
+                                                setMessageShow(false);
+                                            }, 4000);
+                                        }
                                     }
                                 }}
                                 validationSchema={validationSchema}
@@ -272,6 +282,7 @@ const IncomeModal: React.FC<IncomeModalProps> = ({ incomeId, show = false, handl
                                                     onBlur={handleBlur}
                                                     value={values.description}
                                                     name="description"
+                                                    disabled={!userCanEdit}
                                                     isInvalid={!!errors.description && touched.description}
                                                 />
                                                 <Form.Control.Feedback type="invalid">{touched.description && errors.description}</Form.Control.Feedback>
@@ -288,11 +299,12 @@ const IncomeModal: React.FC<IncomeModalProps> = ({ incomeId, show = false, handl
                                                             onChange={(e) => {
                                                                 setFieldValue('value', prettifyCurrency(e.target.value));
                                                             }}
-                                                            onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                            onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                                                                 setFieldValue('value', prettifyCurrency(e.target.value));
                                                             }}
                                                             value={values.value}
                                                             name="value"
+                                                            disabled={!userCanEdit}
                                                             isInvalid={!!errors.value && touched.value}
                                                             aria-label="Valor do projeto"
                                                             aria-describedby="btnGroupValue"
@@ -309,6 +321,7 @@ const IncomeModal: React.FC<IncomeModalProps> = ({ incomeId, show = false, handl
                                                         onBlur={handleBlur}
                                                         value={values.payType}
                                                         name="payType"
+                                                        disabled={!userCanEdit}
                                                         isInvalid={!!errors.payType && touched.payType}
                                                     >
                                                         <option hidden>...</option>
@@ -321,26 +334,55 @@ const IncomeModal: React.FC<IncomeModalProps> = ({ incomeId, show = false, handl
                                                     <Form.Control.Feedback type="invalid">{touched.payType && errors.payType}</Form.Control.Feedback>
                                                 </Form.Group>
                                             </Row>
+
+                                            <Row className="mb-3">
+                                                {
+                                                    !data.project && !user.store_only && <Form.Group as={Col} controlId="formGridStore">
+                                                        <Form.Label>Loja</Form.Label>
+                                                        <Form.Control
+                                                            as="select"
+                                                            onChange={handleChange}
+                                                            onBlur={handleBlur}
+                                                            value={values.store}
+                                                            name="store"
+                                                            disabled={!userCanEdit}
+                                                            isInvalid={!!errors.store && touched.store}
+                                                        >
+                                                            <option hidden>Escolha uma opção</option>
+                                                            {
+                                                                stores.map((store, index) => {
+                                                                    return <option key={index} value={store.id}>{store.name}</option>
+                                                                })
+                                                            }
+                                                        </Form.Control>
+                                                        <Form.Control.Feedback type="invalid">{touched.store && errors.store}</Form.Control.Feedback>
+                                                    </Form.Group>
+                                                }
+                                            </Row>
                                         </Modal.Body>
                                         <Modal.Footer>
                                             {
                                                 messageShow ? <AlertMessage status={typeMessage} /> :
                                                     <>
                                                         <Button variant="secondary" onClick={handleCloseModal}>Cancelar</Button>
-                                                        <Button
-                                                            title="Excluir item"
-                                                            variant={iconDelete ? "outline-danger" : "outline-warning"}
-                                                            onClick={deleteItem}
-                                                        >
-                                                            {
-                                                                iconDelete && "Excluir"
-                                                            }
+                                                        {
+                                                            userCanEdit && <>
+                                                                <Button
+                                                                    title="Excluir item"
+                                                                    variant={iconDelete ? "outline-danger" : "outline-warning"}
+                                                                    onClick={deleteItem}
+                                                                >
+                                                                    {
+                                                                        iconDelete && "Excluir"
+                                                                    }
 
-                                                            {
-                                                                iconDeleteConfirm && "Confirmar"
-                                                            }
-                                                        </Button>
-                                                        <Button variant="success" type="submit">Salvar</Button>
+                                                                    {
+                                                                        iconDeleteConfirm && "Confirmar"
+                                                                    }
+                                                                </Button>
+                                                                <Button variant="success" type="submit">Salvar</Button>
+                                                            </>
+                                                        }
                                                     </>
 
                                             }
@@ -357,25 +399,27 @@ const IncomeModal: React.FC<IncomeModalProps> = ({ incomeId, show = false, handl
                                                 <h6 className="text-success">Pagamentos <FaHistory /></h6>
                                             </Col>
 
-                                            <Col sm={1}>
-                                                <Button
-                                                    variant="outline-success"
-                                                    size="sm"
-                                                    onClick={handleNewItem}
-                                                    title="Criar um novo pagamento para essa receita."
-                                                >
-                                                    {
-                                                        isCreatingItem ? <Spinner
-                                                            as="span"
-                                                            animation="border"
-                                                            size="sm"
-                                                            role="status"
-                                                            aria-hidden="true"
-                                                        /> :
-                                                            <FaPlus />
-                                                    }
-                                                </Button>
-                                            </Col>
+                                            {
+                                                userCanEdit && <Col sm={1}>
+                                                    <Button
+                                                        variant="outline-success"
+                                                        size="sm"
+                                                        onClick={handleNewItem}
+                                                        title="Criar um novo pagamento para essa receita."
+                                                    >
+                                                        {
+                                                            isCreatingItem ? <Spinner
+                                                                as="span"
+                                                                animation="border"
+                                                                size="sm"
+                                                                role="status"
+                                                                aria-hidden="true"
+                                                            /> :
+                                                                <FaPlus />
+                                                        }
+                                                    </Button>
+                                                </Col>
+                                            }
                                         </Row>
 
                                         <Row className="mt-2">
@@ -388,6 +432,7 @@ const IncomeModal: React.FC<IncomeModalProps> = ({ incomeId, show = false, handl
                                                                     key={item.id}
                                                                     item={item}
                                                                     handleListItems={handleListItems}
+                                                                    canEdit={userCanEdit}
                                                                 />
                                                             })
                                                         }
@@ -411,18 +456,20 @@ const IncomeModal: React.FC<IncomeModalProps> = ({ incomeId, show = false, handl
                                                 <h6 className="text-success">Anexos <FaFileAlt /></h6>
                                             </Col>
 
-                                            <Col sm={1}>
-                                                <Button
-                                                    variant={showNewAttachment ? "outline-danger" : "outline-success"}
-                                                    size="sm"
-                                                    onClick={() => {
-                                                        showNewAttachment ? handleCloseNewAttachment() : handleShowNewAttachment();
-                                                    }}
-                                                    title={showNewAttachment ? "Fechar." : "Criar um novo anexo para essa receita."}
-                                                >
-                                                    {showNewAttachment ? <FaTimes /> : <FaPlus />}
-                                                </Button>
-                                            </Col>
+                                            {
+                                                userCanEdit && <Col sm={1}>
+                                                    <Button
+                                                        variant={showNewAttachment ? "outline-danger" : "outline-success"}
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            showNewAttachment ? handleCloseNewAttachment() : handleShowNewAttachment();
+                                                        }}
+                                                        title={showNewAttachment ? "Fechar." : "Criar um novo anexo para essa receita."}
+                                                    >
+                                                        {showNewAttachment ? <FaTimes /> : <FaPlus />}
+                                                    </Button>
+                                                </Col>
+                                            }
                                         </Row>
 
                                         {
@@ -439,7 +486,7 @@ const IncomeModal: React.FC<IncomeModalProps> = ({ incomeId, show = false, handl
                                                             }
                                                         }
                                                         onSubmit={async values => {
-                                                            if (fileToSave) {
+                                                            if (userCanEdit && fileToSave) {
                                                                 setUploadingPercentage(0);
                                                                 setTypeMessage("success");
                                                                 setIsUploading(true);
@@ -624,6 +671,7 @@ const IncomeModal: React.FC<IncomeModalProps> = ({ incomeId, show = false, handl
                                                                     key={attachment.id}
                                                                     attachment={attachment}
                                                                     handleListAttachments={handleListAttachments}
+                                                                    canEdit={userCanEdit}
                                                                 />
                                                             })
                                                         }

@@ -1,37 +1,40 @@
-import { useContext, useEffect, useState } from 'react';
+import { ChangeEvent, useContext, useEffect, useState } from 'react';
 import { GetServerSideProps } from 'next';
+import type { NextPage } from 'next';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { NextSeo } from 'next-seo';
-import { Button, Col, Container, Form, Row, Spinner } from 'react-bootstrap';
+import { Button, Col, Container, Form, Image, Row, Spinner } from 'react-bootstrap';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { FaUserTie } from 'react-icons/fa';
 import cep, { CEP } from 'cep-promise';
 
-import api from '../../api/api';
-import { TokenVerify } from '../../utils/tokenVerify';
-import { SideBarContext } from '../../contexts/SideBarContext';
-import { AuthContext } from '../../contexts/AuthContext';
-import { can } from '../../components/Users';
-import { Store } from '../../components/Store';
+import api from '../../../api/api';
+import { TokenVerify } from '../../../utils/tokenVerify';
+import { SideBarContext } from '../../../contexts/SideBarContext';
+import { AuthContext } from '../../../contexts/AuthContext';
+import { StoresContext } from '../../../contexts/StoresContext';
+import { can } from '../../../components/Users';
+import { Store } from '../../../components/Stores';
 
 const TextEditor = dynamic(
     () => {
-        return import("../../components/Store/TextEditor");
+        return import("../../../components/Stores/TextEditor");
     },
     { ssr: false }
 );
 
-import { cpf, cnpj } from '../../components/InputMask/masks';
-import { statesCities } from '../../components/StatesCities';
-import PageBack from '../../components/PageBack';
-import { PageWaiting, PageType } from '../../components/PageWaiting';
-import { AlertMessage, statusModal } from '../../components/Interfaces/AlertMessage';
+import { cpf, cnpj } from '../../../components/InputMask/masks';
+import { statesCities } from '../../../components/StatesCities';
+import PageBack from '../../../components/PageBack';
+import { PageWaiting, PageType } from '../../../components/PageWaiting';
+import { AlertMessage, statusModal } from '../../../components/Interfaces/AlertMessage';
 
 import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
 
 const validationSchema = Yup.object().shape({
+    avatar: Yup.string().required('Obrigatório!'),
     title: Yup.string().required('Obrigatório!'),
     name: Yup.string().required('Obrigatório!'),
     phone: Yup.string().notRequired(),
@@ -47,14 +50,17 @@ const validationSchema = Yup.object().shape({
     document: Yup.string().min(14, 'CPF inválido!').max(18, 'CNPJ inválido!').required('Obrigatório!'),
 });
 
-export default function EditStore() {
+const EditStore: NextPage = () => {
     const router = useRouter();
-    const { estimate } = router.query;
+    const { store } = router.query;
 
     const { handleItemSideBar, handleSelectedMenu } = useContext(SideBarContext);
     const { loading, user } = useContext(AuthContext);
+    const { stores, handleStores } = useContext(StoresContext);
 
     const [data, setData] = useState<Store>();
+    const [imagePreview, setImagePreview] = useState('');
+    const [imageSelected, setImageSelected] = useState<File>();
 
     const [spinnerCep, setSpinnerCep] = useState(false);
     const [messageShow, setMessageShow] = useState(false);
@@ -69,55 +75,68 @@ export default function EditStore() {
     const [textLoadingMessage, setTextLoadingMessage] = useState('Aguarde, carregando...');
 
     useEffect(() => {
-        handleItemSideBar('store');
-        handleSelectedMenu('store-edit');
+        handleItemSideBar('stores');
+        handleSelectedMenu('stores-index');
 
-        if (user) {
-            if (can(user, "store", "update")) {
-                api.get('store').then(res => {
-                    let storeRes: Store = res.data;
+        try {
+            stores.forEach(storeItem => {
+                if (store === storeItem.id) {
+                    setImagePreview(storeItem.avatar);
 
-                    if (storeRes.document.length > 14)
+                    if (storeItem.document.length > 14)
                         setDocumentType("CNPJ");
 
                     try {
-                        const stateCities = statesCities.estados.find(item => { return item.sigla === res.data.state })
+                        const stateCities = statesCities.estados.find(item => { return item.sigla === storeItem.state })
 
                         if (stateCities)
                             setCities(stateCities.cidades);
                     }
                     catch { }
 
-                    setData(storeRes);
+                    setData(storeItem);
                     setLoadingData(false);
-                }).catch(err => {
-                    console.log('Error to get store to edit, ', err);
+                }
+            });
+        }
+        catch (err) {
+            console.log('Error to get store to edit, ', err);
 
-                    setTypeLoadingMessage("error");
-                    setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
-                    setHasErrors(true);
-                });
+            setTypeLoadingMessage("error");
+            setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
+            setHasErrors(true);
+        }
+    }, [store, stores]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    function handleSelectImage(event: ChangeEvent<HTMLInputElement>) {
+        try {
+            if (event.target.files) {
+                const image = event.target.files[0];
+
+                setImageSelected(image);
+                setImagePreview(URL.createObjectURL(image));
             }
         }
+        catch {
+        }
 
-
-    }, [user, estimate]); // eslint-disable-line react-hooks/exhaustive-deps
+    }
 
     return (
         <>
             <NextSeo
                 title="Editar loja"
-                description="Editar loja da plataforma de gerenciamento da Mtech Solar."
+                description="Editar loja da plataforma de gerenciamento da Plataforma solar."
                 openGraph={{
-                    url: 'https://app.mtechsolar.com.br',
+                    url: process.env.NEXT_PUBLIC_API_URL,
                     title: 'Editar loja',
-                    description: 'Editar loja da plataforma de gerenciamento da Mtech Solar.',
+                    description: 'Editar loja da plataforma de gerenciamento da Plataforma solar.',
                     images: [
                         {
-                            url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
-                            alt: 'Editar loja | Plataforma Mtech Solar',
+                            url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg`,
+                            alt: 'Editar loja | Plataforma solar',
                         },
-                        { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
+                        { url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg` },
                     ],
                 }}
             />
@@ -126,7 +145,7 @@ export default function EditStore() {
                 !user || loading ? <PageWaiting status="waiting" /> :
                     <>
                         {
-                            can(user, "store", "update") ? <>
+                            can(user, "store", "update:any") ? <>
                                 {
                                     loadingData || hasErrors ? <PageWaiting
                                         status={typeLoadingMessage}
@@ -138,12 +157,13 @@ export default function EditStore() {
                                                     <Container className="content-page">
                                                         <Row className="mb-3">
                                                             <Col>
-                                                                <PageBack href={`/estimates/details/${data.id}`} subTitle="Voltar para a lista de lojas" />
+                                                                <PageBack href="/stores" subTitle="Voltar para a lista de lojas" />
                                                             </Col>
                                                         </Row>
 
                                                         <Formik
                                                             initialValues={{
+                                                                avatar: data.avatar,
                                                                 title: data.title,
                                                                 name: data.name,
                                                                 phone: data.phone,
@@ -163,26 +183,35 @@ export default function EditStore() {
                                                                 setMessageShow(true);
 
                                                                 try {
-                                                                    await api.put(`store/${data.id}`, {
-                                                                        title: values.title,
-                                                                        name: values.name,
-                                                                        phone: values.phone,
-                                                                        description: values.description,
-                                                                        email: values.email,
-                                                                        zip_code: values.zip_code,
-                                                                        street: values.street,
-                                                                        number: values.number,
-                                                                        neighborhood: values.neighborhood,
-                                                                        complement: values.complement,
-                                                                        city: values.city,
-                                                                        state: values.state,
-                                                                        document: values.document,
-                                                                    });
+                                                                    const dataToSave = new FormData();
+
+                                                                    dataToSave.append('title', values.title);
+                                                                    dataToSave.append('name', values.name);
+
+                                                                    if (imageSelected) dataToSave.append('avatar', imageSelected);
+
+                                                                    dataToSave.append('phone', values.phone);
+                                                                    dataToSave.append('description', values.description);
+                                                                    dataToSave.append('email', values.email);
+                                                                    dataToSave.append('zip_code', values.zip_code);
+                                                                    dataToSave.append('street', values.street);
+                                                                    dataToSave.append('number', values.number);
+                                                                    dataToSave.append('neighborhood', values.neighborhood);
+                                                                    dataToSave.append('complement', values.complement);
+                                                                    dataToSave.append('city', values.city);
+                                                                    dataToSave.append('state', values.state);
+                                                                    dataToSave.append('document', values.document);
+
+                                                                    await api.put(`stores/${data.id}`, dataToSave);
+
+                                                                    const storesRes = await api.get('stores');
+
+                                                                    handleStores(storesRes.data);
 
                                                                     setTypeMessage("success");
 
                                                                     setTimeout(() => {
-                                                                        setMessageShow(false);
+                                                                        router.push('/stores');
                                                                     }, 1000);
                                                                 }
                                                                 catch {
@@ -197,7 +226,6 @@ export default function EditStore() {
                                                         >
                                                             {({ handleChange, handleBlur, handleSubmit, setFieldValue, values, errors, touched }) => (
                                                                 <Form onSubmit={handleSubmit}>
-
                                                                     <Row className="mb-3">
                                                                         <Col>
                                                                             <Row>
@@ -205,6 +233,23 @@ export default function EditStore() {
                                                                                     <h6 className="text-success">Informações <FaUserTie /></h6>
                                                                                 </Col>
                                                                             </Row>
+                                                                        </Col>
+                                                                    </Row>
+
+                                                                    <Row className="mb-3 align-items-end">
+                                                                        <Col md={3} sm={1}>
+                                                                            <Image src={imagePreview} alt={values.name} rounded fluid thumbnail />
+                                                                        </Col>
+                                                                        <Col md={6} sm={4}>
+                                                                            <Form.Group controlId="procuctImageFile" className="mb-3">
+                                                                                <Form.Label>Escolher imagem</Form.Label>
+                                                                                <Form.Control
+                                                                                    type="file"
+                                                                                    onChange={handleSelectImage}
+                                                                                    isInvalid={!!errors.avatar && touched.avatar}
+                                                                                />
+                                                                                <Form.Control.Feedback type="invalid">{touched.avatar && errors.avatar}</Form.Control.Feedback>
+                                                                            </Form.Group>
                                                                         </Col>
                                                                     </Row>
 
@@ -247,7 +292,7 @@ export default function EditStore() {
                                                                                     else
                                                                                         setDocumentType("CPF");
                                                                                 }}
-                                                                                onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                                                                                onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                                                                                     setFieldValue('document', e.target.value.length <= 14 ? cpf(e.target.value) : cnpj(e.target.value));
                                                                                     if (e.target.value.length > 14)
                                                                                         setDocumentType("CNPJ");
@@ -484,6 +529,7 @@ export default function EditStore() {
                                                                 <TextEditor type="services_in" data={data} />
                                                                 <TextEditor type="warranty" data={data} />
                                                                 <TextEditor type="engineer" data={data} />
+                                                                <TextEditor type="bank_account" data={data} />
                                                             </>
                                                         }
                                                     </Container>
@@ -498,6 +544,8 @@ export default function EditStore() {
         </>
     )
 }
+
+export default EditStore;
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
     const { token } = context.req.cookies;

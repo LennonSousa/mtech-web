@@ -1,5 +1,6 @@
 import { useContext, useEffect, useState } from 'react';
 import { GetServerSideProps } from 'next';
+import type { NextPage } from 'next';
 import { NextSeo } from 'next-seo';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { Button, Col, Container, Form, Image, ListGroup, Modal, Row } from 'react-bootstrap';
@@ -23,7 +24,7 @@ const validationSchema = Yup.object().shape({
     active: Yup.boolean().notRequired(),
 });
 
-export default function AttachmentsRequired() {
+const AttachmentsRequired: NextPage = () => {
     const { handleItemSideBar, handleSelectedMenu } = useContext(SideBarContext);
     const { loading, user } = useContext(AuthContext);
 
@@ -46,7 +47,7 @@ export default function AttachmentsRequired() {
         handleSelectedMenu('projects-attachments-required');
 
         if (user) {
-            if (can(user, "projects", "update")) {
+            if (can(user, "settings", "read:any")) {
                 api.get('attachments-required/project').then(res => {
                     setAttachmentsRequiredProject(res.data);
 
@@ -109,17 +110,17 @@ export default function AttachmentsRequired() {
         <>
             <NextSeo
                 title="Lista de anexos obrigatórios dos projetos"
-                description="Lista de anexos obrigatórios dos projetos da plataforma de gerenciamento da Mtech Solar."
+                description="Lista de anexos obrigatórios dos projetos da plataforma de gerenciamento da Plataforma solar."
                 openGraph={{
-                    url: 'https://app.mtechsolar.com.br',
+                    url: process.env.NEXT_PUBLIC_API_URL,
                     title: 'Lista de anexos obrigatórios dos projetos',
-                    description: 'Lista de anexos obrigatórios dos projetos da plataforma de gerenciamento da Mtech Solar.',
+                    description: 'Lista de anexos obrigatórios dos projetos da plataforma de gerenciamento da Plataforma solar.',
                     images: [
                         {
-                            url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
-                            alt: 'Lista de anexos obrigatórios dos projetos | Plataforma Mtech Solar',
+                            url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg`,
+                            alt: 'Lista de anexos obrigatórios dos projetos | Plataforma solar',
                         },
-                        { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
+                        { url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg` },
                     ],
                 }}
             />
@@ -127,12 +128,14 @@ export default function AttachmentsRequired() {
             {
                 !user || loading ? <PageWaiting status="waiting" /> : <>
                     {
-                        can(user, "projects", "update") ? <Container className="content-page">
+                        can(user, "settings", "read:any") ? <Container className="content-page">
                             <Row>
                                 <Col>
-                                    <Button variant="outline-success" onClick={handleShowModalNewItem}>
-                                        <FaPlus /> Criar um item
-                                    </Button>
+                                    {
+                                        can(user, "settings", "create") && <Button variant="outline-success" onClick={handleShowModalNewItem}>
+                                            <FaPlus /> Criar um item
+                                        </Button>
+                                    }
                                 </Col>
                             </Row>
 
@@ -299,6 +302,8 @@ export default function AttachmentsRequired() {
         </>
     )
 }
+
+export default AttachmentsRequired;
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
     const { token } = context.req.cookies;

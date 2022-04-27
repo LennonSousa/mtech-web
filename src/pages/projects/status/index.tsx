@@ -1,5 +1,6 @@
 import { useContext, useEffect, useState } from 'react';
 import { GetServerSideProps } from 'next';
+import type { NextPage } from 'next';
 import { NextSeo } from 'next-seo';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { Button, Col, Container, Form, Image, ListGroup, Modal, Row } from 'react-bootstrap';
@@ -22,7 +23,7 @@ const validationSchema = Yup.object().shape({
     order: Yup.number().required(),
 });
 
-export default function Status() {
+const ProjectStatusPage: NextPage = () => {
     const { handleItemSideBar, handleSelectedMenu } = useContext(SideBarContext);
     const { loading, user } = useContext(AuthContext);
 
@@ -45,7 +46,7 @@ export default function Status() {
         handleSelectedMenu('projects-status');
 
         if (user) {
-            if (can(user, "projects", "update")) {
+            if (can(user, "projects", "read:any")) {
                 api.get('projects/status').then(res => {
                     setProjectStatus(res.data);
 
@@ -108,17 +109,17 @@ export default function Status() {
         <>
             <NextSeo
                 title="Lista de fases dos projetos"
-                description="Lista de fases dos projetos da plataforma de gerenciamento da Mtech Solar."
+                description="Lista de fases dos projetos da plataforma de gerenciamento da Plataforma solar."
                 openGraph={{
-                    url: 'https://app.mtechsolar.com.br',
+                    url: process.env.NEXT_PUBLIC_API_URL,
                     title: 'Lista de fases dos projetos',
-                    description: 'Lista de fases dos projetos da plataforma de gerenciamento da Mtech Solar.',
+                    description: 'Lista de fases dos projetos da plataforma de gerenciamento da Plataforma solar.',
                     images: [
                         {
-                            url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
-                            alt: 'Lista de fases dos projetos | Plataforma Mtech Solar',
+                            url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg`,
+                            alt: 'Lista de fases dos projetos | Plataforma solar',
                         },
-                        { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
+                        { url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg` },
                     ],
                 }}
             />
@@ -126,12 +127,14 @@ export default function Status() {
             {
                 !user || loading ? <PageWaiting status="waiting" /> : <>
                     {
-                        can(user, "projects", "update") ? <Container className="content-page">
+                        can(user, "projects", "read:any") ? <Container className="content-page">
                             <Row>
                                 <Col>
-                                    <Button variant="outline-success" onClick={handleShowModalNewLine}>
-                                        <FaPlus /> Criar um item
-                                    </Button>
+                                    {
+                                        can(user, "projects", "create") && <Button variant="outline-success" onClick={handleShowModalNewLine}>
+                                            <FaPlus /> Criar um item
+                                        </Button>
+                                    }
                                 </Col>
                             </Row>
 
@@ -298,6 +301,8 @@ export default function Status() {
         </>
     )
 }
+
+export default ProjectStatusPage;
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
     const { token } = context.req.cookies;

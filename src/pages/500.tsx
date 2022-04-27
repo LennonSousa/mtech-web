@@ -1,3 +1,4 @@
+import type { NextPage } from 'next';
 import Link from 'next/link';
 import { NextSeo } from 'next-seo';
 import { Col, Container, Image, Row } from 'react-bootstrap';
@@ -5,22 +6,22 @@ import { FaArrowRight } from 'react-icons/fa';
 
 import { AlertMessage } from '../components/Interfaces/AlertMessage';
 
-export default function Page500() {
+const Page500: NextPage = () => {
   return (
     <>
       <NextSeo
         title="Erro interno"
-        description="Erro interno da plataforma de gerenciamento da Mtech Solar."
+        description="Erro interno da plataforma de gerenciamento da Plataforma solar."
         openGraph={{
-          url: 'https://app.mtechsolar.com',
+          url: 'https://app.Plataforma solarsolar.com',
           title: 'Erro interno',
-          description: 'Erro interno da plataforma de gerenciamento da Mtech Solar.',
+          description: 'Erro interno da plataforma de gerenciamento da Plataforma solar.',
           images: [
             {
-              url: 'https://app.mtechsolar.com/assets/images/logo-mtech.jpg',
-              alt: 'Erro interno | Plataforma Mtech Solar',
+              url: 'https://app.Plataforma solarsolar.com/assets/images/logo.jpg',
+              alt: 'Erro interno | Plataforma solar',
             },
-            { url: 'https://app.mtechsolar.com/assets/images/logo-mtech.jpg' },
+            { url: 'https://app.Plataforma solarsolar.com/assets/images/logo.jpg' },
           ],
         }}
       />
@@ -59,3 +60,5 @@ export default function Page500() {
     </>
   )
 }
+
+export default Page500;

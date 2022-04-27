@@ -1,8 +1,9 @@
 import { ChangeEvent, useContext, useEffect, useState } from 'react';
 import { GetServerSideProps } from 'next';
+import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { NextSeo } from 'next-seo';
-import { Button, Col, Container, Form, ListGroup, Row } from 'react-bootstrap';
+import { Button, Col, Container, Form, InputGroup, ListGroup, Row } from 'react-bootstrap';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { FaKey } from 'react-icons/fa';
@@ -10,15 +11,32 @@ import { FaKey } from 'react-icons/fa';
 import api from '../../../api/api';
 import { TokenVerify } from '../../../utils/tokenVerify';
 import { SideBarContext } from '../../../contexts/SideBarContext';
+import { StoresContext } from '../../../contexts/StoresContext';
 import { AuthContext } from '../../../contexts/AuthContext';
-import { UserRole, can, translateRole } from '../../../components/Users';
+import { UserRole, can, translatedRoles } from '../../../components/Users';
+import { cpf, cnpj, prettifyCurrency } from '../../../components/InputMask/masks';
 import PageBack from '../../../components/PageBack';
 import { AlertMessage, statusModal } from '../../../components/Interfaces/AlertMessage';
 import { PageWaiting, PageType } from '../../../components/PageWaiting';
 
+interface userRoles {
+    role: string,
+    grants: string[],
+};
+
+const rolesToViewSelf = [
+    'estimates',
+    'projects',
+    'services',
+];
+
 const validationSchema = Yup.object().shape({
     name: Yup.string().required('Obrigatório!'),
+    document: Yup.string().required('Obrigatório!'),
     email: Yup.string().email('E-mail invlálido!').required('Obrigatório!'),
+    store_only: Yup.boolean().notRequired(),
+    discountLimit: Yup.string().notRequired(),
+    store: Yup.string().notRequired(),
     roles: Yup.array(
         Yup.object().shape({
             role: Yup.string().required(),
@@ -32,17 +50,20 @@ const validationSchema = Yup.object().shape({
     ),
 });
 
-export default function NewUser() {
+const NewUser: NextPage = () => {
     const { handleItemSideBar, handleSelectedMenu } = useContext(SideBarContext);
     const { loading, user } = useContext(AuthContext);
+    const { stores } = useContext(StoresContext);
 
     const [usersRoles, setUsersRoles] = useState<UserRole[]>([]);
 
     const [loadingData, setLoadingData] = useState(true);
+    const [hasErrors, setHasErrors] = useState(false);
     const [typeLoadingMessage, setTypeLoadingMessage] = useState<PageType>("waiting");
     const [textLoadingMessage, setTextLoadingMessage] = useState('Aguarde, carregando...');
     const [messageShow, setMessageShow] = useState(false);
     const [typeMessage, setTypeMessage] = useState<statusModal>("waiting");
+    const [documentType, setDocumentType] = useState("CPF");
 
     const router = useRouter();
 
@@ -52,9 +73,22 @@ export default function NewUser() {
 
         if (user && can(user, "users", "create")) {
             api.get('user/roles').then(res => {
-                const roles: UserRole[] = res.data;
+                const roles: userRoles[] = res.data;
 
                 setUsersRoles(roles.map(role => {
+                    if (role.role === "users") {
+                        return {
+                            id: role.role,
+                            role: role.role,
+                            view: false,
+                            view_self: true,
+                            create: false,
+                            update: false,
+                            update_self: true,
+                            remove: false,
+                        }
+                    }
+
                     return {
                         id: role.role,
                         role: role.role,
@@ -73,6 +107,7 @@ export default function NewUser() {
 
                 setTypeLoadingMessage("error");
                 setTextLoadingMessage("Não foi possível carregar os dados, verifique a sua internet e tente novamente em alguns minutos.");
+                setHasErrors(true);
             });
         }
 
@@ -88,7 +123,7 @@ export default function NewUser() {
                     return {
                         ...role,
                         view: true,
-                        view_self: true,
+                        view_self: false,
                         create: true,
                         update: true,
                         update_self: true,
@@ -97,15 +132,23 @@ export default function NewUser() {
                 }
 
                 if (grant === 'view') {
-                    if (role.view) {
+                    if (role.view && !role.view_self) {
                         const updatedRole = handleRole(role, ['create', 'update', 'remove'], false);
 
                         return { ...updatedRole, view: !updatedRole.view };
                     }
 
-                    return { ...role, view: !role.view };
+                    return { ...role, view: !role.view, view_self: false };
                 }
-                if (grant === 'view_self') return { ...role, view_self: !role.view_self };
+                if (grant === 'view_self') {
+                    if (role.view_self && !role.view) {
+                        const updatedRole = handleRole(role, ['create', 'update', 'remove'], false);
+
+                        return { ...updatedRole, view_self: !updatedRole.view_self };
+                    }
+
+                    return { ...role, view_self: !role.view_self, view: false };
+                }
                 if (grant === 'create') return { ...role, create: !role.create };
                 if (grant === 'update') {
                     if (role.update) {
@@ -147,17 +190,17 @@ export default function NewUser() {
         <>
             <NextSeo
                 title="Criar usuário"
-                description="Criar usuário da plataforma de gerenciamento da Mtech Solar."
+                description="Criar usuário da plataforma de gerenciamento da Plataforma solar."
                 openGraph={{
-                    url: 'https://app.mtechsolar.com.br',
+                    url: process.env.NEXT_PUBLIC_API_URL,
                     title: 'Criar usuário',
-                    description: 'Criar usuário da plataforma de gerenciamento da Mtech Solar.',
+                    description: 'Criar usuário da plataforma de gerenciamento da Plataforma solar.',
                     images: [
                         {
-                            url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
-                            alt: 'Criar usuário | Plataforma Mtech Solar',
+                            url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg`,
+                            alt: 'Criar usuário | Plataforma solar',
                         },
-                        { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
+                        { url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg` },
                     ],
                 }}
             />
@@ -168,7 +211,7 @@ export default function NewUser() {
                         {
                             can(user, "users", "create") ? <>
                                 {
-                                    loadingData ? <PageWaiting
+                                    loadingData || hasErrors ? <PageWaiting
                                         status={typeLoadingMessage}
                                         message={textLoadingMessage}
                                     /> :
@@ -176,9 +219,15 @@ export default function NewUser() {
                                             <Formik
                                                 initialValues={{
                                                     name: '',
+                                                    document: '',
                                                     email: '',
+                                                    store_only: user.store_only,
+                                                    discountLimit: '0,00',
+                                                    store: user.store_only ? (user.store ? user.store.id : '') : '',
                                                 }}
                                                 onSubmit={async values => {
+                                                    if (values.store_only && !!!values.store) return;
+
                                                     setTypeMessage("waiting");
                                                     setMessageShow(true);
 
@@ -197,7 +246,11 @@ export default function NewUser() {
 
                                                         await api.post('users', {
                                                             name: values.name,
+                                                            document: values.document,
                                                             email: values.email,
+                                                            store_only: values.store_only,
+                                                            discountLimit: Number(values.discountLimit.replaceAll(".", "").replaceAll(",", ".")),
+                                                            store: values.store,
                                                             roles,
                                                         });
 
@@ -217,7 +270,7 @@ export default function NewUser() {
                                                 }}
                                                 validationSchema={validationSchema}
                                             >
-                                                {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
+                                                {({ handleChange, handleBlur, handleSubmit, values, setFieldValue, errors, touched }) => (
                                                     <Form onSubmit={handleSubmit}>
                                                         <Row className="mb-3">
                                                             <Col>
@@ -226,7 +279,7 @@ export default function NewUser() {
                                                         </Row>
 
                                                         <Row className="mb-3">
-                                                            <Form.Group as={Col} sm={6} controlId="formGridName">
+                                                            <Form.Group as={Col} sm={5} controlId="formGridName">
                                                                 <Form.Label>Nome</Form.Label>
                                                                 <Form.Control
                                                                     type="name"
@@ -239,7 +292,33 @@ export default function NewUser() {
                                                                 <Form.Control.Feedback type="invalid">{touched.name && errors.name}</Form.Control.Feedback>
                                                             </Form.Group>
 
-                                                            <Form.Group as={Col} sm={6} controlId="formGridEmail">
+                                                            <Form.Group as={Col} sm={3} controlId="formGridDocument">
+                                                                <Form.Label>{documentType}</Form.Label>
+                                                                <Form.Control
+                                                                    type="text"
+                                                                    maxLength={18}
+                                                                    onChange={(e) => {
+                                                                        setFieldValue('document', e.target.value.length <= 14 ? cpf(e.target.value) : cnpj(e.target.value), false);
+                                                                        if (e.target.value.length > 14)
+                                                                            setDocumentType("CNPJ");
+                                                                        else
+                                                                            setDocumentType("CPF");
+                                                                    }}
+                                                                    onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+                                                                        setFieldValue('document', e.target.value.length <= 14 ? cpf(e.target.value) : cnpj(e.target.value));
+                                                                        if (e.target.value.length > 14)
+                                                                            setDocumentType("CNPJ");
+                                                                        else
+                                                                            setDocumentType("CPF");
+                                                                    }}
+                                                                    value={values.document}
+                                                                    name="document"
+                                                                    isInvalid={!!errors.document && touched.document}
+                                                                />
+                                                                <Form.Control.Feedback type="invalid">{touched.document && errors.document}</Form.Control.Feedback>
+                                                            </Form.Group>
+
+                                                            <Form.Group as={Col} sm={4} controlId="formGridEmail">
                                                                 <Form.Label>E-mail</Form.Label>
                                                                 <Form.Control
                                                                     type="email"
@@ -253,6 +332,68 @@ export default function NewUser() {
                                                             </Form.Group>
                                                         </Row>
 
+                                                        <Row className="mb-2 align-items-center">
+                                                            <Form.Group as={Col} sm={3} controlId="formGridDiscountLimit">
+                                                                <Form.Label>Limite de desconto</Form.Label>
+                                                                <InputGroup className="mb-2">
+                                                                    <InputGroup.Text id="btnGroupDiscountLimit">%</InputGroup.Text>
+
+                                                                    <Form.Control
+                                                                        type="text"
+                                                                        onChange={(e) => {
+                                                                            setFieldValue('discountLimit', prettifyCurrency(e.target.value));
+                                                                        }}
+                                                                        onBlur={(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+                                                                            setFieldValue('discountLimit', prettifyCurrency(e.target.value));
+                                                                        }}
+                                                                        value={values.discountLimit}
+                                                                        name="discountLimit"
+                                                                        isInvalid={!!errors.discountLimit && touched.discountLimit}
+                                                                        aria-label="Limite para desconto em orçamentos."
+                                                                        aria-describedby="btnGroupDiscountLimit"
+                                                                    />
+                                                                </InputGroup>
+                                                                <Form.Control.Feedback type="invalid">{touched.discountLimit && errors.discountLimit}</Form.Control.Feedback>
+                                                            </Form.Group>
+
+                                                            <Col sm={3}>
+                                                                <Form.Check
+                                                                    type="switch"
+                                                                    id="store_only"
+                                                                    label="Vincular a uma loja"
+                                                                    checked={values.store_only}
+                                                                    onChange={() => { setFieldValue('store_only', !values.store_only) }}
+                                                                />
+                                                            </Col>
+
+                                                            {
+                                                                !!values.store_only && <Form.Group as={Col} sm={4} controlId="formGridStore">
+                                                                    <Form.Label>Loja</Form.Label>
+                                                                    <Form.Control
+                                                                        as="select"
+                                                                        onChange={handleChange}
+                                                                        onBlur={handleBlur}
+                                                                        value={values.store}
+                                                                        name="store"
+                                                                        isInvalid={!!errors.store && touched.store}
+                                                                    >
+                                                                        <option hidden>Escolha uma opção</option>
+                                                                        {
+                                                                            stores.map((store, index) => {
+                                                                                return <option key={index} value={store.id}>{store.name}</option>
+                                                                            })
+                                                                        }
+                                                                    </Form.Control>
+                                                                    <Form.Control.Feedback type="invalid">{touched.store && errors.store}</Form.Control.Feedback>
+                                                                    {
+                                                                        values.store_only && !!!values.store && <label className="invalid-feedback" style={{ display: 'block' }}>
+                                                                            Obrigatório escolher uma opção
+                                                                        </label>
+                                                                    }
+                                                                </Form.Group>
+                                                            }
+                                                        </Row>
+
                                                         <Row>
                                                             <Col>
                                                                 <h6 className="text-success">Permissões <FaKey /></h6>
@@ -264,10 +405,12 @@ export default function NewUser() {
                                                                 <ListGroup className="mb-3">
                                                                     {
                                                                         usersRoles.map((role, index) => {
+                                                                            const translatedRole = translatedRoles.find(item => { return item.role === role.role });
+
                                                                             return <ListGroup.Item key={index} as="div" variant="light">
                                                                                 <Row>
                                                                                     <Col>
-                                                                                        <h6 className="text-success">{translateRole(role.role)} </h6>
+                                                                                        <h6 className="text-success">{translatedRole ? translatedRole.translated : role.role} </h6>
                                                                                     </Col>
 
                                                                                     <Col>
@@ -282,6 +425,20 @@ export default function NewUser() {
                                                                                         />
                                                                                     </Col>
 
+                                                                                    {
+                                                                                        rolesToViewSelf.find(item => { return item === role.id }) && <Col>
+                                                                                            <Form.Check
+                                                                                                checked={role.view_self}
+                                                                                                type="checkbox"
+                                                                                                label="Visualizar próprio"
+                                                                                                name="type"
+                                                                                                id={`formUserRoles${role.id}ViewSelf`}
+                                                                                                value={`${role.id}-view_self`}
+                                                                                                onChange={handleChecks}
+                                                                                            />
+                                                                                        </Col>
+                                                                                    }
+
                                                                                     <Col>
                                                                                         <Form.Check
                                                                                             checked={role.create}
@@ -291,7 +448,7 @@ export default function NewUser() {
                                                                                             id={`formUserRoles${role.id}Create`}
                                                                                             value={`${role.id}-create`}
                                                                                             onChange={handleChecks}
-                                                                                            disabled={!role.view}
+                                                                                            disabled={!role.view && !role.view_self}
                                                                                         />
                                                                                     </Col>
 
@@ -304,23 +461,9 @@ export default function NewUser() {
                                                                                             id={`formUserRoles${role.id}Update`}
                                                                                             value={`${role.id}-update`}
                                                                                             onChange={handleChecks}
-                                                                                            disabled={!role.view}
+                                                                                            disabled={!role.view && !role.view_self}
                                                                                         />
                                                                                     </Col>
-
-                                                                                    {
-                                                                                        role.id === 'users' && <Col>
-                                                                                            <Form.Check
-                                                                                                checked={role.update_self}
-                                                                                                type="checkbox"
-                                                                                                label="Editar próprio"
-                                                                                                name="type"
-                                                                                                id={`formUserRoles${role.id}UpdateSelf`}
-                                                                                                value={`${role.id}-update_self`}
-                                                                                                onChange={handleChecks}
-                                                                                            />
-                                                                                        </Col>
-                                                                                    }
 
                                                                                     <Col>
                                                                                         <Form.Check
@@ -339,7 +482,6 @@ export default function NewUser() {
                                                                                         <Form.Check
                                                                                             checked={
                                                                                                 role.view &&
-                                                                                                    role.view_self &&
                                                                                                     role.create &&
                                                                                                     role.update &&
                                                                                                     role.update_self &&
@@ -385,6 +527,8 @@ export default function NewUser() {
         </>
     )
 }
+
+export default NewUser;
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
     const { token } = context.req.cookies;

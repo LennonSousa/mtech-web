@@ -1,5 +1,6 @@
 import { useContext, useEffect, useState } from 'react';
 import { GetServerSideProps } from 'next';
+import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { NextSeo } from 'next-seo';
 import { Button, ButtonGroup, Col, Container, ListGroup, Row } from 'react-bootstrap';
@@ -16,7 +17,7 @@ import PageBack from '../../../../components/PageBack';
 import { PageWaiting, PageType } from '../../../../components/PageWaiting';
 import { prettifyCurrency } from '../../../../components/InputMask/masks';
 
-export default function UserDetails() {
+const PanelDetails: NextPage = () => {
     const router = useRouter();
     const { panel } = router.query;
 
@@ -35,7 +36,7 @@ export default function UserDetails() {
         handleSelectedMenu('estimates-panels');
 
         if (user) {
-            if (can(user, "estimates", "view") || panel === user.id) {
+            if (can(user, "settings", "read:any") || panel === user.id) {
                 api.get(`panels/${panel}`).then(res => {
                     setData(res.data);
 
@@ -58,17 +59,17 @@ export default function UserDetails() {
         <>
             <NextSeo
                 title="Detalhes do painel"
-                description="Detalhes do painel da plataforma de gerenciamento da Mtech Solar."
+                description="Detalhes do painel da plataforma de gerenciamento da Plataforma solar."
                 openGraph={{
-                    url: 'https://app.mtechsolar.com.br',
+                    url: process.env.NEXT_PUBLIC_API_URL,
                     title: 'Detalhes do painel',
-                    description: 'Detalhes do painel da plataforma de gerenciamento da Mtech Solar.',
+                    description: 'Detalhes do painel da plataforma de gerenciamento da Plataforma solar.',
                     images: [
                         {
-                            url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
-                            alt: 'Detalhes do painel | Plataforma Mtech Solar',
+                            url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg`,
+                            alt: 'Detalhes do painel | Plataforma solar',
                         },
-                        { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
+                        { url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg` },
                     ],
                 }}
             />
@@ -77,7 +78,7 @@ export default function UserDetails() {
                 !user || loading ? <PageWaiting status="waiting" /> :
                     <>
                         {
-                            can(user, "estimates", "view") || panel === user.id ? <>
+                            can(user, "settings", "read:any") || panel === user.id ? <>
                                 {
                                     loadingData ? <PageWaiting
                                         status={typeLoadingMessage}
@@ -103,7 +104,7 @@ export default function UserDetails() {
                                                                             </Col>
 
                                                                             {
-                                                                                can(user, "estimates", "update") && <Col className="col-row">
+                                                                                can(user, "estimates", "update:any") && <Col className="col-row">
                                                                                     <ButtonGroup size="sm" className="col-12">
                                                                                         <Button
                                                                                             title="Editar painel."
@@ -176,6 +177,8 @@ export default function UserDetails() {
         </>
     )
 }
+
+export default PanelDetails;
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
     const { token } = context.req.cookies;

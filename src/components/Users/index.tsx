@@ -4,13 +4,32 @@ import { Row, Col, ListGroup, Button, Spinner } from 'react-bootstrap';
 import { FaUserEdit, FaPause, FaPlay, FaUserClock, FaUserTag } from 'react-icons/fa';
 
 import api from '../../api/api';
+import { Store } from '../Stores';
 
-export type Role = 'employees' | 'shifts' | 'attendances' | 'estimates' | 'projects' | 'services' | 'store' | 'finances' | 'users';
-export type Grant = 'view' | 'view_self' | 'create' | 'update' | 'update_self' | 'remove';
+type Resource = 'estimates' | 'projects' | 'services' | 'store' | 'settings' | 'finances' | 'users';
+type Action = 'read:any' | 'read:own' | 'create' | 'update:any' | 'update:own' | 'delete';
+
+export interface User {
+    id: string,
+    name: string;
+    document: string;
+    phone: string;
+    email: string;
+    password: string;
+    active: boolean;
+    paused: boolean;
+    root: boolean;
+    store_only: boolean;
+    discountLimit: number;
+    store: Store;
+    created_at: Date;
+    roles: UserRole[];
+    grants: Grants[];
+}
 
 export interface UserRole {
     id: string;
-    role: Role;
+    role: string;
     view: boolean;
     view_self: boolean;
     create: boolean;
@@ -19,59 +38,56 @@ export interface UserRole {
     remove: boolean;
 }
 
-export interface User {
-    id: string,
-    name: string;
-    phone: string;
-    email: string;
-    password: string;
-    active: boolean;
-    paused: boolean;
-    root: boolean;
-    created_at: Date;
-    roles: UserRole[];
+export interface Grants {
+    role: string;
+    resource: string;
+    action: string;
 }
 
-interface TranslateItem {
-    item: string,
+interface TranslateRoles {
+    role: string,
     translated: string;
 }
 
-export const translatedRoles: TranslateItem[] = [
+export const translatedRoles: TranslateRoles[] = [
     {
-        item: 'employees',
+        role: 'employees',
         translated: 'Funcionários',
     },
     {
-        item: 'shifts',
+        role: 'shifts',
         translated: 'Turnos',
     },
     {
-        item: 'attendances',
+        role: 'attendances',
         translated: 'Ponto',
     },
     {
-        item: 'estimates',
+        role: 'estimates',
         translated: 'Orçamentos',
     },
     {
-        item: 'projects',
+        role: 'projects',
         translated: 'Projetos',
     },
     {
-        item: 'services',
+        role: 'services',
         translated: 'Ordens de Serviço',
     },
     {
-        item: 'store',
+        role: 'store',
         translated: 'Loja'
     },
     {
-        item: 'finances',
+        role: 'settings',
+        translated: 'Configurações'
+    },
+    {
+        role: 'finances',
         translated: 'Financeiro'
     },
     {
-        item: 'users',
+        role: 'users',
         translated: 'Usuários',
     },
 ];
@@ -82,22 +98,14 @@ interface UsersProps {
     handleListUsers(): Promise<void>;
 }
 
-export function can(user: User, userRole: Role, userGrant: Grant) {
-    const foundRole = user.roles.find(role => {
-        return role.role === userRole && role[userGrant] === true
+export function can(user: User, resource: Resource, action: Action) {
+    const foundResource = user.grants.find(grant => {
+        return grant.role === user.id && grant.resource === resource && grant.action === action
     });
 
-    if (foundRole) return true;
+    if (foundResource) return true;
 
     return false;
-}
-
-export function translateRole(resource: Role) {
-    const translatedRole = translatedRoles.find(role => { return role.item === resource });
-
-    if (translatedRole) return translatedRole.translated;
-
-    return resource;
 }
 
 const Users: React.FC<UsersProps> = ({ user, userAuthenticated, handleListUsers }) => {
@@ -112,6 +120,7 @@ const Users: React.FC<UsersProps> = ({ user, userAuthenticated, handleListUsers 
             if (userAuthenticated.id !== user.id && !user.root) {
                 await api.put(`users/${user.id}`, {
                     name: user.name,
+                    document: user.document,
                     phone: user.phone,
                     paused: !user.paused,
                 });
@@ -144,7 +153,7 @@ const Users: React.FC<UsersProps> = ({ user, userAuthenticated, handleListUsers 
 
                 {
                     userAuthenticated.id !== user.id
-                    && can(userAuthenticated, "users", "update")
+                    && can(userAuthenticated, "users", "update:any")
                     && !user.root
                     && <Col className="col-row text-end">
                         <Button
@@ -178,9 +187,9 @@ const Users: React.FC<UsersProps> = ({ user, userAuthenticated, handleListUsers 
                 </Col>
 
                 {
-                    can(userAuthenticated, "users", "update")
+                    can(userAuthenticated, "users", "update:any")
                         || userAuthenticated.id === user.id
-                        && can(userAuthenticated, "users", "update_self")
+                        && can(userAuthenticated, "users", "update:own")
                         ? <Col className="col-row text-end">
                             <Button
                                 variant="outline-success"

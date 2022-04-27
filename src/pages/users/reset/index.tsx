@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { NextPage } from 'next';
 import Link from 'next/link';
 import { NextSeo } from 'next-seo';
 import { Button, Col, Container, Form, Image, Modal, Row } from 'react-bootstrap';
@@ -16,7 +17,7 @@ const validationSchema = Yup.object().shape({
     email: Yup.string().email('E-mail inválido!').required('Obrigatório!'),
 });
 
-export default function NewCustomer() {
+const UserReset: NextPage = () => {
     const [messageShow, setMessageShow] = useState(false);
     const [typeMessage, setTypeMessage] = useState<statusModal>("waiting");
 
@@ -34,17 +35,17 @@ export default function NewCustomer() {
         <>
             <NextSeo
                 title="Recuperar senha"
-                description="Recuperar senha da plataforma de gerenciamento da Mtech Solar."
+                description="Recuperar senha da plataforma de gerenciamento da Plataforma solar."
                 openGraph={{
-                    url: 'https://app.mtechsolar.com.br',
+                    url: process.env.NEXT_PUBLIC_API_URL,
                     title: 'Recuperar senha',
-                    description: 'Recuperar senha da plataforma de gerenciamento da Mtech Solar.',
+                    description: 'Recuperar senha da plataforma de gerenciamento da Plataforma solar.',
                     images: [
                         {
-                            url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
-                            alt: 'Recuperar senha | Plataforma Mtech Solar',
+                            url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg`,
+                            alt: 'Recuperar senha | Plataforma solar',
                         },
-                        { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
+                        { url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg` },
                     ],
                 }}
             />
@@ -58,7 +59,7 @@ export default function NewCustomer() {
                                     <Col md={6} className="mt-1 mb-4">
                                         <Row className="justify-content-center align-items-center">
                                             <Col sm={8}>
-                                                <Image fluid src="/assets/images/logo-mtech.svg" alt="Mtech Solar." />
+                                                <Image fluid src="/assets/images/logo.svg" alt="Plataforma solar." />
                                             </Col>
                                         </Row>
                                     </Col>
@@ -181,3 +182,5 @@ export default function NewCustomer() {
         </>
     )
 }
+
+export default UserReset;

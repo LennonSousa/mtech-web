@@ -1,5 +1,6 @@
 import { ChangeEvent, useContext, useEffect, useState } from 'react';
 import { GetServerSideProps } from 'next';
+import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { NextSeo } from 'next-seo';
 import { Button, Col, Container, Form, ListGroup, Row } from 'react-bootstrap';
@@ -24,7 +25,7 @@ const validationSchema = Yup.object().shape({
     order: Yup.number().required('Obrigatório!'),
 });
 
-export default function NewUser() {
+const NewPanel: NextPage = () => {
     const { handleItemSideBar, handleSelectedMenu } = useContext(SideBarContext);
     const { loading, user } = useContext(AuthContext);
 
@@ -43,7 +44,7 @@ export default function NewUser() {
         handleSelectedMenu('estimates-panels');
 
         if (user) {
-            if (can(user, "estimates", "update")) {
+            if (can(user, "settings", "create")) {
 
                 api.get('panels').then(res => {
                     setPanels(res.data);
@@ -63,17 +64,17 @@ export default function NewUser() {
         <>
             <NextSeo
                 title="Criar painel"
-                description="Criar painel da plataforma de gerenciamento da Mtech Solar."
+                description="Criar painel da plataforma de gerenciamento da Plataforma solar."
                 openGraph={{
-                    url: 'https://app.mtechsolar.com.br',
+                    url: process.env.NEXT_PUBLIC_API_URL,
                     title: 'Criar painel',
-                    description: 'Criar painel da plataforma de gerenciamento da Mtech Solar.',
+                    description: 'Criar painel da plataforma de gerenciamento da Plataforma solar.',
                     images: [
                         {
-                            url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg',
-                            alt: 'Criar painel | Plataforma Mtech Solar',
+                            url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg`,
+                            alt: 'Criar painel | Plataforma solar',
                         },
-                        { url: 'https://app.mtechsolar.com.br/assets/images/logo-mtech.jpg' },
+                        { url: `${process.env.NEXT_PUBLIC_API_URL}/assets/images/logo.jpg` },
                     ],
                 }}
             />
@@ -82,7 +83,7 @@ export default function NewUser() {
                 !user || loading ? <PageWaiting status="waiting" /> :
                     <>
                         {
-                            can(user, "users", "create") ? <>
+                            can(user, "settings", "create") ? <>
                                 {
                                     loadingData ? <PageWaiting
                                         status={typeLoadingMessage}
@@ -183,6 +184,8 @@ export default function NewUser() {
         </>
     )
 }
+
+export default NewPanel;
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
     const { token } = context.req.cookies;

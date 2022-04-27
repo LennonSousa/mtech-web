@@ -227,7 +227,7 @@ const EstimatePrint: NextPage = () => {
                                                                 <Row className="mb-1">
                                                                     <Col>
                                                                         <h3 className="form-control-plaintext text-center text-success">
-                                                                            POR QUE ESCOLHER A LOGICA SOLUÇÕES RENOVÁVEIS?
+                                                                            POR QUE ESCOLHER A LOJA TESTE RENOVÁVEIS?
                                                                         </h3>
                                                                     </Col>
                                                                 </Row>
@@ -236,7 +236,7 @@ const EstimatePrint: NextPage = () => {
                                                                     <Col>
                                                                         <span className="text-secondary text-wrap" >
                                                                             <p>
-                                                                                A Lógica está no mercado há mais de 12 anos, oferecendo serviços e atendimento de qualidade,
+                                                                                A Loja Teste está no mercado há mais de 12 anos, oferecendo serviços e atendimento de qualidade,
                                                                                 nossos profissionais são qualificados e passam por constantes reciclagens para atender melhor nossos
                                                                                 clientes.
                                                                             </p>

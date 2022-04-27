@@ -14,7 +14,7 @@ import '../styles/global.css';
 
 import styles from '../styles/app.module.css';
 
-function LogicaApp({ Component, pageProps }: AppProps) {
+function App({ Component, pageProps }: AppProps) {
   return <>
     <NextSeo titleTemplate="%s | Plataforma solar" defaultTitle="Plataforma de gerenciamento." />
 
@@ -42,4 +42,4 @@ function LogicaApp({ Component, pageProps }: AppProps) {
   </>
 }
 
-export default LogicaApp
+export default App
